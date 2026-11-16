@@ -3,14 +3,13 @@ import { locale } from '@/marketing/i18n/browser';
 import { showcaseAppearance } from './showcaseTheme';
 
 /* The sample shop's green, for its own buttons and choices and for the
-   wallet's buttons. White text fails AA on #10B981, so buttons take dark green
-   text; rings and focus outlines take a deeper green that shows on white. */
+   wallet's buttons. Light button text on it keeps AA contrast. */
 const checkoutPalette = {
-  accent: '#10B981',
-  accentHover: '#0EA371',
-  onAccent: '#022C22',
-  strong: '#047857',
-  tint: '#A7F3D0',
+  accent: '#2b7a52',
+  accentHover: '#236645',
+  onAccent: '#fdfcfc',
+  strong: '#2b7a52',
+  tint: '#edf6f0',
 } as const;
 
 /** Sets the palette as the --checkout-* properties that checkout.css reads. */

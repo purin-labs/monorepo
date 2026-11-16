@@ -34,22 +34,15 @@
   }
 }
 
-.checkout-product-art {
-  display: grid;
-  place-items: center;
-  height: 132px;
+/* The photo of the chosen flavor, cropped around the cake. */
+.checkout-product-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 7 / 5;
+  object-fit: cover;
   border-radius: 10px;
   background: var(--checkout-tint);
-}
-
-.checkout-product-art .checkout-art {
-  width: 104px;
-  height: 104px;
-}
-
-.checkout-art path,
-.checkout-art rect {
-  transition: fill 200ms ease;
 }
 
 .checkout-product-heading {
@@ -135,13 +128,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  /* The wallet's own confirm button is 48px tall with 10px corners; the shop's match it. */
+  min-height: 48px;
+  padding: 12px 16px;
   color: var(--checkout-on-accent);
   background: var(--checkout-accent);
   border: 0;
   border-radius: 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 150ms ease;
@@ -231,11 +226,12 @@ dialog:not([open]) .checkout-review-slot {
   line-height: 1.4;
 }
 
-.checkout-review .checkout-art {
+.checkout-items img {
   flex: none;
   width: 36px;
   height: 36px;
   border-radius: 8px;
+  object-fit: cover;
   background: var(--checkout-fill);
 }
 
@@ -355,12 +351,13 @@ dialog:not([open]) .checkout-review-slot {
   font-weight: 650;
 }
 
-.checkout-token[data-token='usdt-ethereum'] {
-  background: #26a17b;
+.checkout-token[data-token='JPYC'] {
+  background: #16449a;
 }
 
-.checkout-token[data-token='jpyc-ethereum'] {
-  background: #16449a;
+/* A page with one way to pay gives it the full width. */
+.checkout-choices label:only-of-type {
+  grid-column: 1 / -1;
 }
 
 .checkout-totals {
@@ -387,13 +384,6 @@ dialog:not([open]) .checkout-review-slot {
   color: var(--checkout-ink);
   font-size: 14px;
   font-weight: 650;
-}
-
-.checkout-rate {
-  margin-left: 8px;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  font-weight: 400;
 }
 
 .checkout-actions {

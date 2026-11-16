@@ -9,7 +9,7 @@ import type {
    samples and nothing is signed or sent. */
 
 export type SampleToken = {
-  readonly id: 'usdc-base' | 'usdt-ethereum' | 'jpyc-ethereum';
+  readonly id: 'usdc-base' | 'usdc-ethereum' | 'jpyc-ethereum';
   readonly symbol: string;
   readonly decimals: number;
   readonly contract: string;
@@ -17,8 +17,6 @@ export type SampleToken = {
   readonly network: string;
   readonly explorer: string;
   readonly fee: string;
-  /** The currency the token tracks one to one. */
-  readonly currency: 'USD' | 'JPY';
 };
 
 const usdcOnBase: SampleToken = {
@@ -30,19 +28,17 @@ const usdcOnBase: SampleToken = {
   network: 'Base',
   explorer: 'https://basescan.org/',
   fee: '0.000001',
-  currency: 'USD',
 };
 
-const usdtOnEthereum: SampleToken = {
-  id: 'usdt-ethereum',
-  symbol: 'USDT',
+const usdcOnEthereum: SampleToken = {
+  id: 'usdc-ethereum',
+  symbol: 'USDC',
   decimals: 6,
-  contract: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  contract: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   chainId: 1,
   network: 'Ethereum',
   explorer: 'https://etherscan.io/',
   fee: '0.00005',
-  currency: 'USD',
 };
 
 const jpycOnEthereum: SampleToken = {
@@ -54,12 +50,11 @@ const jpycOnEthereum: SampleToken = {
   network: 'Ethereum',
   explorer: 'https://etherscan.io/',
   fee: '0.00005',
-  currency: 'JPY',
 };
 
-/** English pages pay in USDC first, Japanese pages in JPYC. */
+/** English pages pay in USDC, Japanese pages in JPYC (which the wallet lists on Ethereum). */
 export const paymentTokens: readonly SampleToken[] =
-  locale === 'ja' ? [jpycOnEthereum, usdcOnBase] : [usdcOnBase, usdtOnEthereum];
+  locale === 'ja' ? [jpycOnEthereum] : [usdcOnBase, usdcOnEthereum];
 
 export const stablecoin = paymentTokens[0];
 

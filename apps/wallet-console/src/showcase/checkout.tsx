@@ -9,19 +9,20 @@ import { createRoot } from 'react-dom/client';
 import type { TransactionReviewControls } from '@seams/wallet/react';
 import { CheckoutSession } from './checkoutSession';
 import {
-  colorLabel,
-  colors,
-  exchangeRate,
+  flavorDetails,
+  flavorLabel,
+  flavors,
   formatBalance,
   formatPrice,
   formatTokenAmount,
   prices,
   shop,
   subtotalCents,
+  tastingSet,
   totalCents,
   type CheckoutChoice,
-  type Color,
   type Delivery,
+  type Flavor,
 } from './checkoutCart';
 import { paymentTokens, type SampleToken } from './sampleTokens';
 import { configureModalBackdrop } from './modalBackdrop';
@@ -35,46 +36,16 @@ applyCheckoutPalette(document.documentElement);
    product card stays live behind the receipt toast, so the page is still
    usable while the payment settles. */
 
-function swatch(color: Color): string {
-  return colors.find((entry) => entry.id === color)?.swatch ?? colors[0].swatch;
-}
-
-function ToteArt({ color }: { color: Color }): React.JSX.Element {
-  return (
-    <svg className="checkout-art" viewBox="0 0 64 64" aria-hidden="true">
-      <path
-        d="M24 24v-5a8 8 0 0 1 16 0v5"
-        fill="none"
-        stroke="#7a5a3a"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path d="M15 24h34l-2.6 26.4a4 4 0 0 1-4 3.6H21.6a4 4 0 0 1-4-3.6Z" fill={swatch(color)} />
-      <path d="M15.5 29h33" stroke="rgb(0 0 0 / 0.14)" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function NotebookArt(): React.JSX.Element {
-  return (
-    <svg className="checkout-art" viewBox="0 0 64 64" aria-hidden="true">
-      <rect x="19" y="13" width="26" height="38" rx="3" fill="#c49a6c" />
-      <rect x="21" y="16" width="26" height="38" rx="3" fill="#d6b087" />
-      <rect x="40" y="16" width="2.5" height="38" fill="#2c2b29" />
-    </svg>
-  );
-}
-
 function TokenBadge({ token }: { token: SampleToken }): React.JSX.Element {
   return (
-    <span className="checkout-token" data-token={token.id} aria-hidden="true">
-      {token.currency === 'JPY' ? '¥' : token.symbol === 'USDT' ? '₮' : '$'}
+    <span className="checkout-token" data-token={token.symbol} aria-hidden="true">
+      {token.symbol === 'JPYC' ? '¥' : '$'}
     </span>
   );
 }
 
 function Checkout(): React.JSX.Element {
-  const [color, setColor] = React.useState<Color>('sand');
+  const [flavor, setFlavor] = React.useState<Flavor>('plain');
   const [open, setOpen] = React.useState(false);
   const [outcome, setOutcome] = React.useState('');
   const finish = React.useCallback((message: string) => {
@@ -83,26 +54,30 @@ function Checkout(): React.JSX.Element {
   }, []);
   return (
     <section className="checkout-product" aria-labelledby="checkout-product-title">
-      <div className="checkout-product-art">
-        <ToteArt color={color} />
-      </div>
+      <img
+        className="checkout-product-image"
+        src={flavorDetails(flavor).image}
+        alt={t('productImageAlt').replaceAll('{flavor}', flavorLabel(flavor))}
+        width={700}
+        height={500}
+      />
       <div className="checkout-product-heading">
         <span className="checkout-eyebrow">{shop.name}</span>
-        <h1 id="checkout-product-title">{t('productTote')}</h1>
+        <h1 id="checkout-product-title">{t('productBaumkuchen')}</h1>
       </div>
-      <p className="checkout-price">{formatPrice(prices.tote)}</p>
-      <div className="checkout-swatches" role="radiogroup" aria-label={t('color')}>
-        {colors.map(({ id }) => (
-          <label key={id} title={colorLabel(id)}>
+      <p className="checkout-price">{formatPrice(prices.baumkuchen)}</p>
+      <div className="checkout-swatches" role="radiogroup" aria-label={t('flavor')}>
+        {flavors.map(({ id, swatch }) => (
+          <label key={id}>
             <input
               type="radio"
-              name="checkout-color"
+              name="checkout-flavor"
               value={id}
-              checked={color === id}
-              onChange={() => setColor(id)}
+              checked={flavor === id}
+              onChange={() => setFlavor(id)}
             />
-            <span className="checkout-swatch" style={{ background: swatch(id) }} />
-            <span>{colorLabel(id)}</span>
+            <span className="checkout-swatch" style={{ background: swatch }} />
+            <span>{flavorLabel(id)}</span>
           </label>
         ))}
       </div>
@@ -123,16 +98,16 @@ function Checkout(): React.JSX.Element {
           {outcome}
         </p>
       ) : null}
-      {open ? <CheckoutReview color={color} onFinish={finish} /> : null}
+      {open ? <CheckoutReview flavor={flavor} onFinish={finish} /> : null}
     </section>
   );
 }
 
 function CheckoutReview({
-  color,
+  flavor,
   onFinish,
 }: {
-  color: Color;
+  flavor: Flavor;
   onFinish: (message: string) => void;
 }): React.JSX.Element | null {
   const [session, setSession] = React.useState<CheckoutSession | null>(null);
@@ -154,7 +129,7 @@ function CheckoutReview({
         </span>
       </div>
       <CheckoutPanel
-        color={color}
+        flavor={flavor}
         choice={choice}
         onDelivery={setDelivery}
         onToken={setToken}
@@ -170,38 +145,37 @@ function CheckoutReview({
 }
 
 function CheckoutPanel({
-  color,
+  flavor,
   choice,
   onDelivery,
   onToken,
   controls,
 }: {
-  color: Color;
+  flavor: Flavor;
   choice: CheckoutChoice;
   onDelivery: (delivery: Delivery) => void;
   onToken: (token: SampleToken) => void;
   controls: TransactionReviewControls;
 }): React.JSX.Element {
   const total = totalCents(choice.delivery);
-  const rate = exchangeRate(choice.token);
   return (
     <>
       <ul className="checkout-items" aria-label={t('yourCart')}>
         <li>
-          <ToteArt color={color} />
+          <img src={flavorDetails(flavor).thumb} alt="" width={36} height={36} />
           <span>
-            {t('productTote')}
-            <small>{colorLabel(color)} · ×1</small>
+            {t('productBaumkuchen')}
+            <small>{flavorLabel(flavor)} · ×1</small>
           </span>
-          <span>{formatPrice(prices.tote)}</span>
+          <span>{formatPrice(prices.baumkuchen)}</span>
         </li>
         <li>
-          <NotebookArt />
+          <img src={tastingSet.thumb} alt="" width={36} height={36} />
           <span>
-            {t('productNotebook')}
-            <small>{t('notebookKraft')} · ×1</small>
+            {t('productTastingSet')}
+            <small>{t('tastingSetFlavors')} · ×1</small>
           </span>
-          <span>{formatPrice(prices.notebook)}</span>
+          <span>{formatPrice(prices.tastingSet)}</span>
         </li>
       </ul>
       <dl className="checkout-ship">
@@ -268,10 +242,7 @@ function CheckoutPanel({
         <dd>{choice.delivery === 'express' ? formatPrice(prices.express) : t('free')}</dd>
         <dt>{t('networkFee')}</dt>
         <dd>{t('paidByShop').replaceAll('{shop}', shop.name)}</dd>
-        <dt className="checkout-total">
-          {t('total')}
-          {rate ? <span className="checkout-rate">{rate}</span> : null}
-        </dt>
+        <dt className="checkout-total">{t('total')}</dt>
         <dd className="checkout-total">{formatTokenAmount(choice.token, total)}</dd>
       </dl>
       <div className="checkout-actions">

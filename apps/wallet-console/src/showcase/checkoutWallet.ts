@@ -32,7 +32,7 @@ const choice = choiceFrom(new URLSearchParams(location.search));
 // account card and fits the homepage frame.
 const payment = tokenTransferModel({
   token: choice.token,
-  amount: tokenAmount(choice.token, totalCents(choice.delivery)),
+  amount: tokenAmount(totalCents(choice.delivery)),
   signer: null,
   recipient: shop.wallet,
   label: t('payShop').replaceAll('{shop}', shop.name),
