@@ -12,34 +12,24 @@ import type {
   TransactionReceiptState,
   TransactionReceiptView,
 } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-receipt';
-import type { TxDisplayModel } from '@wallet-ui/core/signingEngine/interfaces/display';
 import { showcaseAppearance, showcasePreset } from './showcaseTheme';
 import { playReceiptLifecycle } from './receiptLifecycle';
 import { transitionReceiptView } from './receiptTransition';
 import { sendExplorerLinksHome } from './sampleExplorer';
 import { configureModalBackdrop } from './modalBackdrop';
+import { stablecoin, tokenTransferModel } from './sampleTokens';
 
 configureModalBackdrop();
 
 /* The SDK's transaction confirmer and receipt on sample data. Confirming plays
    a simulated signing and broadcast; nothing is signed or sent. */
 
-const transfer: TxDisplayModel = {
-  chain: 'evm',
-  chainId: 8453,
-  signerAccount: `0x4201${'0'.repeat(32)}891c`,
-  operations: [
-    {
-      id: 'transfer',
-      kind: 'generic.contractCall',
-      label: t('transferEth'),
-      to: `0x2F01${'0'.repeat(32)}4EC9`,
-    },
-  ],
-  totals: { nativeValue: '0.025', nativeSymbol: 'ETH', estimatedFee: '0.000001', feeSymbol: 'ETH' },
-};
+const transfer = tokenTransferModel({
+  recipient: `0x2F01${'0'.repeat(32)}4EC9`,
+  label: t('transferAsset').replaceAll('{asset}', stablecoin.symbol),
+});
 
-const explorer = 'https://basescan.org/';
+const explorer = stablecoin.explorer;
 const stage = document.getElementById('root') as HTMLElement;
 sendExplorerLinksHome(stage, explorer);
 let handle: ConfirmationSurfaceHandle | null = null;
@@ -61,7 +51,7 @@ function model(): ConfirmSurfaceModel {
       header: {
         heading: t('reviewTransfer'),
         website: { kind: 'ready', text: 'shop.example.com' },
-        chainDetails: { kind: 'ready', text: 'Base' },
+        chainDetails: { kind: 'ready', text: stablecoin.network },
       },
       body: { kind: 'empty' },
       prompt: { kind: 'passkey' },
