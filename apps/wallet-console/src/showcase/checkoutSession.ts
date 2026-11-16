@@ -14,7 +14,7 @@ import {
   walletIframeSurfaceIdFromBoundary,
 } from '@wallet-ui/core/types/walletIframeIdentity';
 import type { TransactionReceiptView } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-receipt';
-import { choiceQuery, shop, type CheckoutChoice } from './checkoutCart';
+import { choiceQuery, type CheckoutChoice } from './checkoutCart';
 import { checkoutAppearance } from './checkoutAppearance';
 import { showcasePreset } from './showcaseTheme';
 
@@ -28,10 +28,8 @@ type Phase = 'mounting' | 'review' | 'review_again' | 'preparing' | 'approval' |
 const dialogWidthCssPx = 420;
 const toastWidthCssPx = 360;
 
-const confirmedMessage = t('orderPlaced').replaceAll('{order}', shop.order);
-
-/* Drives the SDK's production overlay through a custom review, its handoff to
-   the wallet approval, and the receipt toast that follows. The approval runs
+/* Drives the SDK's production overlay through the shop's own checkout card,
+   its handoff to the wallet approval, and the receipt that follows. The approval runs
    in a sample-data frame that has no wallet provider, authentication or
    signing transport. */
 export class CheckoutSession {
@@ -51,11 +49,11 @@ export class CheckoutSession {
   // Set once the wallet shows its receipt; null while it still asks for approval.
   private receiptView: TransactionReceiptView | null = null;
 
-  constructor(private readonly onFinish: (message: string) => void) {
+  constructor(private readonly onFinish: () => void) {
     this.overlay = new OverlayController({
       ensureIframe: () => this.iframe,
-      // Escape or a backdrop click; once the receipt shows, the purchase is done.
-      onDismiss: () => (this.receiptView ? this.finish(confirmedMessage) : this.cancel()),
+      // Escape or a backdrop click ends the checkout, paid or not.
+      onDismiss: () => this.finish(),
     });
     this.slot = this.overlay.getTransactionReviewSlot();
     // Measure the review at its final width before the dialog opens.
@@ -93,10 +91,9 @@ export class CheckoutSession {
     this.iframe.src = `${import.meta.env.BASE_URL}showcase/checkout/wallet/?${query}&lang=${locale}&theme=${showcasePreset.id}`;
   };
 
-  readonly cancel = (): void => this.finish(t('checkoutClosed'));
+  readonly cancel = (): void => this.finish();
 
-  readonly fail = (error: unknown): void =>
-    this.finish(error instanceof Error ? error.message : t('checkoutFailed'));
+  readonly fail = (): void => this.finish();
 
   readonly dispose = (): void => {
     this.phase = 'closed';
@@ -198,8 +195,8 @@ export class CheckoutSession {
     if (message.type === 'checkout-back' && this.phase === 'approval') {
       this.phase = 'review_again';
       this.resize();
-    } else if (message.type === 'checkout-finished' && typeof message.confirmed === 'boolean') {
-      this.finish(message.confirmed ? confirmedMessage : t('declinedWallet'));
+    } else if (message.type === 'checkout-finished') {
+      this.finish();
     } else if (
       message.type === 'checkout-receipt-view' &&
       (message.view === 'expanded' || message.view === 'toast') &&
@@ -226,10 +223,10 @@ export class CheckoutSession {
     }
   }
 
-  private finish(message: string): void {
+  private finish(): void {
     if (this.phase === 'closed') return;
     this.dispose();
-    this.onFinish(message);
+    this.onFinish();
   }
 }
 

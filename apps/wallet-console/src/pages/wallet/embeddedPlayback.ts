@@ -28,11 +28,10 @@ const transferSteps: readonly PlaybackStep[] = [
 ];
 
 const checkoutSteps: readonly PlaybackStep[] = [
-  { selector: '.checkout-swatches label:nth-child(2)', afterConfirmation: false },
-  { selector: '.checkout-buy', afterConfirmation: false },
+  { selector: '.checkout-choices label:nth-of-type(2)', afterConfirmation: false },
   { selector: '.checkout-confirm', afterConfirmation: false },
   { selector: 'button.confirm', afterConfirmation: false },
-  { selector: '.seams-receipt-dismiss', afterConfirmation: true },
+  { selector: '.seams-receipt-primary', afterConfirmation: true },
 ];
 
 type PlaybackTarget = HTMLButtonElement | HTMLLabelElement;

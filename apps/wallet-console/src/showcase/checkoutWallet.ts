@@ -20,9 +20,9 @@ import { sendExplorerLinksHome } from './sampleExplorer';
 import { choiceFrom, shop, tokenAmount, totalCents } from './checkoutCart';
 import { tokenTransferModel } from './sampleTokens';
 
-/* The wallet approval that the checkout demo hands off to: the SDK's confirmer
-   on sample data, inside the overlay's frame. Confirming plays the receipt as
-   a toast. The frame reports its card height and receipt view so the checkout
+/* The wallet approval that the shop's checkout card hands off to: the SDK's
+   confirmer on sample data, inside the overlay's frame. Confirming plays the
+   receipt in the same card; the shopper can shrink it to a toast. The frame reports its card height and receipt view so the checkout
    page can place and size the overlay. Nothing is signed or sent. */
 
 const choice = choiceFrom(new URLSearchParams(location.search));
@@ -43,7 +43,7 @@ const explorer = choice.token.explorer;
 sendExplorerLinksHome(document.body, explorer);
 
 let receipt: TransactionReceiptState = { kind: 'signing' };
-let view: TransactionReceiptView = 'toast';
+let view: TransactionReceiptView = 'expanded';
 let shownView: TransactionReceiptView | null = null;
 type CheckoutLayout = {
   dialogWidthCssPx: number;
@@ -97,7 +97,7 @@ const handle = mountConfirmationSurface({
   model: model(),
   onClosed: () => {},
 });
-// After a review handoff the checkout dialog's shell paints the card; this
+// After the review handoff the checkout dialog's shell paints the card; this
 // keeps the card inside the frame transparent so only one card shows.
 handle.element.setAttribute('data-seams-review-frame', '');
 // Content that changes height, such as opening the transaction details, asks
@@ -142,8 +142,14 @@ function settleReceiptMorph(): void {
   }
 }
 
+// The surface is capped at this frame's height, so a frame opened at the SDK's
+// provisional size would report that size. The card inside it has its own height.
+function card(): HTMLElement {
+  return handle.element.querySelector<HTMLElement>('.seams-confirmation-modal') ?? handle.element;
+}
+
 function cardHeight(): number {
-  return handle.element.getBoundingClientRect().height;
+  return card().getBoundingClientRect().height;
 }
 
 // The checkout page sends the widths it gives this frame, so the card lays out
@@ -242,4 +248,6 @@ handle.element.addEventListener('click', prepareDetailsExpansion, { capture: tru
 addSurfaceResizeBeginListener(handle.element, keepNestedDetailsLocal, { capture: true });
 
 // Report later height changes, such as opening the transaction details.
-new ResizeObserver(reportHeight).observe(handle.element);
+const heightObserver = new ResizeObserver(reportHeight);
+heightObserver.observe(handle.element);
+heightObserver.observe(card());

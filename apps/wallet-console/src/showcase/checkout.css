@@ -1,4 +1,4 @@
-/* A sample shop: its product card and its own checkout panel, in neutral
+/* A sample shop's own checkout card, shown in the SDK's modal, in neutral
    greys with the shop's green for actions and choices. checkout.tsx sets the
    green --checkout-accent* and --checkout-tint properties from the palette in
    checkoutAppearance.ts, which the wallet approval that follows also takes. */
@@ -13,42 +13,46 @@
   font-family: system-ui, sans-serif;
 }
 
-.checkout-product {
+/* The SDK's quieter card elevation (its sign-in card's) for the dialog shell,
+   which paints the card for both the checkout and the wallet approval. */
+dialog.seams-wallet-overlay-dialog.is-modal[data-transaction-review] {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 20px rgba(15, 23, 42, 0.1),
+    inset 0 0 0 1px var(--seams-colors-borderPrimary) !important;
+}
+
+/* The checkout card, portalled into the overlay's review slot. */
+dialog:not([open]) .checkout-review-slot {
+  inline-size: min(420px, calc(100vw - 32px));
+}
+
+/* The slot stops scroll chaining in the SDK; over the checkout the wheel must
+   reach the homepage, as in showcase.css. */
+.seams-transaction-review-slot.checkout-review-slot {
+  overscroll-behavior: auto;
+}
+
+.seams-transaction-review-content.checkout-review {
   display: grid;
   gap: 10px;
-  justify-self: center;
-  width: min(340px, 100%);
-  box-sizing: border-box;
-  padding: 14px 14px 16px;
-  border: 1px solid var(--checkout-line);
-  border-radius: 16px;
+  padding: 18px 20px 16px;
   background: #ffffff;
-  box-shadow: 0 12px 28px -18px rgba(15, 23, 42, 0.22);
 }
 
-/* The homepage frames this page at 440px on wide screens and narrower only on
-   phones, where the card fills the frame as the other demos do. */
-@media (max-width: 439px) {
-  .checkout-product {
-    width: 100%;
-  }
+.checkout-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-/* The photo of the chosen flavor, cropped around the cake. */
-.checkout-product-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 7 / 5;
-  object-fit: cover;
-  border-radius: 10px;
-  background: var(--checkout-tint);
-}
-
-.checkout-product-heading {
-  display: grid;
-  gap: 2px;
-  margin-top: 2px;
+.checkout-review h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
 }
 
 .checkout-eyebrow {
@@ -59,41 +63,14 @@
   text-transform: uppercase;
 }
 
-.checkout-product h1 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+.checkout-review small {
+  display: block;
+  color: var(--checkout-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-.checkout-price {
-  margin: -6px 0 0;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 12px;
-}
-
-/* Each color is a radio: the chosen one takes a green ring. */
-.checkout-swatches label {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 5px;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px var(--checkout-line);
-  cursor: pointer;
-  transition: box-shadow 150ms ease;
-}
-
-.checkout-swatches input,
 .checkout-choices input {
   position: absolute;
   inset: 0;
@@ -102,29 +79,12 @@
   cursor: pointer;
 }
 
-.checkout-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
-}
-
-.checkout-swatches label:hover {
-  box-shadow: inset 0 0 0 1px #d4d4d4;
-}
-
-.checkout-swatches label:has(input:checked) {
-  box-shadow: inset 0 0 0 1.5px var(--checkout-accent-strong);
-}
-
-.checkout-swatches label:has(input:focus-visible),
 .checkout-choices label:has(input:focus-visible) {
   outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 2px;
 }
 
-.checkout-buy,
-.checkout-review .checkout-confirm {
+.checkout-confirm {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -142,13 +102,11 @@
   transition: background-color 150ms ease;
 }
 
-.checkout-buy:hover:not(:disabled),
-.checkout-review .checkout-confirm:hover:not(:disabled) {
+.checkout-confirm:hover:not(:disabled) {
   background: var(--checkout-accent-hover);
 }
 
-.checkout-buy:disabled,
-.checkout-review .checkout-confirm:disabled {
+.checkout-confirm:disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -160,7 +118,7 @@
   text-align: center;
 }
 
-/* A light scrim over the sample shop instead of the SDK's 26% black. The
+/* A light scrim behind the shop's card instead of the SDK's 26% black. The
    SDK fades its scrim in with an animation whose end value outranks any plain
    background rule, so this replaces the animation itself. */
 dialog.seams-wallet-overlay-dialog::backdrop {
@@ -176,60 +134,10 @@ dialog.seams-wallet-overlay-dialog::backdrop {
   }
 }
 
-/* The SDK's quieter card elevation (its sign-in card's) for the dialog shell,
-   which paints the card for both the review and the wallet approval. */
-dialog.seams-wallet-overlay-dialog.is-modal[data-transaction-review] {
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 10px 20px rgba(15, 23, 42, 0.1),
-    inset 0 0 0 1px var(--seams-colors-borderPrimary) !important;
-}
-
-/* The review panel, portalled into the overlay's review slot. */
-dialog:not([open]) .checkout-review-slot {
-  inline-size: min(420px, calc(100vw - 32px));
-}
-
-/* The slot stops scroll chaining in the SDK; over the review the wheel must
-   reach the homepage, as in showcase.css. */
-.seams-transaction-review-slot.checkout-review-slot {
-  overscroll-behavior: auto;
-}
-
-.seams-transaction-review-content.checkout-review {
-  display: grid;
-  gap: 10px;
-  padding: 18px 20px 14px;
-  background: #ffffff;
-}
-
-.checkout-review-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.checkout-review h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 650;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
-}
-
-.checkout-review small {
-  display: block;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.4;
-}
-
 .checkout-items img {
   flex: none;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   object-fit: cover;
   background: var(--checkout-fill);
@@ -386,24 +294,7 @@ dialog:not([open]) .checkout-review-slot {
   font-weight: 650;
 }
 
-.checkout-actions {
-  display: grid;
-  gap: 2px;
-}
-
-.checkout-review .checkout-cancel {
-  min-height: 32px;
-  padding: 6px;
-  color: var(--checkout-muted);
-  background: transparent;
-  border: 0;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.checkout-confirm:focus-visible,
-.checkout-cancel:focus-visible {
+.checkout-confirm:focus-visible {
   outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 3px;
 }

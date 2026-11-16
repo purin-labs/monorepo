@@ -1,33 +1,23 @@
 import { locale, t } from '@/marketing/i18n/browser';
 import { paymentTokens, type SampleToken } from './sampleTokens';
-import plainImage from './products/baumkuchen-plain.webp';
 import plainThumb from './products/baumkuchen-plain-thumb.webp';
-import blackSesameImage from './products/baumkuchen-black-sesame.webp';
-import blackSesameThumb from './products/baumkuchen-black-sesame-thumb.webp';
-import matchaImage from './products/baumkuchen-matcha.webp';
 import matchaThumb from './products/baumkuchen-matcha-thumb.webp';
-import tastingSetThumb from './products/baumkuchen-set-thumb.webp';
 
-/* The sample shop that both checkout frames describe: a baumkuchen in the
-   chosen flavor, with a tasting set already in the cart. Prices are in US
+/* The sample shop's cart: a plain and a matcha baumkuchen. Prices are in US
    cents; the Japanese page shows yen at a fixed sample rate. Each page pays in
    its own stablecoin, so the amount to pay is the price in the shop's currency. */
 
-export type Flavor = 'plain' | 'black-sesame' | 'matcha';
 export type Delivery = 'standard' | 'express';
 
-export const flavors: readonly {
-  readonly id: Flavor;
-  readonly swatch: string;
-  readonly image: string;
+export const cart: readonly {
+  readonly id: string;
+  readonly flavor: string;
   readonly thumb: string;
+  readonly cents: number;
 }[] = [
-  { id: 'plain', swatch: '#e3c48d', image: plainImage, thumb: plainThumb },
-  { id: 'black-sesame', swatch: '#3a3836', image: blackSesameImage, thumb: blackSesameThumb },
-  { id: 'matcha', swatch: '#7c9a3a', image: matchaImage, thumb: matchaThumb },
+  { id: 'plain', flavor: t('flavorPlain'), thumb: plainThumb, cents: 1200 },
+  { id: 'matcha', flavor: t('flavorMatcha'), thumb: matchaThumb, cents: 1400 },
 ];
-
-export const tastingSet = { thumb: tastingSetThumb } as const;
 
 export const shop = {
   name: t('shopName'),
@@ -38,11 +28,7 @@ export const shop = {
 const yenPerDollar = 150;
 const shopCurrency = locale === 'ja' ? 'JPY' : 'USD';
 
-export const prices = {
-  baumkuchen: 1200,
-  tastingSet: 1800,
-  express: 600,
-} as const;
+export const expressCents = 600;
 
 // Sample wallet balances, shown with each way to pay.
 const balances: Readonly<Record<SampleToken['id'], number>> = {
@@ -51,27 +37,12 @@ const balances: Readonly<Record<SampleToken['id'], number>> = {
   'jpyc-ethereum': 25_000,
 };
 
-export function flavorLabel(flavor: Flavor): string {
-  switch (flavor) {
-    case 'plain':
-      return t('flavorPlain');
-    case 'black-sesame':
-      return t('flavorBlackSesame');
-    case 'matcha':
-      return t('flavorMatcha');
-  }
-}
-
-export function flavorDetails(flavor: Flavor): (typeof flavors)[number] {
-  return flavors.find((entry) => entry.id === flavor) ?? flavors[0];
-}
-
 export function subtotalCents(): number {
-  return prices.baumkuchen + prices.tastingSet;
+  return cart.reduce((sum, item) => sum + item.cents, 0);
 }
 
 export function totalCents(delivery: Delivery): number {
-  return subtotalCents() + (delivery === 'express' ? prices.express : 0);
+  return subtotalCents() + (delivery === 'express' ? expressCents : 0);
 }
 
 function inShopCurrency(cents: number): number {
