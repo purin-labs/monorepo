@@ -267,4 +267,63 @@ export const walletProductMessages = {
   walletGateUnavailable: { en: 'Wallet unavailable', ja: 'ウォレットを利用できません' },
   walletGateCheckAgain: { en: 'Check again', ja: '再確認' },
   walletGateLoadingProject: { en: 'Loading project...', ja: 'プロジェクトを読み込んでいます…' },
+
+  // Wallet sessions: the maximum budget of one unlock, for each environment
+  walletSessionsLead: {
+    en: 'One unlock of a wallet starts a Wallet Session. The session ends after a number of signatures or after a time. Set the maximum for each environment of {project}. An app can ask for less. It never gets more.',
+    ja: 'ウォレットを1回ロック解除すると、ウォレットセッションが始まります。セッションは、決まった数の署名のあと、または決まった時間のあとに終わります。{project} の環境ごとに上限を設定します。アプリはこれより少ない値を要求できます。これより多い値は得られません。',
+  },
+  walletSessionsLoading: { en: 'Loading environments...', ja: '環境を読み込んでいます…' },
+  walletSessionsLoadFailed: {
+    en: 'The environments of this project did not load.',
+    ja: 'このプロジェクトの環境を読み込めませんでした。',
+  },
+  walletSessionsNoEnvironments: {
+    en: 'This project has no environments.',
+    ja: 'このプロジェクトには環境がありません。',
+  },
+  walletSessionsReadOnly: {
+    en: 'Only an owner, or an admin who can manage projects, can change these limits.',
+    ja: 'これらの上限を変更できるのは、オーナー、またはプロジェクトを管理できる管理者だけです。',
+  },
+  walletSessionsUsesDefaults: {
+    en: 'Uses the defaults: {signatures} signatures and {days} days.',
+    ja: 'デフォルトを使用中: 署名 {signatures} 回、{days} 日。',
+  },
+  walletSessionsCurrent: {
+    en: 'Maximum: {signatures} signatures and {days} days.',
+    ja: '上限: 署名 {signatures} 回、{days} 日。',
+  },
+  walletSessionsSignaturesLabel: {
+    en: 'Signatures for each unlock (maximum)',
+    ja: 'ロック解除ごとの署名数（上限）',
+  },
+  walletSessionsSignaturesHint: {
+    en: 'A whole number from 1 to {max}. If you leave it empty, the default is {default}.',
+    ja: '1〜{max} の整数。空欄の場合、デフォルトの {default} を使用します。',
+  },
+  walletSessionsDaysLabel: {
+    en: 'Session length (maximum, days)',
+    ja: 'セッションの長さ（上限、日数）',
+  },
+  walletSessionsDaysHint: {
+    en: 'A whole number of days from 1 to {max}. If you leave it empty, the default is {default}.',
+    ja: '1〜{max} の整数（日数）。空欄の場合、デフォルトの {default} を使用します。',
+  },
+  walletSessionsSignaturesInvalid: {
+    en: 'Enter a whole number of signatures from 1 to {max}.',
+    ja: '署名数には 1〜{max} の整数を入力してください。',
+  },
+  walletSessionsDaysInvalid: {
+    en: 'Enter a whole number of days from 1 to {max}.',
+    ja: '日数には 1〜{max} の整数を入力してください。',
+  },
+  walletSessionsSave: { en: 'Save', ja: '保存' },
+  walletSessionsSaving: { en: 'Saving...', ja: '保存しています…' },
+  walletSessionsUseDefaults: { en: 'Use defaults', ja: 'デフォルトを使用' },
+  walletSessionsSaved: { en: 'Saved.', ja: '保存しました。' },
+  walletSessionsSaveFailed: {
+    en: 'The limits did not save.',
+    ja: '上限を保存できませんでした。',
+  },
 } as const satisfies Record<string, Entry>;

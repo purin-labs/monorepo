@@ -1,5 +1,8 @@
 import { ConsoleWalletEnvironmentError } from './errors';
-import { parseExternalAuthProvider } from '@seams/wallet-server/cloud-host';
+import {
+  parseExternalAuthProvider,
+  parseWalletSessionLimits,
+} from '@seams/wallet-server/cloud-host';
 import {
   readOptionalQueryStringField as readOptionalQueryString,
   readOptionalStringField as readOptionalString,
@@ -144,6 +147,36 @@ export function parseUpdateConsoleWalletEnvironmentRequest(
     ...(name ? { name } : {}),
     ...(runtimeVersion ? { signingRootVersion: runtimeVersion } : {}),
   };
+}
+
+/**
+ * The body of `PUT /console/environments/:id/wallet-session-limits`:
+ * `{ walletSessionLimits: { maxTtlMs, maxRemainingUses } | null }`. Null clears the setting.
+ */
+export function parseUpdateWalletSessionLimitsRequest(
+  body: unknown,
+): UpdateConsoleWalletEnvironmentRequest {
+  const obj = requireBodyObject(body, createParseError);
+  const keys = Object.keys(obj);
+  if (keys.length !== 1 || keys[0] !== 'walletSessionLimits') {
+    throw createParseError(
+      'invalid_body',
+      400,
+      'The body must have only the field walletSessionLimits',
+    );
+  }
+  if (obj.walletSessionLimits === null) return { walletSessionLimits: null };
+  try {
+    return {
+      walletSessionLimits: parseWalletSessionLimits(obj.walletSessionLimits, 'walletSessionLimits'),
+    };
+  } catch (error: unknown) {
+    throw createParseError(
+      'invalid_body',
+      400,
+      error instanceof Error ? error.message : 'Wallet Session limits are invalid',
+    );
+  }
 }
 
 function parseExternalAuthUpdate(config: Record<string, unknown>) {

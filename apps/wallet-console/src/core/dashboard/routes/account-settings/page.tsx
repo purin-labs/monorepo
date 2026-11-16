@@ -18,7 +18,11 @@ import {
   type DashboardTableActionMenuItem,
 } from '../../components/DashboardTable';
 import { DashboardInlineModal } from '../../components/DashboardInlineModal';
-import { markDashboardConsoleSignOut, useDashboardConsoleSession } from '../../consoleSession';
+import {
+  canDashboardManageProjects,
+  markDashboardConsoleSignOut,
+  useDashboardConsoleSession,
+} from '../../consoleSession';
 import { dashboardSignInLabel } from '../../utils/userIdentity';
 import { ProviderMark } from '@core/auth/ProviderMark';
 import { consoleSessionHref } from '../../consoleNavigation';
@@ -659,10 +663,7 @@ export function AccountSettingsPage(props: {
           </DashboardTableHeader>
           {organizations.length ? (
             organizations.map((organization) => {
-              const canRename =
-                organization.role === 'OWNER' ||
-                (organization.role === 'ADMIN' &&
-                  organization.adminPermissions.includes('projects.manage'));
+              const canRename = canDashboardManageProjects(organization);
               const menuItems: DashboardTableActionMenuItem[] = [
                 ...(canRename
                   ? [

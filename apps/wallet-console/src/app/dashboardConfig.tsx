@@ -10,6 +10,7 @@ import { AuditLogsPage, type AuditApprovalIntegration } from '@core/dashboard/ro
 import { GasSponsorshipPage } from '@wallet-product/gas-sponsorship/page';
 import { DerivationRootSecurityPage } from '@wallet-product/derivation-root/page';
 import { TenantDeploymentPage } from '@wallet-product/tenant-deployment/page';
+import { WalletSessionsPage } from '@wallet-product/wallet-sessions/page';
 import { PolicyEnginePage } from '@wallet-product/policy-engine/page';
 import {
   OpsCockpitPage,
@@ -45,6 +46,7 @@ import {
   ScaleIcon,
   ScrollTextIcon,
   ServerIcon,
+  TimerIcon,
   UserCogIcon,
   WalletCardsIcon,
   WebhookIcon,
@@ -65,6 +67,7 @@ export type WalletDashboardRoute =
   | '/dashboard/policy-engine'
   | '/dashboard/derivation-root'
   | '/dashboard/deployment-status'
+  | '/dashboard/wallet-sessions'
   | '/dashboard/gas-sponsorship';
 export type ComposedDashboardRoute = DashboardRoute | WalletDashboardRoute;
 export type ComposedSidebarGroupKey = SidebarGroupKey | 'operationsSecurity' | 'account';
@@ -202,6 +205,14 @@ function WalletTenantDeploymentPage(): React.JSX.Element {
   return (
     <WalletServiceGate>
       <TenantDeploymentPage />
+    </WalletServiceGate>
+  );
+}
+
+function WalletWalletSessionsPage(): React.JSX.Element {
+  return (
+    <WalletServiceGate>
+      <WalletSessionsPage />
     </WalletServiceGate>
   );
 }
@@ -363,6 +374,14 @@ const sidebarGroups: ComposedSidebarGroup[] = [
         path: '/dashboard/api-keys',
         icon: KeyRoundIcon,
         component: WalletApiKeyManagementPage,
+        context: 'wallet',
+      },
+      {
+        key: 'wallet-sessions',
+        label: t('navWalletSessions'),
+        path: '/dashboard/wallet-sessions',
+        icon: TimerIcon,
+        component: WalletWalletSessionsPage,
         context: 'wallet',
       },
       {

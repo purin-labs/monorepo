@@ -4,6 +4,8 @@ export const DEFAULT_WALLET_SIGNING_ROOT_VERSION = 'default';
 
 export interface ConsoleWalletEnvironment {
   readonly externalAuth: import('@seams/wallet-server/cloud-host').ExternalAuthConfiguration;
+  /** The tenant's maximum Wallet Session budget; null when the tenant set none. */
+  readonly walletSessionLimits: WalletSessionLimits | null;
   readonly id: string;
   readonly orgId: string;
   readonly projectId: string;
@@ -28,6 +30,8 @@ export interface CreateConsoleWalletEnvironmentRequest {
 }
 export interface UpdateConsoleWalletEnvironmentRequest {
   externalAuth?: import('@seams/wallet-server/cloud-host').ExternalAuthProvider;
+  /** Absent leaves the setting as it is; null clears it. */
+  walletSessionLimits?: WalletSessionLimits | null;
   name?: string;
   signingRootVersion?: string;
 }
@@ -52,6 +56,7 @@ export type SetConsoleWalletProjectAvailabilityResult =
   | { readonly kind: 'stale'; readonly environments?: never };
 export interface ConsoleWalletEnvironmentWire {
   externalAuth: ConsoleWalletEnvironment['externalAuth'];
+  walletSessionLimits: ConsoleWalletEnvironment['walletSessionLimits'];
   id: string;
   orgId: string;
   projectId: string;
@@ -67,6 +72,7 @@ export function serializeWalletEnvironment(
 ): ConsoleWalletEnvironmentWire {
   return {
     externalAuth: environment.externalAuth,
+    walletSessionLimits: environment.walletSessionLimits,
     id: environment.id,
     orgId: environment.orgId,
     projectId: environment.projectId,
@@ -79,3 +85,4 @@ export function serializeWalletEnvironment(
   };
 }
 import type { PlatformScopeV1 } from '@seams-internal/console-shared/accountPlatform';
+import type { WalletSessionLimits } from '@seams/wallet-server/cloud-host';

@@ -205,6 +205,7 @@ async function verifyExistingWalletRuntime(
     environments,
     native.id,
   );
+  const walletSessionLimits = await verifyWalletSessionLimits(worker, token, native.id);
   const event = {
     orgId: owner.orgId,
     environmentId: native.id,
@@ -257,6 +258,7 @@ async function verifyExistingWalletRuntime(
   return {
     automaticSetupReplayed: true,
     externalAuthentication,
+    walletSessionLimits,
     environments: 3,
     projectedWallets: 1,
     crossOriginReads,
@@ -359,6 +361,64 @@ async function verifyExternalAuthenticationTrust(
     otherEnvironmentsUnchanged: true,
     gatewayProjectionVerified: true,
   };
+}
+
+async function projectedEnvironment(
+  worker: Awaited<ReturnType<Miniflare['getWorker']>>,
+  environmentId: string,
+): Promise<Record<string, unknown>> {
+  const projected = await worker.fetch(
+    WALLET_CONSOLE_SERVICE_ORIGIN_V1 + WALLET_CONSOLE_OP_PATHS_V1.projectEnvironments,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: {
+          orgId: owner.orgId,
+          actorUserId: 'wallet-session-issuer',
+          roles: [],
+          projectId: walletProjectId,
+          environmentId,
+        },
+        filters: { status: 'ACTIVE' },
+      }),
+    },
+  );
+  expect(projected.status, await projected.clone().text()).toBe(200);
+  const environments = object(await projected.json()).environments;
+  if (!Array.isArray(environments)) throw new Error('Projected environments missing');
+  return object(environments.find((environment) => object(environment).id === environmentId));
+}
+
+async function verifyWalletSessionLimits(
+  worker: Awaited<ReturnType<Miniflare['getWorker']>>,
+  token: string,
+  environmentId: string,
+): Promise<unknown> {
+  const route = `https://account.acceptance.invalid/console/environments/${encodeURIComponent(environmentId)}/wallet-session-limits`;
+  const put = (body: unknown) =>
+    worker.fetch(route, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const limits = { maxTtlMs: 7 * 86_400_000, maxRemainingUses: 500 };
+  const set = await put({ walletSessionLimits: limits });
+  expect(set.status, await set.clone().text()).toBe(200);
+  expect(object(object(await set.json()).environment).walletSessionLimits).toEqual(limits);
+  expect((await projectedEnvironment(worker, environmentId)).walletSessionLimits).toEqual(limits);
+
+  const refused = await put({ walletSessionLimits: { ...limits, maxRemainingUses: 1_000_001 } });
+  expect(refused.status).toBe(400);
+  expect(await refused.json()).toMatchObject({ code: 'invalid_body' });
+
+  const cleared = await put({ walletSessionLimits: null });
+  expect(cleared.status, await cleared.clone().text()).toBe(200);
+  expect(object(object(await cleared.json()).environment).walletSessionLimits).toBeNull();
+  expect(await projectedEnvironment(worker, environmentId)).not.toHaveProperty(
+    'walletSessionLimits',
+  );
+  return { setStatus: set.status, refusedStatus: refused.status, clearedStatus: cleared.status };
 }
 
 async function verifyCrossOriginReads(
