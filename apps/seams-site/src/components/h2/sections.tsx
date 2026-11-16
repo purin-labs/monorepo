@@ -1610,7 +1610,7 @@ export function H2Duo(): React.JSX.Element {
           <a className="h2-duo__panel" href={satyrProps.href} onClick={satyrProps.onClick}>
             <h3 className="h2-duo__title">
               <InkTile sign="shop" />
-              Satyr
+              Seams Atelier
             </h3>
             <p className="h2-duo__panel-copy">{copy.duo.satyr}</p>
             <div className="h2-duo__visual">
@@ -1624,7 +1624,7 @@ export function H2Duo(): React.JSX.Element {
           <a className="h2-duo__panel" href={bakeryProps.href} onClick={bakeryProps.onClick}>
             <h3 className="h2-duo__title">
               <InkTile sign="croissant" />
-              Satyr Kitchen
+              Kitchen
             </h3>
             <p className="h2-duo__panel-copy">{copy.duo.kitchen}</p>
             <div className="h2-duo__visual">
@@ -1943,13 +1943,13 @@ function getFooterGroups(t: Translate): { heading: string; links: H2FooterLink[]
     {
       heading: t('products'),
       links: [
-        { label: 'Satyr', to: '/ecommerce' },
-        { label: 'Satyr Kitchen', to: '/ecommerce#kitchen' },
+        { label: 'Seams Atelier', to: '/ecommerce' },
+        { label: 'Kitchen', to: '/ecommerce#kitchen' },
         { label: 'Seams Wallet', to: '/wallet' },
       ],
     },
     {
-      heading: 'Satyr',
+      heading: 'Seams Atelier',
       links: [
         { label: t('theSuite'), to: '/ecommerce#suite' },
         { label: t('agentWorkflows'), to: '/ecommerce#workflows' },
