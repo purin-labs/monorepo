@@ -142,14 +142,12 @@ function settleReceiptMorph(): void {
   }
 }
 
-// The surface is capped at this frame's height, so a frame opened at the SDK's
-// provisional size would report that size. The card inside it has its own height.
-function card(): HTMLElement {
-  return handle.element.querySelector<HTMLElement>('.seams-confirmation-modal') ?? handle.element;
-}
-
+// The resize choreographer pins this host to the height a change is heading
+// for, so the checkout page hears one height per change and eases once. The
+// card inside grows frame by frame into the room the frame gives it; measuring
+// the card instead would report every step and make the dialog chase it.
 function cardHeight(): number {
-  return card().getBoundingClientRect().height;
+  return handle.element.getBoundingClientRect().height;
 }
 
 // The checkout page sends the widths it gives this frame, so the card lays out
@@ -248,6 +246,4 @@ handle.element.addEventListener('click', prepareDetailsExpansion, { capture: tru
 addSurfaceResizeBeginListener(handle.element, keepNestedDetailsLocal, { capture: true });
 
 // Report later height changes, such as opening the transaction details.
-const heightObserver = new ResizeObserver(reportHeight);
-heightObserver.observe(handle.element);
-heightObserver.observe(card());
+new ResizeObserver(reportHeight).observe(handle.element);
