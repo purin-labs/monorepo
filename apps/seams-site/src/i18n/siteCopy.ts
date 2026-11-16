@@ -1,8 +1,9 @@
 import type { Locale } from './locale';
 
-/* The copy of the home page, the Satyr page and the 404 page. English is the
-   source; Japanese must fill the same shape, so a missing string fails the
-   type check. Product names (Satyr, Satyr Kitchen, Seams Wallet, Slack) and
+/* The copy of the home page, the Seams Atelier page and the 404 page. English
+   is the source; Japanese must fill the same shape, so a missing string fails
+   the type check. Product and area names (Seams Atelier, Sous Chef, Kitchen,
+   Seams Wallet, Slack) and
    Portal screenshots stay in English. A `rest` string follows a bold `lead`
    with no space added, so English starts it with a space and Japanese does not. */
 
@@ -13,17 +14,17 @@ const Z = '\u200b';
 const en = {
   common: {
     talkToUs: 'Talk to us',
-    exploreSatyr: 'Explore Satyr',
-    exploreKitchen: 'Explore Satyr Kitchen',
+    exploreSatyr: 'Explore Seams Atelier',
+    exploreKitchen: 'Explore the Kitchen',
     exploreWallet: 'Explore Seams Wallet',
     readDocs: 'Read the docs',
     products: 'Products',
     productViews: 'Product views',
   },
   homeHero: {
-    title: 'Ecommerce on autopilot.',
-    titleMuted: 'For cafés and pâtisseries.',
-    sub: 'Satyr agents run your shop, inbox and bake plan. Changes that matter wait for your approval.',
+    title: 'Seams Atelier:',
+    titleMuted: 'the operating system for modern bakeries & cafés.',
+    sub: 'Sous Chef agents run your shop, inbox and bake plan. Changes that matter wait for your approval.',
   },
   tour: {
     label: 'Product tour',
@@ -31,43 +32,43 @@ const en = {
     views: 'Product views',
     explore: 'Explore {name}',
     features: '{name} features',
-    tabs: { satyr: 'Satyr Shop', kitchen: 'Satyr Kitchen' },
+    tabs: { satyr: 'Seams Atelier', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: 'Replies wait for you',
         body: 'An agent drafts each customer reply and shows its sources. Nothing is sent until you approve it.',
-        alt: 'The Satyr Inbox with a reply that an agent drafted for a customer',
+        alt: 'The Inbox in Atelier with a reply that an agent drafted for a customer',
       },
       activity: {
         title: 'Every Case of the day',
         body: 'See what each agent works on, and which Cases wait for a person.',
-        alt: 'The Activity timeline of the Satyr Portal with three Cases that wait for a person',
+        alt: 'The Activity timeline in Atelier with three Cases that wait for a person',
       },
       orders: {
         title: 'Orders that need you',
         body: 'Agents check each order against your rules. When one fails, you see why, with an email ready to approve.',
-        alt: 'The Orders page of the Satyr Portal with two orders that need a person',
+        alt: 'The Orders page in Atelier with two orders that need a person',
       },
       plan: {
         title: 'Orders become a bake plan',
-        body: 'Satyr turns the day’s orders into batches, steps and times for the kitchen.',
-        alt: 'Satyr Kitchen: the 3D bakery above the production timeline',
+        body: 'Atelier turns the day’s orders into batches, steps and times for the kitchen.',
+        alt: 'Kitchen: the 3D bakery above the production timeline',
       },
       batch: {
         title: 'Each batch, step by step',
         body: 'Open a batch to see its current step, its baker and when it will finish.',
-        alt: 'Satyr Kitchen: the details of one batch of 48 financiers',
+        alt: 'Kitchen: the details of one batch of 48 financiers',
       },
       floor: {
         title: 'Rehearse the shift',
         body: 'Play the morning in the floor plan and the 3D kitchen before the shift starts.',
-        alt: 'Satyr Kitchen: the floor plan and the 3D view of the bakery',
+        alt: 'Kitchen: the floor plan and the 3D view of the bakery',
       },
     },
   },
   duo: {
     title: 'From the shop to the oven',
-    copy: 'Satyr runs the sales side of the business, and Satyr Kitchen plans what you bake. Both work from the same orders.',
+    copy: 'Atelier runs the sales side of the business, and its Kitchen plans what you bake. Both work from the same orders.',
     satyr:
       'Agents run the online shop, menus, orders, payments and the inbox. Changes wait for your approval in Slack or in the Portal.',
     kitchen:
@@ -79,39 +80,39 @@ const en = {
     fieldLabel: 'A field of wheat with a connected tool over some of the stalks: {tools}',
   },
   pillars: {
-    title: 'One suite for the whole business',
+    title: 'One operating system for the whole business',
     sub: 'The online shop, the inbox and the kitchen work from the same orders.',
-    tablist: 'Suite areas',
+    tablist: 'Atelier areas',
     items: {
       shop: {
         label: 'Shop and menus',
         lead: 'Menus, products and the storefront.',
         rest: ' Agents draft menus and product descriptions with you, and publish a menu when you approve it.',
-        alt: 'The Checkout page of the Satyr Portal: how customers buy from the café’s storefront',
+        alt: 'The Checkout page in Atelier: how customers buy from the café’s storefront',
       },
       orders: {
         label: 'Orders and payments',
         lead: 'Orders, payments, refunds and gift cards.',
         rest: ' Card payments go to your own Stripe or Square account. Ask in Slack for a brief on failed payments and late orders.',
-        alt: 'The Orders page of the Satyr Portal: two orders that a shop rule holds, each with one action, above the orders that are on track',
+        alt: 'The Orders page in Atelier: two orders that a shop rule holds, each with one action, above the orders that are on track',
       },
       inbox: {
         label: 'Inbox',
         lead: 'Customer and supplier mail, answered.',
         rest: ' The inbox agent drafts each reply with the sources it used, and links each sender to the right customer or supplier.',
-        alt: 'The Satyr Inbox: a reply that an agent drafted waits for approval',
+        alt: 'The Inbox in Atelier: a reply that an agent drafted waits for approval',
       },
       production: {
         label: 'Production',
-        lead: 'Satyr Kitchen turns orders into a bake plan.',
+        lead: 'The Kitchen turns orders into a bake plan.',
         rest: ' One production run shows as a workflow, a timeline of ovens and staff, and a 3D view of the bakery.',
-        alt: 'Satyr Kitchen: a 3D view of the bakery above the timeline of three batches',
+        alt: 'Kitchen: a 3D view of the bakery above the timeline of three batches',
       },
       vault: {
         label: 'Vault',
         lead: 'Logins and keys that agents use but never see.',
-        rest: ' Keep them in the Satyr Vault or in your own 1Password.',
-        alt: 'The Vault page of the Satyr Portal: logins and API keys that agents use',
+        rest: ' Keep them in Seams Vault or in your own 1Password.',
+        alt: 'The Vault page in Atelier: logins and API keys that agents use',
       },
     },
   },
@@ -150,7 +151,7 @@ const en = {
       },
       money: {
         title: 'Money moves only from the Portal',
-        copy: 'A chat card cannot approve a refund or a payment. The approval happens in the Portal, and Satyr keeps the provider’s confirmation.',
+        copy: 'A chat card cannot approve a refund or a payment. The approval happens in the Portal, and Atelier keeps the provider’s confirmation.',
       },
       roles: {
         title: 'Roles',
@@ -188,7 +189,7 @@ const en = {
     },
     flow: {
       label: 'A gift box order flowing through checks into the bake plan and a confirmation email',
-      tag: 'Satyr · gift box order',
+      tag: 'Atelier · gift box order',
       newOrder: 'New order',
       giftBoxes: 'Gift boxes ×12',
       giftNote: '¥64,800 · pickup Sat 10:30',
@@ -201,7 +202,7 @@ const en = {
       ownerApproval: 'Owner approval',
       actions: 'Actions',
       planned: 'Added to the bake plan',
-      plannedNote: 'Satyr Kitchen · 2 trays',
+      plannedNote: 'Kitchen · 2 trays',
       plannedChip: 'Planned',
       email: 'Confirmation email',
       sent: 'Sent',
@@ -210,8 +211,8 @@ const en = {
     },
   },
   production: {
-    title: 'Satyr Kitchen: from orders to the oven',
-    sub: 'Satyr Kitchen is the production workspace inside Satyr. It turns orders and preorders into production runs, and it shows one run in three views.',
+    title: 'Kitchen: from orders to the oven',
+    sub: 'Kitchen is the production workspace inside Atelier. It turns orders and preorders into production runs, and it shows one run in three views.',
     items: {
       workflow: {
         title: 'Workflow canvas',
@@ -238,11 +239,11 @@ const en = {
     home: {
       title: 'Put agents to work in your café',
       sub: 'We connect the shop, Slack and your mailbox with you, and we set the first approval rules together.',
-      secondary: 'Explore Satyr',
+      secondary: 'Explore Seams Atelier',
     },
     ecommerce: {
-      title: 'See Satyr run your shop',
-      sub: 'Tell us what you sell and where. We show you Satyr on your own shop.',
+      title: 'See Atelier run your shop',
+      sub: 'Tell us what you sell and where. We show you Atelier on your own shop.',
       secondary: 'See the integrations',
     },
   },
@@ -256,9 +257,9 @@ const en = {
     },
     items: {
       whatIsSatyr: {
-        q: 'What is Satyr?',
-        a: 'Satyr is an ecommerce suite for cafés and pâtisseries. Agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
-        more: 'Explore Satyr',
+        q: 'What is Seams Atelier?',
+        a: 'Seams Atelier is the operating system for modern bakeries and cafés. Sous Chef agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
+        more: 'Explore Seams Atelier',
       },
       agents: {
         q: 'What can the agents do?',
@@ -272,17 +273,17 @@ const en = {
       },
       secrets: {
         q: 'Do agents see our passwords and keys?',
-        a: 'No. Logins and API keys stay in the Vault: the Satyr Vault or your own 1Password. Agents use them without seeing them, and no key enters a prompt or a transcript.',
+        a: 'No. Logins and API keys stay in the Vault: Seams Vault or your own 1Password. Agents use them without seeing them, and no key enters a prompt or a transcript.',
         more: '',
       },
       tools: {
-        q: 'Which tools does Satyr connect to?',
+        q: 'Which tools does Atelier connect to?',
         a: 'Slack, Gmail, Shopify, Square, Stripe, Google Drive, Dropbox, Notion and Airtable. Card payments go to your own Stripe or Square account.',
         more: 'Integrations',
       },
       models: {
-        q: 'Which AI models does Satyr use?',
-        a: 'You choose. Sign in with your ChatGPT account, add your own OpenAI API key, or use the models that Satyr provides.',
+        q: 'Which AI models does Atelier use?',
+        a: 'You choose. Sign in with your ChatGPT account, add your own OpenAI API key, or use the models that Seams provides.',
         more: '',
       },
       start: {
@@ -294,19 +295,19 @@ const en = {
   },
   ecommerceHero: {
     title: 'Agents that run your café’s shop, inside your rules',
-    sub: 'Satyr connects the online shop, menus, payments, the inbox and the kitchen plan. Agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
-    secondary: 'See the suite',
+    sub: 'Seams Atelier connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
+    secondary: 'See inside Atelier',
     scenes: 'Product scenes',
     previous: 'Previous product scene',
     next: 'Next product scene',
     views: {
       portal: {
         label: 'Portal',
-        alt: 'The Agents page of the Satyr Portal: the café’s merchant agent has a suggested change for review',
+        alt: 'The Agents page in Atelier: the café’s merchant agent has a suggested change for review',
       },
       activity: {
         label: 'Activity',
-        alt: 'The Activity timeline of the Satyr Portal: three Cases wait for a person, and a card shows the steps of a refund request',
+        alt: 'The Activity timeline in Atelier: three Cases wait for a person, and a card shows the steps of a refund request',
       },
       inbox: {
         label: 'Inbox',
@@ -315,12 +316,12 @@ const en = {
       slack: { label: 'Slack', alt: '' },
       kitchen: {
         label: 'Kitchen',
-        alt: 'Satyr Kitchen: a 3D view of the bakery with the details of one batch of financiers',
+        alt: 'Kitchen: a 3D view of the bakery with the details of one batch of financiers',
       },
     },
   },
   slackWindow: {
-    label: 'Satyr asks for a menu approval in a Slack channel',
+    label: 'Sous Chef asks for a menu approval in a Slack channel',
     request:
       'Approval needed: the shop agent wants to publish the autumn menu, with 14 items and 3 new prices.',
     rule: 'An owner or admin can approve it on this card. Nothing goes live before that.',
@@ -343,17 +344,17 @@ export type SiteCopy = typeof en;
 const ja: SiteCopy = {
   common: {
     talkToUs: 'ご相談はこちら',
-    exploreSatyr: 'Satyrを見る',
-    exploreKitchen: 'Satyr Kitchenを見る',
+    exploreSatyr: 'Seams Atelierを見る',
+    exploreKitchen: 'Kitchenを見る',
     exploreWallet: 'Seams Walletを見る',
     readDocs: 'ドキュメントを読む',
     products: '製品',
     productViews: '製品の画面',
   },
   homeHero: {
-    title: `ECを、${Z}自動操縦で。`,
-    titleMuted: `カフェと${Z}パティスリーの${Z}ために。`,
-    sub: 'Satyrのエージェントが、ショップ、受信箱、生産計画を運営します。重要な変更は、あなたの承認を待ちます。',
+    title: 'Seams Atelier：',
+    titleMuted: `モダンな${Z}ベーカリーと${Z}カフェの${Z}ための${Z}OS。`,
+    sub: 'Sous Chefエージェントが、ショップ、受信箱、生産計画を運営します。重要な変更は、あなたの承認を待ちます。',
   },
   tour: {
     label: '製品ツアー',
@@ -361,43 +362,43 @@ const ja: SiteCopy = {
     views: '製品の画面',
     explore: '{name}を見る',
     features: '{name}の機能',
-    tabs: { satyr: 'Satyr Shop', kitchen: 'Satyr Kitchen' },
+    tabs: { satyr: 'Seams Atelier', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: '返信はあなたの承認待ち',
         body: 'エージェントがお客様への返信を下書きし、根拠を示します。あなたが承認するまで送信しません。',
-        alt: 'エージェントがお客様への返信を下書きしたSatyrの受信箱',
+        alt: 'エージェントがお客様への返信を下書きしたAtelierの受信箱',
       },
       activity: {
         title: '一日のすべてのケース',
         body: '各エージェントの作業と、人の対応を待つケースがわかります。',
-        alt: '人の対応を待つ3件のケースを表示したSatyrポータルのアクティビティ',
+        alt: '人の対応を待つ3件のケースを表示したAtelierのアクティビティ',
       },
       orders: {
         title: '対応が必要な注文',
         body: 'エージェントが各注文をあなたのルールで確認します。問題があれば理由と、承認するだけのメールを表示します。',
-        alt: '人の対応が必要な2件の注文を表示したSatyrポータルの注文ページ',
+        alt: '人の対応が必要な2件の注文を表示したAtelierの注文ページ',
       },
       plan: {
         title: '注文から生産計画へ',
-        body: 'Satyrがその日の注文を、キッチンのためのバッチ、工程、時刻に変えます。',
-        alt: 'Satyr Kitchen：生産タイムラインの上に3Dのベーカリー',
+        body: 'Atelierがその日の注文を、キッチンのためのバッチ、工程、時刻に変えます。',
+        alt: 'Kitchen：生産タイムラインの上に3Dのベーカリー',
       },
       batch: {
         title: 'バッチごとに、工程ごとに',
         body: 'バッチを開くと、現在の工程、担当のベイカー、完了時刻がわかります。',
-        alt: 'Satyr Kitchen：フィナンシェ48個のバッチの詳細',
+        alt: 'Kitchen：フィナンシェ48個のバッチの詳細',
       },
       floor: {
         title: 'シフトを事前に確認',
         body: 'シフトの前に、朝の流れをフロアプランと3Dのキッチンで再生します。',
-        alt: 'Satyr Kitchen：ベーカリーのフロアプランと3Dビュー',
+        alt: 'Kitchen：ベーカリーのフロアプランと3Dビュー',
       },
     },
   },
   duo: {
     title: `ショップから${Z}オーブンまで`,
-    copy: 'Satyrが販売を担い、Satyr Kitchenが焼くものを計画します。どちらも同じ注文をもとに動きます。',
+    copy: 'Atelierが販売を担い、その中のKitchenが焼くものを計画します。どちらも同じ注文をもとに動きます。',
     satyr:
       'エージェントがオンラインショップ、メニュー、注文、決済、受信箱を運営します。変更はSlackかポータルで、あなたの承認を待ちます。',
     kitchen:
@@ -409,39 +410,39 @@ const ja: SiteCopy = {
     fieldLabel: '麦畑の一部の穂に、連携するツールのロゴ：{tools}',
   },
   pillars: {
-    title: `ビジネス全体を、${Z}ひとつの${Z}スイートで`,
+    title: `ビジネス全体を、${Z}ひとつの${Z}OSで`,
     sub: 'オンラインショップ、受信箱、キッチンが、同じ注文をもとに動きます。',
-    tablist: 'スイートの領域',
+    tablist: 'Atelierの領域',
     items: {
       shop: {
         label: 'ショップとメニュー',
         lead: 'メニュー、商品、ストアフロント。',
         rest: 'エージェントがあなたと一緒にメニューと商品説明を下書きし、承認するとメニューを公開します。',
-        alt: 'Satyrポータルのチェックアウトページ：お客様がカフェのストアフロントで購入する流れ',
+        alt: 'Atelierのチェックアウトページ：お客様がカフェのストアフロントで購入する流れ',
       },
       orders: {
         label: '注文と決済',
         lead: '注文、決済、返金、ギフトカード。',
         rest: 'カード決済はあなた自身のStripeまたはSquareのアカウントに入ります。決済の失敗や注文の遅れは、Slackで報告を依頼できます。',
-        alt: 'Satyrポータルの注文ページ：ショップのルールで保留中の2件の注文と、順調な注文',
+        alt: 'Atelierの注文ページ：ショップのルールで保留中の2件の注文と、順調な注文',
       },
       inbox: {
         label: '受信箱',
         lead: 'お客様と仕入先のメールに対応。',
         rest: '受信箱のエージェントが、使った根拠とともに返信を下書きし、送信者を該当するお客様や仕入先に結びつけます。',
-        alt: 'Satyrの受信箱：エージェントが下書きした返信が承認を待っています',
+        alt: 'Atelierの受信箱：エージェントが下書きした返信が承認を待っています',
       },
       production: {
         label: '生産',
-        lead: 'Satyr Kitchenが注文を生産計画に変えます。',
+        lead: 'Kitchenが注文を生産計画に変えます。',
         rest: 'ひとつの生産ランを、ワークフロー、オーブンとスタッフのタイムライン、ベーカリーの3Dビューで表示します。',
-        alt: 'Satyr Kitchen：3バッチのタイムラインの上に、ベーカリーの3Dビュー',
+        alt: 'Kitchen：3バッチのタイムラインの上に、ベーカリーの3Dビュー',
       },
       vault: {
         label: 'Vault',
         lead: 'エージェントが使い、中身は見ないログイン情報とキー。',
-        rest: 'Satyr Vault、またはあなたの1Passwordに保管します。',
-        alt: 'SatyrポータルのVaultページ：エージェントが使うログイン情報とAPIキー',
+        rest: 'Seams Vault、またはあなたの1Passwordに保管します。',
+        alt: 'AtelierのVaultページ：エージェントが使うログイン情報とAPIキー',
       },
     },
   },
@@ -480,7 +481,7 @@ const ja: SiteCopy = {
       },
       money: {
         title: 'お金はポータルからだけ動く',
-        copy: 'チャットのカードでは返金や支払いを承認できません。承認はポータルで行い、Satyrはプロバイダーの確認結果を保存します。',
+        copy: 'チャットのカードでは返金や支払いを承認できません。承認はポータルで行い、Atelierはプロバイダーの確認結果を保存します。',
       },
       roles: {
         title: 'ロール',
@@ -518,7 +519,7 @@ const ja: SiteCopy = {
     },
     flow: {
       label: 'ギフトボックスの注文が確認を経て、生産計画と確認メールに進む流れ',
-      tag: 'Satyr · ギフトボックスの注文',
+      tag: 'Atelier · ギフトボックスの注文',
       newOrder: '新しい注文',
       giftBoxes: 'ギフトボックス ×12',
       giftNote: '¥64,800 · 土曜 10:30 受け取り',
@@ -531,7 +532,7 @@ const ja: SiteCopy = {
       ownerApproval: 'オーナーの承認',
       actions: '操作',
       planned: '生産計画に追加',
-      plannedNote: 'Satyr Kitchen · 2トレイ',
+      plannedNote: 'Kitchen · 2トレイ',
       plannedChip: '計画済み',
       email: '確認メール',
       sent: '送信済み',
@@ -540,8 +541,8 @@ const ja: SiteCopy = {
     },
   },
   production: {
-    title: `Satyr Kitchen：${Z}注文から${Z}オーブンまで`,
-    sub: 'Satyr Kitchenは、Satyrの中の生産ワークスペースです。注文と予約から生産ランをつくり、ひとつのランを3つのビューで表示します。',
+    title: `Kitchen：${Z}注文から${Z}オーブンまで`,
+    sub: 'Kitchenは、Atelierの中の生産ワークスペースです。注文と予約から生産ランをつくり、ひとつのランを3つのビューで表示します。',
     items: {
       workflow: {
         title: 'ワークフローキャンバス',
@@ -568,11 +569,11 @@ const ja: SiteCopy = {
     home: {
       title: `あなたの${Z}カフェで、${Z}エージェントを${Z}働かせよう`,
       sub: 'ショップ、Slack、メールボックスの接続をご一緒に行い、最初の承認ルールも一緒に設定します。',
-      secondary: 'Satyrを見る',
+      secondary: 'Seams Atelierを見る',
     },
     ecommerce: {
-      title: `Satyrが${Z}あなたの${Z}ショップを${Z}運営する${Z}様子を見る`,
-      sub: '何を、どこで販売しているかをお聞かせください。あなたのショップでSatyrをご紹介します。',
+      title: `Atelierが${Z}あなたの${Z}ショップを${Z}運営する${Z}様子を見る`,
+      sub: '何を、どこで販売しているかをお聞かせください。あなたのショップでAtelierをご紹介します。',
       secondary: '連携を見る',
     },
   },
@@ -586,9 +587,9 @@ const ja: SiteCopy = {
     },
     items: {
       whatIsSatyr: {
-        q: 'Satyrとは？',
-        a: 'Satyrは、カフェとパティスリーのためのECスイートです。エージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
-        more: 'Satyrを見る',
+        q: 'Seams Atelierとは？',
+        a: 'Seams Atelierは、モダンなベーカリーとカフェのためのOSです。Sous Chefエージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
+        more: 'Seams Atelierを見る',
       },
       agents: {
         q: 'エージェントは何ができますか？',
@@ -602,17 +603,17 @@ const ja: SiteCopy = {
       },
       secrets: {
         q: 'エージェントはパスワードやキーを見ますか？',
-        a: 'いいえ。ログイン情報とAPIキーはVault（Satyr Vault、またはあなたの1Password）に保管します。エージェントは中身を見ずに使い、キーがプロンプトや会話記録に入ることはありません。',
+        a: 'いいえ。ログイン情報とAPIキーはVault（Seams Vault、またはあなたの1Password）に保管します。エージェントは中身を見ずに使い、キーがプロンプトや会話記録に入ることはありません。',
         more: '',
       },
       tools: {
-        q: 'Satyrはどのツールと連携しますか？',
+        q: 'Atelierはどのツールと連携しますか？',
         a: 'Slack、Gmail、Shopify、Square、Stripe、Google Drive、Dropbox、Notion、Airtableと連携します。カード決済は、あなた自身のStripeまたはSquareのアカウントに入ります。',
         more: '連携',
       },
       models: {
-        q: 'SatyrはどのAIモデルを使いますか？',
-        a: 'お選びいただけます。ChatGPTアカウントでサインインする、ご自身のOpenAI APIキーを追加する、またはSatyrが提供するモデルを使う、のいずれかです。',
+        q: 'AtelierはどのAIモデルを使いますか？',
+        a: 'お選びいただけます。ChatGPTアカウントでサインインする、ご自身のOpenAI APIキーを追加する、またはSeamsが提供するモデルを使う、のいずれかです。',
         more: '',
       },
       start: {
@@ -624,19 +625,19 @@ const ja: SiteCopy = {
   },
   ecommerceHero: {
     title: `あなたの${Z}ルールの中で、${Z}カフェの${Z}ショップを${Z}運営する${Z}エージェント`,
-    sub: 'Satyrは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。エージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
-    secondary: 'スイートを見る',
+    sub: 'Seams Atelierは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
+    secondary: 'Atelierの中を見る',
     scenes: '製品のシーン',
     previous: '前のシーン',
     next: '次のシーン',
     views: {
       portal: {
         label: 'ポータル',
-        alt: 'Satyrポータルのエージェントページ：カフェのマーチャントエージェントが確認用の変更案を出しています',
+        alt: 'Atelierのエージェントページ：カフェのマーチャントエージェントが確認用の変更案を出しています',
       },
       activity: {
         label: 'アクティビティ',
-        alt: 'Satyrポータルのアクティビティ：3件のケースが人の対応を待ち、カードに返金依頼の工程を表示しています',
+        alt: 'Atelierのアクティビティ：3件のケースが人の対応を待ち、カードに返金依頼の工程を表示しています',
       },
       inbox: {
         label: '受信箱',
@@ -645,12 +646,12 @@ const ja: SiteCopy = {
       slack: { label: 'Slack', alt: '' },
       kitchen: {
         label: 'キッチン',
-        alt: 'Satyr Kitchen：ベーカリーの3Dビューと、フィナンシェのバッチの詳細',
+        alt: 'Kitchen：ベーカリーの3Dビューと、フィナンシェのバッチの詳細',
       },
     },
   },
   slackWindow: {
-    label: 'SatyrがSlackチャンネルでメニューの承認を依頼しています',
+    label: 'Sous ChefがSlackチャンネルでメニューの承認を依頼しています',
     request:
       '承認が必要です：ショップのエージェントが、14品目と3つの新価格を含む秋のメニューを公開しようとしています。',
     rule: 'オーナーまたは管理者がこのカードで承認できます。承認されるまで公開されません。',

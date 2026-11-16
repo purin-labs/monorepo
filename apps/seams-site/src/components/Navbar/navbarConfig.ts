@@ -20,7 +20,7 @@ const productLinks = {
   wallet: { landing: '/wallet', docs: '/docs/' },
 } as const;
 
-const SATYR_KITCHEN = 'Satyr Kitchen';
+const SATYR_KITCHEN = 'Kitchen';
 const SEAMS_WALLET = 'Seams Wallet';
 
 /* The 'documentation' pane id historically maps to the "Products" trigger and

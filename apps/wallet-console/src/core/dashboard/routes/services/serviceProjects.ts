@@ -14,7 +14,7 @@ export function platformServiceLabel(serviceId: PlatformServiceIdV1): string {
     case 'wallet':
       return 'Wallet';
     case 'satyr':
-      return 'Satyr';
+      return 'Seams Atelier';
     default:
       return assertNever(serviceId);
   }

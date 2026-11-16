@@ -451,7 +451,7 @@ export async function handleConsoleBillingRoutes(
         await emitConsoleAuditEvent(ctx, auth.claims, {
           category: 'BILLING',
           action: 'billing.credit_limit.self_serve',
-          summary: 'Turned on Satyr paid use with the self-serve postpaid credit limit',
+          summary: 'Turned on Seams Atelier paid use with the self-serve postpaid credit limit',
           metadata: {
             orgId: billingCtx.orgId,
             creditLimitMinor: SATYR_SELF_SERVE_CREDIT_LIMIT.creditLimitMinor,
