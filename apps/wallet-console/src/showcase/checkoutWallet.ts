@@ -9,8 +9,6 @@ import {
 import { attachConfirmSurfaceResizeChoreographer } from '@wallet-ui/core/signingEngine/uiConfirm/ui/confirm-surface-resize';
 import { addSurfaceResizeBeginListener } from '@wallet-ui/core/signingEngine/uiConfirm/ui/surface-resize-events';
 import { buildDisplayTreeFromModel } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-display/tree';
-import { enrichDisplayModelWithAbi } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-display/abi/enrichDisplayModelWithAbi';
-import { buildEvmDisplayModel } from '@wallet-ui/core/signingEngine/chains/evm/display/evmTx';
 import type {
   TransactionReceiptState,
   TransactionReceiptView,
@@ -19,65 +17,29 @@ import { checkoutAppearance } from './checkoutAppearance';
 import { showcasePreset } from './showcaseTheme';
 import { playReceiptLifecycle } from './receiptLifecycle';
 import { sendExplorerLinksHome } from './sampleExplorer';
-import { market, sideFrom } from './checkoutMarket';
+import { choiceFrom, shop, tokenAmount, totalCents } from './checkoutCart';
+import { tokenTransferModel } from './sampleTokens';
 
 /* The wallet approval that the checkout demo hands off to: the SDK's confirmer
    on sample data, inside the overlay's frame. Confirming plays the receipt as
    a toast. The frame reports its card height and receipt view so the checkout
    page can place and size the overlay. Nothing is signed or sent. */
 
-const side = sideFrom(new URLSearchParams(location.search).get('side'));
+const choice = choiceFrom(new URLSearchParams(location.search));
 
-// The purchase is a call to the market contract. The wallet builds and decodes
-// it the way it does any EIP-1559 request, so the details show the
-// transaction's own fields.
-const buyPositions = {
-  type: 'function',
-  name: 'buyPositions',
-  stateMutability: 'nonpayable',
-  inputs: [
-    { name: 'outcome', type: 'uint8' },
-    { name: 'amount', type: 'uint256' },
-    { name: 'minPositions', type: 'uint256' },
-  ],
-  outputs: [],
-};
-const buyPositionsSelector = '0xae8a354b';
+// The shop sponsors the network fee, so the shopper pays only the total. The
+// shop's panel already showed what pays, so the approval leaves out the
+// account card and fits the homepage frame.
+const payment = tokenTransferModel({
+  token: choice.token,
+  amount: tokenAmount(choice.token, totalCents(choice.delivery)),
+  signer: null,
+  recipient: shop.wallet,
+  label: t('payShop').replaceAll('{shop}', shop.name),
+  sponsored: true,
+});
 
-function abiWord(value: bigint): string {
-  return value.toString(16).padStart(64, '0');
-}
-
-function baseUnits(amount: string): bigint {
-  const [whole, fraction = ''] = amount.split('.');
-  return BigInt(whole + fraction.padEnd(18, '0'));
-}
-
-const purchase = enrichDisplayModelWithAbi(
-  buildEvmDisplayModel({
-    signerAccount: `0x4201${'0'.repeat(32)}891c`,
-    request: {
-      chain: 'evm',
-      kind: 'eip1559',
-      senderSignatureAlgorithm: 'secp256k1',
-      tx: {
-        chainId: 84532,
-        nonce: 7n,
-        maxPriorityFeePerGas: 1_000_000n,
-        maxFeePerGas: 1_200_000n,
-        gasLimit: 180_000n,
-        to: `0x5A1E${'0'.repeat(32)}0542`,
-        value: 0n,
-        data: `${buyPositionsSelector}${abiWord(side === 'Yes' ? 1n : 0n)}${abiWord(
-          baseUnits(market.pay),
-        )}${abiWord(baseUnits(market.outcomes[side].minimumPositions))}`,
-        abi: [buyPositions],
-      },
-    },
-  }),
-);
-
-const explorer = 'https://sepolia.basescan.org/';
+const explorer = choice.token.explorer;
 sendExplorerLinksHome(document.body, explorer);
 
 let receipt: TransactionReceiptState = { kind: 'signing' };
@@ -104,21 +66,21 @@ function model(): ConfirmSurfaceModel {
       kind: 'transaction',
       capture: null,
       review: {
-        model: purchase,
-        tree: buildDisplayTreeFromModel(purchase),
+        model: payment,
+        tree: buildDisplayTreeFromModel(payment),
         detailsInitiallyOpen: false,
       },
       header: {
-        heading: t('approvePurchase'),
+        heading: t('approvePayment'),
         website: { kind: 'ready', text: 'shop.example.com' },
-        chainDetails: { kind: 'ready', text: 'Base Sepolia' },
+        chainDetails: { kind: 'ready', text: choice.token.network },
       },
       body: { kind: 'empty' },
       prompt: { kind: 'passkey' },
       transaction: {
         tree: null,
         theme: showcasePreset.mode,
-        explorers: { near: 'https://testnet.nearblocks.io', evm: explorer },
+        explorers: { near: 'https://nearblocks.io', evm: explorer },
         decision: { kind: 'ready', onConfirm: confirm },
         confirmText: t('confirmPasskey'),
         cancelText: t('cancel'),

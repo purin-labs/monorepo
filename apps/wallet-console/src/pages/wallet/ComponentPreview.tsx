@@ -22,7 +22,7 @@ function embeddedRoute(id: PreviewId): string {
       return 'authentication';
     case 'transaction-modal':
       return 'transaction';
-    case 'prediction-market':
+    case 'checkout':
       return 'checkout';
     case 'voiceid':
       return 'voiceid';
@@ -37,8 +37,8 @@ function embeddedTitle(id: PreviewId): string {
       return t('authentication');
     case 'transaction-modal':
       return t('transactionModal');
-    case 'prediction-market':
-      return t('predictionMarket');
+    case 'checkout':
+      return t('shopCheckout');
     case 'voiceid':
       return t('voiceId');
   }

@@ -1,26 +1,25 @@
-/* A sample merchant: its market card and its own review panel, in neutral
-   greys with the merchant's maroon for actions and highlights. The wallet
-   approval that follows is styled by the SDK. */
+/* A sample shop: its product card and its own checkout panel, in neutral
+   greys with the shop's green for actions and choices. checkout.tsx sets the
+   green --checkout-accent* and --checkout-tint properties from the palette in
+   checkoutAppearance.ts, which the wallet approval that follows also takes. */
 .showcase-stage,
 .seams-transaction-review-content.checkout-review {
   --checkout-ink: #171717;
   --checkout-muted: #737373;
   --checkout-line: #e5e5e5;
   --checkout-fill: #f5f5f5;
-  --checkout-accent: #852f43;
-  --checkout-accent-hover: #6e2537;
 
   color: var(--checkout-ink);
   font-family: system-ui, sans-serif;
 }
 
-.checkout-market {
+.checkout-product {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   justify-self: center;
   width: min(340px, 100%);
   box-sizing: border-box;
-  padding: 18px;
+  padding: 14px 14px 16px;
   border: 1px solid var(--checkout-line);
   border-radius: 16px;
   background: #ffffff;
@@ -30,12 +29,35 @@
 /* The homepage frames this page at 440px on wide screens and narrower only on
    phones, where the card fills the frame as the other demos do. */
 @media (max-width: 439px) {
-  .checkout-market {
+  .checkout-product {
     width: 100%;
   }
 }
 
-.checkout-lot,
+.checkout-product-art {
+  display: grid;
+  place-items: center;
+  height: 132px;
+  border-radius: 10px;
+  background: var(--checkout-tint);
+}
+
+.checkout-product-art .checkout-art {
+  width: 104px;
+  height: 104px;
+}
+
+.checkout-art path,
+.checkout-art rect {
+  transition: fill 200ms ease;
+}
+
+.checkout-product-heading {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+}
+
 .checkout-eyebrow {
   color: var(--checkout-muted);
   font-size: 10px;
@@ -44,37 +66,42 @@
   text-transform: uppercase;
 }
 
-.checkout-market h1 {
-  margin: -6px 0 0;
+.checkout-product h1 {
+  margin: 0;
   font-size: 17px;
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.02em;
 }
 
-.checkout-odds {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.checkout-price {
+  margin: -6px 0 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   font-size: 12px;
 }
 
-/* Each outcome is a radio: the chosen one lifts to white with a maroon ring. */
-.checkout-odds label {
+/* Each color is a radio: the chosen one takes a green ring. */
+.checkout-swatches label {
   position: relative;
-  display: flex;
-  justify-content: space-between;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--checkout-fill);
-  box-shadow: inset 0 0 0 1px transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 5px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--checkout-line);
   cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
 }
 
-.checkout-odds input {
+.checkout-swatches input,
+.checkout-choices input {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -82,21 +109,24 @@
   cursor: pointer;
 }
 
-.checkout-odds label:hover {
-  box-shadow: inset 0 0 0 1px var(--checkout-line);
+.checkout-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
 }
 
-.checkout-odds label:has(input:checked) {
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1.5px var(--checkout-accent);
+.checkout-swatches label:hover {
+  box-shadow: inset 0 0 0 1px #d4d4d4;
 }
 
-.checkout-odds label:has(input:checked) strong {
-  color: var(--checkout-accent);
+.checkout-swatches label:has(input:checked) {
+  box-shadow: inset 0 0 0 1.5px var(--checkout-accent-strong);
 }
 
-.checkout-odds label:has(input:focus-visible) {
-  outline: 2px solid var(--checkout-accent);
+.checkout-swatches label:has(input:focus-visible),
+.checkout-choices label:has(input:focus-visible) {
+  outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 2px;
 }
 
@@ -106,7 +136,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
-  color: #ffffff;
+  color: var(--checkout-on-accent);
   background: var(--checkout-accent);
   border: 0;
   border-radius: 10px;
@@ -135,7 +165,7 @@
   text-align: center;
 }
 
-/* A light scrim over the sample market instead of the SDK's 26% black. The
+/* A light scrim over the sample shop instead of the SDK's 26% black. The
    SDK fades its scrim in with an animation whose end value outranks any plain
    background rule, so this replaces the animation itself. */
 dialog.seams-wallet-overlay-dialog::backdrop {
@@ -173,180 +203,197 @@ dialog:not([open]) .checkout-review-slot {
 
 .seams-transaction-review-content.checkout-review {
   display: grid;
-  gap: 14px;
-  padding: 20px;
+  gap: 10px;
+  padding: 18px 20px 14px;
   background: #ffffff;
 }
 
 .checkout-review-heading {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
 }
 
 .checkout-review h2 {
-  margin: -6px 0 0;
+  margin: 0;
   font-size: 20px;
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.03em;
 }
 
-.checkout-summary-card {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--checkout-line);
-  border-radius: 12px;
-  background: var(--checkout-fill);
-}
-
-.checkout-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.checkout-side {
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--checkout-accent);
-  color: #ffffff;
+.checkout-review small {
+  display: block;
+  color: var(--checkout-muted);
   font-size: 11px;
-  font-weight: 700;
-}
-
-.checkout-summary-claim {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 550;
+  font-weight: 400;
   line-height: 1.4;
 }
 
-.checkout-summary-values {
-  align-items: end;
+.checkout-review .checkout-art {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--checkout-fill);
 }
 
-.checkout-summary-values > div:last-child {
-  text-align: right;
-}
-
-.checkout-summary-label {
-  display: block;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.checkout-amount {
-  display: block;
-  font-size: 24px;
-  font-weight: 550;
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-details {
+.checkout-items {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: 12px;
 }
 
-.checkout-details dt {
-  color: var(--checkout-muted);
+.checkout-items li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.checkout-details dd {
-  margin: 0;
-  text-align: right;
-  font-weight: 550;
+.checkout-items li > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkout-items li > span:last-child,
+.checkout-totals dd {
   font-variant-numeric: tabular-nums;
 }
 
-.checkout-included {
-  color: var(--checkout-muted);
-  font-weight: 400;
-}
-
-.checkout-note {
-  margin: -4px 0 0;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.checkout-expiry {
-  --checkout-expiry-bar: var(--checkout-muted);
-  display: grid;
-  gap: 8px;
+.checkout-ship {
+  display: flex;
+  gap: 12px;
+  margin: 0;
   padding-top: 12px;
   border-top: 1px solid var(--checkout-line);
+  font-size: 12px;
+}
+
+.checkout-ship dt,
+.checkout-choices legend {
+  flex: none;
   color: var(--checkout-muted);
   font-size: 11px;
 }
 
-.checkout-expiry > div {
-  display: flex;
-  justify-content: space-between;
+.checkout-ship dd {
+  margin: 0 0 0 auto;
+  text-align: right;
 }
 
-.checkout-expiry[data-urgent] {
-  --checkout-expiry-bar: var(--checkout-accent);
-}
-
-.checkout-expiry strong {
-  color: var(--checkout-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-expiry[data-urgent] strong {
-  color: var(--checkout-accent);
-}
-
-.checkout-review .checkout-refresh {
+.checkout-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
-  color: var(--checkout-accent);
-  background: transparent;
   border: 0;
-  font: inherit;
-  font-weight: 650;
+}
+
+.checkout-choices legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* Each choice is a radio card: the chosen one turns pale green with a green ring. */
+.checkout-choices label {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--checkout-fill);
+  box-shadow: inset 0 0 0 1px transparent;
+  font-size: 12px;
+  line-height: 1.35;
   cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
-.checkout-refresh:focus-visible {
-  outline: 2px solid var(--checkout-accent);
-  outline-offset: 2px;
+.checkout-choices label > span:not(.checkout-token) {
+  flex: 1;
+  min-width: 0;
 }
 
-.checkout-expiry progress {
-  display: block;
-  width: 100%;
-  height: 3px;
-  border: 0;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--checkout-line);
-  accent-color: var(--checkout-expiry-bar);
+.checkout-choices label strong {
+  font-weight: 550;
 }
 
-.checkout-expiry progress::-webkit-progress-bar {
-  background: var(--checkout-line);
+.checkout-choices label:hover {
+  box-shadow: inset 0 0 0 1px var(--checkout-line);
 }
 
-.checkout-expiry progress::-webkit-progress-value {
-  background: var(--checkout-expiry-bar);
+.checkout-choices label:has(input:checked) {
+  background: var(--checkout-tint);
+  box-shadow: inset 0 0 0 1.5px var(--checkout-accent-strong);
 }
 
-.checkout-expiry progress::-moz-progress-bar {
-  background: var(--checkout-expiry-bar);
+.checkout-network {
+  color: var(--checkout-muted);
+  font-size: 11px;
+}
+
+.checkout-token {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2775ca;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.checkout-token[data-token='usdt-ethereum'] {
+  background: #26a17b;
+}
+
+.checkout-token[data-token='jpyc-ethereum'] {
+  background: #16449a;
+}
+
+.checkout-totals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--checkout-line);
+  font-size: 12px;
+}
+
+.checkout-totals dt {
+  color: var(--checkout-muted);
+}
+
+.checkout-totals dd {
+  margin: 0;
+  text-align: right;
+}
+
+.checkout-totals .checkout-total {
+  margin-top: 4px;
+  color: var(--checkout-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.checkout-rate {
+  margin-left: 8px;
+  color: var(--checkout-muted);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .checkout-actions {
@@ -367,6 +414,6 @@ dialog:not([open]) .checkout-review-slot {
 
 .checkout-confirm:focus-visible,
 .checkout-cancel:focus-visible {
-  outline: 2px solid #852f43;
+  outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 3px;
 }

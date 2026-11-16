@@ -23,7 +23,7 @@ import { playReceiptLifecycle } from './receiptLifecycle';
 import { transitionReceiptView } from './receiptTransition';
 import { sendExplorerLinksHome } from './sampleExplorer';
 import { configureModalBackdrop } from './modalBackdrop';
-import { sampleEvmAccount, stablecoin, tokenTransferModel } from './sampleTokens';
+import { sampleEvmAccount, stablecoin, stablecoinAmount, tokenTransferModel } from './sampleTokens';
 
 configureModalBackdrop();
 
@@ -87,6 +87,9 @@ function nearTrade(): SampleTrade {
 function stablecoinTrade(): SampleTrade {
   return {
     transaction: tokenTransferModel({
+      token: stablecoin,
+      amount: stablecoinAmount,
+      signer: sampleEvmAccount,
       recipient: `0xD3F0${'0'.repeat(32)}5A11`,
       label: tradeLabel(stablecoin.symbol),
       fields: tradeFields('9.60', sampleEvmAccount),

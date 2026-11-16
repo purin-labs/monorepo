@@ -5,12 +5,7 @@ import { ComponentPreview } from './ComponentPreview';
 import { BackgroundPreview, type BackgroundPreviewKind } from './BackgroundPreview';
 import './component-showcase.css';
 
-export type PreviewId =
-  | 'create'
-  | 'transaction-modal'
-  | 'prediction-market'
-  | 'profile'
-  | 'voiceid';
+export type PreviewId = 'create' | 'transaction-modal' | 'checkout' | 'profile' | 'voiceid';
 
 type Preview = {
   id: PreviewId;
@@ -31,7 +26,7 @@ const previews: readonly Preview[] = [
   defaultPreview,
   { id: 'profile', label: t('recoverLink'), x: 840, y: 60 },
   { id: 'voiceid', label: t('voiceId'), x: 1260, y: -20 },
-  { id: 'prediction-market', label: t('customComponents'), x: 1680, y: -70 },
+  { id: 'checkout', label: t('customComponents'), x: 1680, y: -70 },
 ];
 
 type BackgroundPlacement = { kind: BackgroundPreviewKind; x: number; y: number };

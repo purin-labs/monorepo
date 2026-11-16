@@ -17,7 +17,12 @@ import { playReceiptLifecycle } from './receiptLifecycle';
 import { transitionReceiptView } from './receiptTransition';
 import { sendExplorerLinksHome } from './sampleExplorer';
 import { configureModalBackdrop } from './modalBackdrop';
-import { stablecoin, tokenTransferModel } from './sampleTokens';
+import {
+  sampleEvmAccount,
+  stablecoin,
+  stablecoinAmount,
+  tokenTransferModel,
+} from './sampleTokens';
 
 configureModalBackdrop();
 
@@ -25,6 +30,9 @@ configureModalBackdrop();
    a simulated signing and broadcast; nothing is signed or sent. */
 
 const transfer = tokenTransferModel({
+  token: stablecoin,
+  amount: stablecoinAmount,
+  signer: sampleEvmAccount,
   recipient: `0x2F01${'0'.repeat(32)}4EC9`,
   label: t('transferAsset').replaceAll('{asset}', stablecoin.symbol),
 });

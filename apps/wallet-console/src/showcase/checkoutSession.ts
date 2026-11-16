@@ -14,7 +14,7 @@ import {
   walletIframeSurfaceIdFromBoundary,
 } from '@wallet-ui/core/types/walletIframeIdentity';
 import type { TransactionReceiptView } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-receipt';
-import type { Side } from './checkoutMarket';
+import { choiceQuery, shop, type CheckoutChoice } from './checkoutCart';
 import { checkoutAppearance } from './checkoutAppearance';
 import { showcasePreset } from './showcaseTheme';
 
@@ -28,7 +28,7 @@ type Phase = 'mounting' | 'review' | 'review_again' | 'preparing' | 'approval' |
 const dialogWidthCssPx = 420;
 const toastWidthCssPx = 360;
 
-const confirmedMessage = t('purchaseConfirmed');
+const confirmedMessage = t('orderPlaced').replaceAll('{order}', shop.order);
 
 /* Drives the SDK's production overlay through a custom review, its handoff to
    the wallet approval, and the receipt toast that follows. The approval runs
@@ -44,15 +44,14 @@ export class CheckoutSession {
     surfaceId: walletIframeSurfaceIdFromBoundary(crypto.randomUUID()),
   });
   private phase: Phase = 'mounting';
+  // The choice the wallet frame was loaded with; a changed choice reloads it.
+  private walletQuery = '';
   private reviewHeightCssPx = 0;
   private walletHeightCssPx = 420;
   // Set once the wallet shows its receipt; null while it still asks for approval.
   private receiptView: TransactionReceiptView | null = null;
 
-  constructor(
-    private readonly side: Side,
-    private readonly onFinish: (message: string) => void,
-  ) {
+  constructor(private readonly onFinish: (message: string) => void) {
     this.overlay = new OverlayController({
       ensureIframe: () => this.iframe,
       // Escape or a backdrop click; once the receipt shows, the purchase is done.
@@ -80,16 +79,18 @@ export class CheckoutSession {
     content.querySelector<HTMLElement>('button')?.focus();
   };
 
-  readonly continueToWallet = (): void => {
-    if (this.phase === 'review_again') {
+  readonly continueToWallet = (choice: CheckoutChoice): void => {
+    const query = choiceQuery(choice);
+    if (this.phase === 'review_again' && query === this.walletQuery) {
       this.phase = 'approval';
       this.resize();
       this.overlay.activateAfterReviewHandoff(this.focusWallet);
       return;
     }
-    if (this.phase !== 'review') return;
+    if (this.phase !== 'review' && this.phase !== 'review_again') return;
     this.phase = 'preparing';
-    this.iframe.src = `${import.meta.env.BASE_URL}showcase/checkout/wallet/?side=${this.side}&lang=${locale}&theme=${showcasePreset.id}`;
+    this.walletQuery = query;
+    this.iframe.src = `${import.meta.env.BASE_URL}showcase/checkout/wallet/?${query}&lang=${locale}&theme=${showcasePreset.id}`;
   };
 
   readonly cancel = (): void => this.finish(t('checkoutClosed'));
@@ -127,7 +128,7 @@ export class CheckoutSession {
     }
     const presentation = modalWalletIframeSurfacePresentation(
       reviewing
-        ? t('reviewPurchase')
+        ? t('checkoutTitle')
         : this.receiptView
           ? t('transactionReceipt')
           : t('walletApproval'),

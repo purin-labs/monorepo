@@ -1,3 +1,5 @@
+import type { PreviewId } from './ComponentShowcase';
+
 type PlaybackStep = {
   selector: string;
   afterConfirmation: boolean;
@@ -26,6 +28,7 @@ const transferSteps: readonly PlaybackStep[] = [
 ];
 
 const checkoutSteps: readonly PlaybackStep[] = [
+  { selector: '.checkout-swatches label:nth-child(2)', afterConfirmation: false },
   { selector: '.checkout-buy', afterConfirmation: false },
   { selector: '.checkout-confirm', afterConfirmation: false },
   { selector: 'button.confirm', afterConfirmation: false },
@@ -57,7 +60,7 @@ export class EmbeddedPlayback {
 
   constructor(
     private readonly frame: HTMLIFrameElement,
-    kind: 'create' | 'transaction-modal' | 'prediction-market' | 'profile' | 'voiceid',
+    kind: PreviewId,
     private readonly onComplete: () => void,
     private readonly onInteract: () => void,
   ) {
@@ -72,7 +75,7 @@ export class EmbeddedPlayback {
       case 'voiceid':
         this.steps = transferSteps;
         break;
-      case 'prediction-market':
+      case 'checkout':
         this.steps = checkoutSteps;
         break;
     }

@@ -4,12 +4,12 @@ import type {
   TxDisplayModel,
 } from '@wallet-ui/core/signingEngine/interfaces/display';
 
-/* The stablecoin each language's demos pay with: USDC on Base in English and
-   JPYC on Ethereum in Japanese. The contracts are the real ones, so the wallet
-   names the token and shows its artwork; the accounts and amounts are samples
-   and nothing is signed or sent. */
+/* The stablecoins the demos pay with. The contracts are the real ones, so the
+   wallet names each token and shows its artwork; the accounts and amounts are
+   samples and nothing is signed or sent. */
 
-type SampleToken = {
+export type SampleToken = {
+  readonly id: 'usdc-base' | 'usdt-ethereum' | 'jpyc-ethereum';
   readonly symbol: string;
   readonly decimals: number;
   readonly contract: string;
@@ -17,11 +17,12 @@ type SampleToken = {
   readonly network: string;
   readonly explorer: string;
   readonly fee: string;
-  /** What the demos move, in whole tokens. */
-  readonly sampleAmount: string;
+  /** The currency the token tracks one to one. */
+  readonly currency: 'USD' | 'JPY';
 };
 
 const usdcOnBase: SampleToken = {
+  id: 'usdc-base',
   symbol: 'USDC',
   decimals: 6,
   contract: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
@@ -29,10 +30,23 @@ const usdcOnBase: SampleToken = {
   network: 'Base',
   explorer: 'https://basescan.org/',
   fee: '0.000001',
-  sampleAmount: '15',
+  currency: 'USD',
+};
+
+const usdtOnEthereum: SampleToken = {
+  id: 'usdt-ethereum',
+  symbol: 'USDT',
+  decimals: 6,
+  contract: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  chainId: 1,
+  network: 'Ethereum',
+  explorer: 'https://etherscan.io/',
+  fee: '0.00005',
+  currency: 'USD',
 };
 
 const jpycOnEthereum: SampleToken = {
+  id: 'jpyc-ethereum',
   symbol: 'JPYC',
   decimals: 18,
   contract: '0xe7c3d8c9a439fede00d2600032d5db0be71c3c29',
@@ -40,25 +54,44 @@ const jpycOnEthereum: SampleToken = {
   network: 'Ethereum',
   explorer: 'https://etherscan.io/',
   fee: '0.00005',
-  sampleAmount: '1500',
+  currency: 'JPY',
 };
 
-export const stablecoin = locale === 'ja' ? jpycOnEthereum : usdcOnBase;
+/** English pages pay in USDC first, Japanese pages in JPYC. */
+export const paymentTokens: readonly SampleToken[] =
+  locale === 'ja' ? [jpycOnEthereum, usdcOnBase] : [usdcOnBase, usdtOnEthereum];
+
+export const stablecoin = paymentTokens[0];
+
+/** What the transfer and VoiceID demos move, in whole tokens. */
+export const stablecoinAmount = locale === 'ja' ? '1500' : '15';
 
 export const sampleEvmAccount = `0x4201${'0'.repeat(32)}891c`;
 
-/** An ERC-20 transfer as the wallet reviews it: the token amount is the headline. */
+function baseUnits(amount: string, decimals: number): string {
+  const [whole, fraction = ''] = amount.split('.');
+  return BigInt(whole + fraction.padEnd(decimals, '0')).toString();
+}
+
+/**
+ * An ERC-20 transfer as the wallet reviews it: the token amount is the
+ * headline. A sponsored transfer costs the sender no network fee, so the
+ * review shows none. Without a signer the review leaves out its account card.
+ */
 export function tokenTransferModel(transfer: {
+  readonly token: SampleToken;
+  readonly amount: string;
+  readonly signer: string | null;
   readonly recipient: string;
   readonly label: string;
   readonly fields?: TxDisplayField[];
+  readonly sponsored?: boolean;
 }): TxDisplayModel {
-  const token = stablecoin;
-  const baseUnits = BigInt(token.sampleAmount) * 10n ** BigInt(token.decimals);
+  const { token, amount } = transfer;
   return {
     chain: 'evm',
     chainId: token.chainId,
-    signerAccount: sampleEvmAccount,
+    ...(transfer.signer ? { signerAccount: transfer.signer } : {}),
     operations: [
       {
         id: 'transfer',
@@ -73,10 +106,10 @@ export function tokenTransferModel(transfer: {
       transfer: {
         tokenContract: token.contract,
         recipient: transfer.recipient,
-        baseUnits: baseUnits.toString(),
-        amount: { value: token.sampleAmount, symbol: token.symbol, verified: true },
+        baseUnits: baseUnits(amount, token.decimals),
+        amount: { value: amount, symbol: token.symbol, verified: true },
       },
     },
-    totals: { estimatedFee: token.fee, feeSymbol: 'ETH' },
+    ...(transfer.sponsored ? {} : { totals: { estimatedFee: token.fee, feeSymbol: 'ETH' } }),
   };
 }
