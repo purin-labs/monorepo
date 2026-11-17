@@ -19,7 +19,8 @@ concurrency:
 jobs:
   validate:
     name: Check private applications and deployment composition
-    runs-on: ubuntu-latest
+    # Playwright 1.55 installs no Chromium on Ubuntu 26.04, which ubuntu-latest became on 2026-11-16.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout
