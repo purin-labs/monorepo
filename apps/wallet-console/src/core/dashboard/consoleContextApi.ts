@@ -26,12 +26,20 @@ export interface DashboardConsoleProject {
   updatedAt: string;
 }
 
+/** The tenant's maximum Wallet Session budget for one environment. */
+export interface DashboardWalletSessionLimits {
+  maxTtlMs: number;
+  maxRemainingUses: number;
+}
+
 export interface DashboardConsoleEnvironment {
   id: string;
   projectId: string;
   key: string;
   name: string;
   status: string;
+  /** Null when the tenant set none, so the wallet gateway uses its defaults. */
+  walletSessionLimits: DashboardWalletSessionLimits | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -95,6 +103,18 @@ function decodeProject(raw: unknown): DashboardConsoleProject | null {
   };
 }
 
+function decodePositiveInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+function decodeWalletSessionLimits(raw: unknown): DashboardWalletSessionLimits | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const row = raw as Record<string, unknown>;
+  const maxTtlMs = decodePositiveInteger(row.maxTtlMs);
+  const maxRemainingUses = decodePositiveInteger(row.maxRemainingUses);
+  return maxTtlMs && maxRemainingUses ? { maxTtlMs, maxRemainingUses } : null;
+}
+
 function decodeEnvironment(raw: unknown): DashboardConsoleEnvironment | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
@@ -107,40 +127,40 @@ function decodeEnvironment(raw: unknown): DashboardConsoleEnvironment | null {
     key: String(row.key || '').trim(),
     name: String(row.name || '').trim() || id,
     status: String(row.status || '').trim() || 'ACTIVE',
+    walletSessionLimits: decodeWalletSessionLimits(row.walletSessionLimits),
     createdAt: String(row.createdAt || '').trim(),
     updatedAt: String(row.updatedAt || '').trim(),
   };
 }
 
-async function fetchJson(path: string): Promise<any> {
+async function requestJson(path: string, init: RequestInit): Promise<unknown> {
   const base = requireConsoleBaseUrl();
   const response = await fetch(`${base}${path}`, {
-    method: 'GET',
-    headers: buildConsoleAcceptHeaders(),
+    ...init,
     credentials: 'include',
     cache: 'no-store',
   });
   const body = await parseConsoleJson(response);
-  if (!response.ok || (body as any)?.ok !== true) {
+  if (!response.ok || (body as ConsoleResponseBase | null)?.ok !== true) {
     throw new Error(consoleErrorMessage(response, body, 'Console request failed'));
   }
   return body;
 }
 
-async function mutateJson(path: string, method: 'POST' | 'PATCH', body: unknown): Promise<any> {
-  const base = requireConsoleBaseUrl();
-  const response = await fetch(`${base}${path}`, {
+function fetchJson(path: string): Promise<unknown> {
+  return requestJson(path, { method: 'GET', headers: buildConsoleAcceptHeaders() });
+}
+
+function mutateJson(
+  path: string,
+  method: 'POST' | 'PATCH' | 'PUT',
+  body: unknown,
+): Promise<unknown> {
+  return requestJson(path, {
     method,
     headers: buildConsoleJsonHeaders(),
-    credentials: 'include',
-    cache: 'no-store',
     body: JSON.stringify(body),
   });
-  const parsed = await parseConsoleJson(response);
-  if (!response.ok || (parsed as any)?.ok !== true) {
-    throw new Error(consoleErrorMessage(response, parsed, 'Console request failed'));
-  }
-  return parsed;
 }
 
 export async function getDashboardOrganization(): Promise<DashboardConsoleOrganization> {
@@ -181,6 +201,23 @@ export async function listDashboardEnvironments(
   return rows
     .map((entry) => decodeEnvironment(entry))
     .filter((entry): entry is DashboardConsoleEnvironment => entry !== null);
+}
+
+/** Sets the maximum Wallet Session budget of one environment. Null returns it to the defaults. */
+export async function updateDashboardEnvironmentWalletSessionLimits(
+  environmentId: string,
+  walletSessionLimits: DashboardWalletSessionLimits | null,
+): Promise<DashboardConsoleEnvironment> {
+  const normalizedId = String(environmentId || '').trim();
+  if (!normalizedId) throw new Error('Environment id is required');
+  const body = (await mutateJson(
+    `/console/environments/${encodeURIComponent(normalizedId)}/wallet-session-limits`,
+    'PUT',
+    { walletSessionLimits },
+  )) as ConsoleEnvironmentsResponse;
+  const environment = decodeEnvironment(body.environment);
+  if (!environment) throw new Error('Console environment update response was invalid');
+  return environment;
 }
 
 export async function createDashboardProject(

@@ -7,7 +7,13 @@ import {
   createRouterApiPublishableKeyAuthAdapter,
 } from '@seams-internal/wallet-console-server/router/routerApiKeyAuth';
 import { createWalletConsoleOpsHandler } from '@seams-internal/wallet-console-server/serviceBinding/walletConsoleOpsHandler';
-import { createWalletConsoleOpsClient } from '@seams/wallet-server/cloud-host';
+import { createWalletProjectEnvironmentResolver } from '@seams-internal/wallet-console-server/router/projectEnvironmentAdapter';
+import {
+  createWalletConsoleOpsClient,
+  WALLET_CONSOLE_OP_PATHS_V1,
+  WALLET_CONSOLE_SERVICE_ORIGIN_V1,
+  type RouterApiProjectEnvironmentResolver,
+} from '@seams/wallet-server/cloud-host';
 import { createWalletConsoleRelayProxyExtensionV1 } from '@seams/wallet-server/cloud-host';
 import { createWalletRuntimeOpsHandler } from '@seams/wallet-server/cloud-host';
 import {
@@ -98,7 +104,22 @@ function disposeFixtureDirectories(): void {
 
 test.afterEach(disposeFixtureDirectories);
 
-async function bindingHarness() {
+const STUB_PROJECT_ENVIRONMENTS: RouterApiProjectEnvironmentResolver = {
+  async listEnvironments() {
+    return [
+      {
+        id: CTX.environmentId,
+        projectId: CTX.projectId,
+        key: 'development',
+        signingRootVersion: 'runtime-v1',
+        status: 'ACTIVE',
+      },
+    ];
+  },
+};
+
+/** `environmentsFromD1` serves the project environments from the Console D1, as deployed. */
+async function bindingHarness(options: { readonly environmentsFromD1?: boolean } = {}) {
   const temporary = createTemporaryD1Database();
   fixtureDirectories.push(temporary.tempDir);
   await applyD1MigrationFiles(temporary.database, listD1MigrationFiles('d1-console'));
@@ -155,19 +176,13 @@ async function bindingHarness() {
         recorded.push(event);
       },
     },
-    projectEnvironments: {
-      async listEnvironments() {
-        return [
-          {
-            id: CTX.environmentId,
-            projectId: CTX.projectId,
-            key: 'development',
-            signingRootVersion: 'runtime-v1',
-            status: 'ACTIVE',
-          },
-        ];
-      },
-    },
+    projectEnvironments: options.environmentsFromD1
+      ? createWalletProjectEnvironmentResolver({
+          database: temporary.database,
+          namespace,
+          deploymentId,
+        })
+      : STUB_PROJECT_ENVIRONMENTS,
     tenantRootActiveLineage: {
       async resolveActiveLineage(identity) {
         if (
@@ -194,7 +209,7 @@ async function bindingHarness() {
       return response;
     },
   });
-  return { apiKeys, client, recorded, handler };
+  return { apiKeys, client, recorded, handler, environments };
 }
 
 function rejectingTenantRootHandler() {
@@ -335,13 +350,65 @@ test('project environments decode into the exact Router API projection', async (
     }),
   ).resolves.toEqual([
     {
+      externalAuth: { kind: 'disabled', revision: 0 },
       id: CTX.environmentId,
       projectId: CTX.projectId,
       key: 'development',
       signingRootVersion: 'runtime-v1',
       status: 'ACTIVE',
+      walletSessionLimits: null,
     },
   ]);
+});
+
+test('project environments carry the tenant Wallet Session limits from the Console D1', async () => {
+  const { client, environments, handler } = await bindingHarness({ environmentsFromD1: true });
+  // The context and the filter of the gateway's Wallet Session issuer.
+  const issuer = {
+    orgId: CTX.orgId,
+    projectId: CTX.projectId,
+    environmentId: CTX.environmentId,
+    actorUserId: 'wallet-session-issuer',
+    roles: [],
+  };
+  async function issuerEnvironment() {
+    const listed = await client.projectEnvironments.listEnvironments(issuer, { status: 'ACTIVE' });
+    return listed.find((environment) => environment.id === CTX.environmentId);
+  }
+  async function consoleEnvironmentFields(): Promise<Record<string, unknown>> {
+    const response = await handler(
+      new Request(
+        WALLET_CONSOLE_SERVICE_ORIGIN_V1 + WALLET_CONSOLE_OP_PATHS_V1.projectEnvironments,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ context: issuer, filters: { status: 'ACTIVE' } }),
+        },
+      ),
+    );
+    if (!response) throw new Error('project-environments was not served');
+    const body = (await response.json()) as { environments: Record<string, unknown>[] };
+    const environment = body.environments.find((entry) => entry.id === CTX.environmentId);
+    if (!environment) throw new Error('The Console omitted the environment');
+    return environment;
+  }
+
+  // A gateway before 0.73.0 refuses the field, so the Console sends it only when the tenant set it.
+  expect(await consoleEnvironmentFields()).not.toHaveProperty('walletSessionLimits');
+  await expect(issuerEnvironment()).resolves.toMatchObject({ walletSessionLimits: null });
+
+  const limits = { maxTtlMs: 7 * 86_400_000, maxRemainingUses: 500 };
+  await environments.updateEnvironment(CTX, CTX.environmentId, { walletSessionLimits: limits });
+  expect(await consoleEnvironmentFields()).toMatchObject({ walletSessionLimits: limits });
+  await expect(issuerEnvironment()).resolves.toMatchObject({
+    id: CTX.environmentId,
+    status: 'ACTIVE',
+    walletSessionLimits: limits,
+  });
+
+  await environments.updateEnvironment(CTX, CTX.environmentId, { walletSessionLimits: null });
+  expect(await consoleEnvironmentFields()).not.toHaveProperty('walletSessionLimits');
+  await expect(issuerEnvironment()).resolves.toMatchObject({ walletSessionLimits: null });
 });
 
 test('active tenant-root lineage resolves through the exact private operation', async () => {

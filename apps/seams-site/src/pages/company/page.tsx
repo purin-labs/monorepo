@@ -37,14 +37,14 @@ type CompanyLink = {
 function getProducts(t: Translate): readonly Product[] {
   return [
     {
-      title: 'Satyr',
+      title: 'Seams Atelier',
       copy: t('satyrCopy'),
       to: '/ecommerce',
       cta: t('exploreSatyr'),
       field: 'azure-coral',
     },
     {
-      title: 'Satyr Kitchen',
+      title: 'Kitchen',
       copy: t('bakeryCopy'),
       to: '/ecommerce#kitchen',
       cta: t('exploreBakery'),

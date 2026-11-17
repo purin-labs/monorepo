@@ -12,6 +12,11 @@ export function walletProjectEnvironment(
 ): RouterApiProjectEnvironment {
   return {
     externalAuth: environment.externalAuth,
+    // Sent only when the tenant set it: a gateway before 0.73.0 refuses an
+    // environment with this field, and one without it means the gateway defaults.
+    ...(environment.walletSessionLimits
+      ? { walletSessionLimits: environment.walletSessionLimits }
+      : {}),
     id: environment.id,
     projectId: environment.projectId,
     key: environment.key,

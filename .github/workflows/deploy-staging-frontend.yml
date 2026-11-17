@@ -52,7 +52,8 @@ env:
 jobs:
   deploy:
     name: Deploy / staging / frontend
-    runs-on: ubuntu-latest
+    # Playwright 1.55 installs no Chromium on Ubuntu 26.04, which ubuntu-latest became on 2026-11-16.
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     environment: staging
     env:

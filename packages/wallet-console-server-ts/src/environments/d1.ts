@@ -1,4 +1,8 @@
-import { parseExternalAuthConfiguration } from '@seams/wallet-server/cloud-host';
+import {
+  parseExternalAuthConfiguration,
+  parseWalletSessionLimits,
+  type WalletSessionLimits,
+} from '@seams/wallet-server/cloud-host';
 import {
   secureRandomBase36,
   d1Number as toNumber,
@@ -22,7 +26,7 @@ import type {
   ProvisionConsoleWalletEnvironmentsRequest,
   SetConsoleWalletProjectAvailabilityRequest,
 } from './types';
-import type { ConsoleWalletEnvironmentContext, ConsoleWalletEnvironmentService } from './service';
+import type { ConsoleWalletEnvironmentService } from './service';
 
 type ConsoleWalletEnvironmentKey = ConsoleWalletEnvironment['key'];
 const DEFAULT_ENVIRONMENT_KEYS: readonly ConsoleWalletEnvironmentKey[] = ['dev', 'staging', 'prod'];
@@ -43,6 +47,8 @@ export const CONSOLE_WALLET_ENVIRONMENT_D1_SCHEMA_SQL = Object.freeze([
       runtime_version TEXT NOT NULL DEFAULT 'default',
       external_auth_json TEXT NOT NULL DEFAULT '{"kind":"disabled","revision":0}'
         CHECK (json_valid(external_auth_json)),
+      wallet_session_limits_json TEXT
+        CHECK (wallet_session_limits_json IS NULL OR json_valid(wallet_session_limits_json)),
       name TEXT NOT NULL,
       status TEXT NOT NULL,
       created_at_ms INTEGER NOT NULL,
@@ -142,9 +148,19 @@ function parseEnvironmentKey(value: unknown): ConsoleWalletEnvironmentKey {
   }
 }
 
+/** NULL means that the tenant set none. A stored value that does not parse is an error. */
+function parseStoredWalletSessionLimits(value: unknown): WalletSessionLimits | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') {
+    throw new Error('Invalid console environment wallet_session_limits_json row');
+  }
+  return parseWalletSessionLimits(JSON.parse(value), 'environment.walletSessionLimits');
+}
+
 export function parseEnvironmentRow(row: D1Row): ConsoleWalletEnvironment {
   return {
     externalAuth: parseExternalAuthConfiguration(JSON.parse(String(row.external_auth_json))),
+    walletSessionLimits: parseStoredWalletSessionLimits(row.wallet_session_limits_json),
     id: String(row.id || ''),
     orgId: String(row.org_id || ''),
     projectId: String(row.project_id || ''),
@@ -655,6 +671,14 @@ export async function createD1ConsoleWalletEnvironmentService(
               current.runtime_version,
               DEFAULT_WALLET_SIGNING_ROOT_VERSION,
             );
+      const externalAuthJson =
+        request.externalAuth === undefined ? null : JSON.stringify(request.externalAuth);
+      const walletSessionLimitsJson =
+        request.walletSessionLimits == null
+          ? null
+          : JSON.stringify(
+              parseWalletSessionLimits(request.walletSessionLimits, 'walletSessionLimits'),
+            );
       await database
         .prepare(
           `UPDATE environments
@@ -662,16 +686,24 @@ export async function createD1ConsoleWalletEnvironmentService(
                   runtime_version = ?,
                   updated_at_ms = ?,
                   external_auth_json = CASE WHEN ? IS NULL THEN external_auth_json
-                    ELSE json_set(?, '$.revision', json_extract(external_auth_json, '$.revision') + 1) END
+                    ELSE json_set(?, '$.revision', json_extract(external_auth_json, '$.revision') + 1) END,
+                  wallet_session_limits_json = CASE WHEN ? = 1 THEN ?
+                    ELSE wallet_session_limits_json END
             WHERE namespace = ?
               AND org_id = ?
               AND id = ?`,
         )
         .bind(
-          nextName, nextRuntimeVersion, nowMs(now()),
-          request.externalAuth === undefined ? null : JSON.stringify(request.externalAuth),
-          request.externalAuth === undefined ? null : JSON.stringify(request.externalAuth),
-          namespace, ctx.orgId, environmentId,
+          nextName,
+          nextRuntimeVersion,
+          nowMs(now()),
+          externalAuthJson,
+          externalAuthJson,
+          request.walletSessionLimits === undefined ? 0 : 1,
+          walletSessionLimitsJson,
+          namespace,
+          ctx.orgId,
+          environmentId,
         )
         .run();
       return await loadEnvironment({ database, namespace, orgId: ctx.orgId, environmentId });

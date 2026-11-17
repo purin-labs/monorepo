@@ -58,11 +58,13 @@ import {
 import type { ConsoleOrgProjectService } from '@seams-internal/console-server/orgProjectEnv/service';
 import { isConsoleOrgProjectError } from '@seams-internal/console-server/orgProjectEnv/errors';
 import {
+  type ConsoleWalletEnvironment,
   type ConsoleWalletEnvironmentService,
   isConsoleWalletEnvironmentError,
   parseCreateConsoleWalletEnvironmentRequest,
   parseListConsoleWalletEnvironmentsRequest,
   parseUpdateConsoleWalletEnvironmentRequest,
+  parseUpdateWalletSessionLimitsRequest,
   serializeWalletEnvironment,
 } from '@seams-internal/wallet-console-server/environments';
 import type { ConsoleWalletService } from '@seams-internal/wallet-console-server/wallets/service';
@@ -2038,22 +2040,24 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
   const environmentContext = toWalletEnvironmentContext(auth.claims);
   const environmentPatchMatch = ctx.pathname.match(/^\/console\/environments\/([^/]+)$/);
   const environmentArchiveMatch = ctx.pathname.match(/^\/console\/environments\/([^/]+)\/archive$/);
-  const externalAuthMatch = ctx.pathname.match(/^\/console\/environments\/([^/]+)\/external-auth$/);
+  const environmentSettingMatch = ctx.pathname.match(
+    /^\/console\/environments\/([^/]+)\/(external-auth|wallet-session-limits)$/,
+  );
 
   try {
-    if (ctx.method === 'PUT' && externalAuthMatch) {
+    if (ctx.method === 'PUT' && environmentSettingMatch) {
       const routePolicy = requireConsoleRoutePolicy(ctx, auth.claims);
       if (routePolicy) return routePolicy;
-      const request = parseUpdateConsoleWalletEnvironmentRequest({
-        externalAuth: await readJson(ctx.request),
-      });
-      const environment = await walletEnvironments.updateEnvironment(
-        environmentContext,
-        decodePathPart(externalAuthMatch[1]),
-        request,
+      const environmentId = decodePathPart(environmentSettingMatch[1]);
+      const body = await readJson(ctx.request);
+      const request =
+        environmentSettingMatch[2] === 'external-auth'
+          ? parseUpdateConsoleWalletEnvironmentRequest({ externalAuth: body })
+          : parseUpdateWalletSessionLimitsRequest(body);
+      return walletEnvironmentResponse(
+        environmentId,
+        await walletEnvironments.updateEnvironment(environmentContext, environmentId, request),
       );
-      if (!environment) return json({ ok: false, code: 'environment_not_found' }, { status: 404 });
-      return json({ ok: true, environment: serializeWalletEnvironment(environment) });
     }
     if (ctx.method === 'GET' && ctx.pathname === '/console/environments') {
       const request = parseListConsoleWalletEnvironmentsRequest({
@@ -2101,24 +2105,9 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
       if (routePolicy) return routePolicy;
       const environmentId = decodePathPart(environmentPatchMatch[1]);
       const request = parseUpdateConsoleWalletEnvironmentRequest(await readJson(ctx.request));
-      const environment = await walletEnvironments.updateEnvironment(
-        environmentContext,
+      return walletEnvironmentResponse(
         environmentId,
-        request,
-      );
-      if (!environment) {
-        return json(
-          {
-            ok: false,
-            code: 'environment_not_found',
-            message: `Environment ${environmentId} was not found`,
-          },
-          { status: 404 },
-        );
-      }
-      return json(
-        { ok: true, environment: serializeWalletEnvironment(environment) },
-        { status: 200 },
+        await walletEnvironments.updateEnvironment(environmentContext, environmentId, request),
       );
     }
 
@@ -2126,23 +2115,9 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
       const routePolicy = requireConsoleRoutePolicy(ctx, auth.claims);
       if (routePolicy) return routePolicy;
       const environmentId = decodePathPart(environmentArchiveMatch[1]);
-      const environment = await walletEnvironments.archiveEnvironment(
-        environmentContext,
+      return walletEnvironmentResponse(
         environmentId,
-      );
-      if (!environment) {
-        return json(
-          {
-            ok: false,
-            code: 'environment_not_found',
-            message: `Environment ${environmentId} was not found`,
-          },
-          { status: 404 },
-        );
-      }
-      return json(
-        { ok: true, environment: serializeWalletEnvironment(environment) },
-        { status: 200 },
+        await walletEnvironments.archiveEnvironment(environmentContext, environmentId),
       );
     }
   } catch (error: unknown) {
@@ -2151,6 +2126,23 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
   }
 
   return new Response('Not Found', { status: 404 });
+}
+
+function walletEnvironmentResponse(
+  environmentId: string,
+  environment: ConsoleWalletEnvironment | null,
+): Response {
+  if (!environment) {
+    return json(
+      {
+        ok: false,
+        code: 'environment_not_found',
+        message: `Environment ${environmentId} was not found`,
+      },
+      { status: 404 },
+    );
+  }
+  return json({ ok: true, environment: serializeWalletEnvironment(environment) }, { status: 200 });
 }
 
 async function handleConsoleApprovals(ctx: CloudflareConsoleContext): Promise<Response | null> {

@@ -28,8 +28,13 @@ const PROJECTS_MANAGE_STEP_UP_ROUTES: readonly ConsoleRouteTuple[] = [
   ['console_tenant_root_refresh', 'POST', '/console/tenant-root/refresh'],
 ];
 
-const EXTERNAL_AUTH_MANAGE_ROUTES: readonly ConsoleRouteTuple[] = [
+const ENVIRONMENT_SETTINGS_MANAGE_ROUTES: readonly ConsoleRouteTuple[] = [
   ['console_environment_external_auth_update', 'PUT', '/console/environments/:id/external-auth'],
+  [
+    'console_environment_wallet_session_limits_update',
+    'PUT',
+    '/console/environments/:id/wallet-session-limits',
+  ],
 ];
 
 const PROJECT_VIEW_ROUTES: readonly ConsoleRouteTuple[] = [
@@ -222,7 +227,7 @@ export function createWalletConsoleRouteDefinitions(): readonly ConsoleRouteDefi
 
 export function createWalletConsoleBaseRouteDefinitions(): readonly ConsoleRouteDefinition[] {
   return Object.freeze([
-    ...defineConsoleRoutes('projects.manage', EXTERNAL_AUTH_MANAGE_ROUTES),
+    ...defineConsoleRoutes('projects.manage', ENVIRONMENT_SETTINGS_MANAGE_ROUTES),
     ...defineConsoleRoutes('project.view', PROJECT_VIEW_ROUTES),
     ...defineConsoleRoutes('project.edit', PROJECT_EDIT_ROUTES),
     ...defineConsoleRoutes('billing.view', BILLING_VIEW_ROUTES),

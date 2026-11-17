@@ -8,106 +8,83 @@ import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import type { TransactionReviewControls } from '@seams/wallet/react';
 import { CheckoutSession } from './checkoutSession';
-import { market, sides, type Side } from './checkoutMarket';
+import {
+  cart,
+  expressCents,
+  formatBalance,
+  formatPrice,
+  formatTokenAmount,
+  shop,
+  subtotalCents,
+  totalCents,
+  type CheckoutChoice,
+  type Delivery,
+} from './checkoutCart';
+import { paymentTokens, type SampleToken } from './sampleTokens';
 import { schedulePlayback } from './playbackClock';
 import { configureModalBackdrop } from './modalBackdrop';
+import { applyCheckoutPalette } from './checkoutAppearance';
 
 configureModalBackdrop();
+applyCheckoutPalette(document.documentElement);
 
-/* A sample prediction-market checkout: the host app's own review panel hands
-   off to the SDK's wallet approval in one resizing modal. The market stays
-   live behind the receipt toast, so picking a side there shows the page is
-   still usable. */
+/* A sample shop's own checkout card, shown in the SDK's modal. Pay hands the
+   same modal to the wallet approval, which morphs from the card; Back in the
+   wallet morphs it back. When a run ends, the checkout opens again. */
 
-type Quote = {
-  side: Side;
-  expiresAtMs: number;
-};
+const reopenDelayMs = 700;
 
-const quoteLifetimeSeconds = 90;
-const quoteUrgentSeconds = 15;
-
-function Checkout(): React.JSX.Element {
-  const [side, setSide] = React.useState<Side>('Yes');
-  const [quote, setQuote] = React.useState<Quote | null>(null);
-  const [outcome, setOutcome] = React.useState('');
-  const finish = React.useCallback((message: string) => {
-    setQuote(null);
-    setOutcome(message);
-  }, []);
-  const refresh = React.useCallback((quoteSide: Side) => {
-    setQuote({ side: quoteSide, expiresAtMs: Date.now() + quoteLifetimeSeconds * 1000 });
-  }, []);
+function TokenBadge({ token }: { token: SampleToken }): React.JSX.Element {
   return (
-    <section className="checkout-market" aria-labelledby="checkout-market-title">
-      <span className="checkout-lot">{market.lot}</span>
-      <h1 id="checkout-market-title">{market.question}</h1>
-      <div className="checkout-odds" role="radiogroup" aria-label={t('outcome')}>
-        {sides.map((option) => (
-          <label key={option}>
-            <input
-              type="radio"
-              name="checkout-side"
-              value={option}
-              checked={side === option}
-              onChange={() => setSide(option)}
-            />
-            {t(option === 'Yes' ? 'yes' : 'no')} <strong>{market.outcomes[option].odds}</strong>
-          </label>
-        ))}
-      </div>
-      <button
-        className="checkout-buy"
-        type="button"
-        disabled={quote !== null}
-        onClick={() => {
-          setOutcome('');
-          refresh(side);
-        }}
-      >
-        <span>
-          {t('buy')} {t(side === 'Yes' ? 'yes' : 'no')}
-        </span>
-        <span aria-hidden="true">→</span>
-      </button>
-      {outcome ? (
-        <p className="checkout-outcome" role="status">
-          {outcome}
-        </p>
-      ) : null}
-      {quote ? <CheckoutReview quote={quote} onFinish={finish} onRefresh={refresh} /> : null}
-    </section>
+    <span className="checkout-token" data-token={token.symbol} aria-hidden="true">
+      {token.symbol === 'JPYC' ? '¥' : '$'}
+    </span>
   );
 }
 
-function CheckoutReview({
-  quote,
-  onFinish,
-  onRefresh,
-}: {
-  quote: Quote;
-  onFinish: (message: string) => void;
-  onRefresh: (side: Side) => void;
-}): React.JSX.Element | null {
-  const [session, setSession] = React.useState<CheckoutSession | null>(null);
+function Checkout(): React.JSX.Element {
+  const [run, setRun] = React.useState(0);
+  const [open, setOpen] = React.useState(true);
+  const finish = React.useCallback(() => setOpen(false), []);
   React.useEffect(() => {
-    const next = new CheckoutSession(quote.side, onFinish);
+    if (open) return;
+    return schedulePlayback(() => {
+      setRun((value) => value + 1);
+      setOpen(true);
+    }, reopenDelayMs);
+  }, [open]);
+  return open ? <CheckoutReview key={run} onFinish={finish} /> : <></>;
+}
+
+function CheckoutReview({ onFinish }: { onFinish: () => void }): React.JSX.Element | null {
+  const [session, setSession] = React.useState<CheckoutSession | null>(null);
+  const [delivery, setDelivery] = React.useState<Delivery>('standard');
+  const [token, setToken] = React.useState<SampleToken>(paymentTokens[0]);
+  React.useEffect(() => {
+    const next = new CheckoutSession(onFinish);
     setSession(next);
     return next.dispose;
-  }, [quote.side, onFinish]);
+  }, [onFinish]);
   if (!session) return null;
+  const choice: CheckoutChoice = { token, delivery };
   return createPortal(
-    <section className="seams-transaction-review-content checkout-review" ref={session.observe}>
-      <div className="checkout-review-heading">
-        <span className="checkout-eyebrow">{market.sale}</span>
+    <section
+      className="seams-transaction-review-content checkout-review"
+      aria-labelledby="checkout-title"
+      ref={session.observe}
+    >
+      <div className="checkout-heading">
+        <h2 id="checkout-title">{t('checkoutTitle')}</h2>
+        <span className="checkout-eyebrow">
+          {shop.name} · {t('orderNumber').replaceAll('{order}', shop.order)}
+        </span>
       </div>
-      <h2>{t('reviewPurchase')}</h2>
-      <PurchaseSummary
-        key={quote.expiresAtMs}
-        quote={quote}
-        onRefresh={onRefresh}
+      <CheckoutPanel
+        choice={choice}
+        onDelivery={setDelivery}
+        onToken={setToken}
         controls={{
-          continueToWallet: session.continueToWallet,
+          continueToWallet: () => session.continueToWallet(choice),
           cancel: session.cancel,
           fail: session.fail,
         }}
@@ -117,115 +94,105 @@ function CheckoutReview({
   );
 }
 
-function PurchaseSummary({
-  quote,
-  onRefresh,
+function CheckoutPanel({
+  choice,
+  onDelivery,
+  onToken,
   controls,
 }: {
-  quote: Quote;
-  onRefresh: (side: Side) => void;
+  choice: CheckoutChoice;
+  onDelivery: (delivery: Delivery) => void;
+  onToken: (token: SampleToken) => void;
   controls: TransactionReviewControls;
 }): React.JSX.Element {
-  const seconds = useSecondsUntil(quote.expiresAtMs);
-  const outcome = market.outcomes[quote.side];
+  const total = totalCents(choice.delivery);
   return (
     <>
-      <div className="checkout-summary-card">
-        <div className="checkout-summary-claim">
-          <span className="checkout-side">
-            {t(quote.side === 'Yes' ? 'yes' : 'no')} · {outcome.odds}
-          </span>
-          <span>{outcome.claim}</span>
-        </div>
-        <div className="checkout-summary-row checkout-summary-values">
-          <div>
-            <span className="checkout-summary-label">{t('youPay')}</span>
-            <strong className="checkout-amount">{market.pay}</strong>
-            <span className="checkout-summary-label">{t('units')}</span>
-          </div>
-          <div>
-            <span className="checkout-summary-label">
-              {t('payoutIf')} {t(quote.side === 'Yes' ? 'yes' : 'no')}
+      <ul className="checkout-items" aria-label={t('yourCart')}>
+        {cart.map((item) => (
+          <li key={item.id}>
+            <img src={item.thumb} alt="" width={44} height={44} />
+            <span>
+              {t('productBaumkuchen')}
+              <small>{item.flavor} · ×1</small>
             </span>
-            <strong className="checkout-amount">{outcome.positions}</strong>
-            <span className="checkout-summary-label">{t('units')}</span>
-          </div>
-        </div>
-      </div>
-      <dl className="checkout-details">
-        <dt>{t('price')}</dt>
+            <span>{formatPrice(item.cents)}</span>
+          </li>
+        ))}
+      </ul>
+      <dl className="checkout-ship">
+        <dt>{t('shipTo')}</dt>
         <dd>
-          {outcome.price} {t('unitsPerPosition')}
+          {t('sampleCustomer')}
+          <small>{t('sampleAddress')}</small>
         </dd>
-        <dt>{t('minimumPayout')}</dt>
-        <dd>
-          {outcome.minimumPositions} {t('units')}
-        </dd>
-        <dt>{t('tradingFee')}</dt>
-        <dd>
-          {market.fee} {t('units')}{' '}
-          <span className="checkout-included">{t('includedParentheses')}</span>
-        </dd>
-        <dt>{t('networkFee')}</dt>
-        <dd>{t('free')}</dd>
       </dl>
-      <p className="checkout-note">
-        {t('purchaseNote').replace('{side}', t(quote.side === 'Yes' ? 'yes' : 'no'))}
-      </p>
-      <div className="checkout-expiry" data-urgent={seconds <= quoteUrgentSeconds || undefined}>
-        <div>
-          <span>{seconds === 0 ? t('quoteExpired') : t('quoteExpires')}</span>
-          {seconds === 0 ? (
-            <button
-              className="checkout-refresh"
-              type="button"
-              onClick={() => onRefresh(quote.side)}
-            >
-              {t('refreshQuote')}
-            </button>
-          ) : (
-            <strong>
-              {seconds}
-              {t('secondsUnit')}
-            </strong>
-          )}
-        </div>
-        <progress aria-label={t('quoteTime')} max={quoteLifetimeSeconds} value={seconds} />
-      </div>
-      <div className="checkout-actions">
-        <button
-          className="checkout-confirm"
-          type="button"
-          disabled={seconds === 0}
-          onClick={controls.continueToWallet}
-        >
-          <span>{t('confirmWallet')}</span>
-          <span aria-hidden="true">→</span>
-        </button>
-        <button className="checkout-cancel" type="button" onClick={controls.cancel}>
-          {t('backToMarket')}
-        </button>
-      </div>
+      <fieldset className="checkout-choices">
+        <legend>{t('delivery')}</legend>
+        <label>
+          <input
+            type="radio"
+            name="checkout-delivery"
+            checked={choice.delivery === 'standard'}
+            onChange={() => onDelivery('standard')}
+          />
+          <span>
+            {t('standardDelivery')}
+            <small>{t('standardDays')}</small>
+          </span>
+          <strong>{t('free')}</strong>
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="checkout-delivery"
+            checked={choice.delivery === 'express'}
+            onChange={() => onDelivery('express')}
+          />
+          <span>
+            {t('expressDelivery')}
+            <small>{t('expressDays')}</small>
+          </span>
+          <strong>{formatPrice(expressCents)}</strong>
+        </label>
+      </fieldset>
+      <fieldset className="checkout-choices">
+        <legend>{t('payFromWallet')}</legend>
+        {paymentTokens.map((option) => (
+          <label key={option.id}>
+            <input
+              type="radio"
+              name="checkout-token"
+              checked={choice.token.id === option.id}
+              onChange={() => onToken(option)}
+            />
+            <TokenBadge token={option} />
+            <span>
+              {option.symbol}{' '}
+              <span className="checkout-network">
+                {t('onNetwork').replaceAll('{network}', option.network)}
+              </span>
+              <small>{t('balance').replaceAll('{amount}', formatBalance(option))}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <dl className="checkout-totals">
+        <dt>{t('subtotal')}</dt>
+        <dd>{formatPrice(subtotalCents())}</dd>
+        <dt>{t('shipping')}</dt>
+        <dd>{choice.delivery === 'express' ? formatPrice(expressCents) : t('free')}</dd>
+        <dt>{t('networkFee')}</dt>
+        <dd>{t('paidByShop').replaceAll('{shop}', shop.name)}</dd>
+        <dt className="checkout-total">{t('total')}</dt>
+        <dd className="checkout-total">{formatTokenAmount(choice.token, total)}</dd>
+      </dl>
+      <button className="checkout-confirm" type="button" onClick={controls.continueToWallet}>
+        <span>{t('payTotal').replaceAll('{amount}', formatTokenAmount(choice.token, total))}</span>
+        <span aria-hidden="true">→</span>
+      </button>
     </>
   );
-}
-
-function scheduleCountdown(
-  seconds: number,
-  setSeconds: React.Dispatch<React.SetStateAction<number>>,
-): (() => void) | undefined {
-  if (seconds === 0) return;
-  return schedulePlayback(setSeconds.bind(null, seconds - 1), 1000);
-}
-
-function useSecondsUntil(deadlineMs: number): number {
-  const [seconds, setSeconds] = React.useState(secondsUntil.bind(null, deadlineMs));
-  React.useEffect(scheduleCountdown.bind(null, seconds, setSeconds), [seconds]);
-  return seconds;
-}
-
-function secondsUntil(deadlineMs: number): number {
-  return Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
 }
 
 createRoot(document.getElementById('root') as HTMLElement).render(<Checkout />);

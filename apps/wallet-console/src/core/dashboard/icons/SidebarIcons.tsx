@@ -93,6 +93,14 @@ export const KeyRoundIcon: React.FC<SidebarIconProps> = (props) => (
   </SidebarIconBase>
 );
 
+export const TimerIcon: React.FC<SidebarIconProps> = (props) => (
+  <SidebarIconBase iconName="timer" {...props}>
+    <line x1="10" x2="14" y1="2" y2="2" />
+    <line x1="12" x2="15" y1="14" y2="11" />
+    <circle cx="12" cy="14" r="8" />
+  </SidebarIconBase>
+);
+
 export const WalletCardsIcon: React.FC<SidebarIconProps> = (props) => (
   <SidebarIconBase iconName="wallet-cards" {...props}>
     <rect width="18" height="18" x="3" y="3" rx="2" />

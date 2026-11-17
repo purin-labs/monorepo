@@ -62,6 +62,15 @@ export function canDashboardEditProject(
   );
 }
 
+/** The Console's `projects.manage` rule: an owner, or an admin with that permission. */
+export function canDashboardManageProjects(
+  access: { readonly role: string; readonly adminPermissions: readonly string[] } | null,
+): boolean {
+  if (!access) return false;
+  if (access.role === 'OWNER') return true;
+  return access.role === 'ADMIN' && access.adminPermissions.includes('projects.manage');
+}
+
 export function canDashboardViewBilling(claims: DashboardConsoleSessionClaims | null): boolean {
   if (!claims) return false;
   if (claims.role === 'OWNER') return true;

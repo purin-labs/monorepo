@@ -21,6 +21,7 @@ export const shellMessages = {
   navObservability: { en: 'Observability', ja: 'オブザーバビリティ' },
   navApiKeys: { en: 'API Keys', ja: 'APIキー' },
   navDeploymentStatus: { en: 'Deployment status', ja: 'デプロイ状況' },
+  navWalletSessions: { en: 'Wallet sessions', ja: 'ウォレットセッション' },
   navWebhooks: { en: 'Webhooks', ja: 'Webhook' },
   navAccountSettings: { en: 'Account settings', ja: 'アカウント設定' },
   navTeamMembers: { en: 'Team members', ja: 'チームメンバー' },

@@ -12,7 +12,10 @@ import type {
   TransactionReceiptState,
   TransactionReceiptView,
 } from '@wallet-ui/core/signingEngine/uiConfirm/ui/transaction-receipt';
-import type { TxDisplayModel } from '@wallet-ui/core/signingEngine/interfaces/display';
+import type {
+  TxDisplayField,
+  TxDisplayModel,
+} from '@wallet-ui/core/signingEngine/interfaces/display';
 import { VoicePrompt } from '@seams/voice-capture/card';
 import { showcaseAppearance, showcasePreset } from './showcaseTheme';
 import { schedulePlayback } from './playbackClock';
@@ -20,6 +23,7 @@ import { playReceiptLifecycle } from './receiptLifecycle';
 import { transitionReceiptView } from './receiptTransition';
 import { sendExplorerLinksHome } from './sampleExplorer';
 import { configureModalBackdrop } from './modalBackdrop';
+import { sampleEvmAccount, stablecoin, stablecoinAmount, tokenTransferModel } from './sampleTokens';
 
 configureModalBackdrop();
 
@@ -28,42 +32,75 @@ type DemoState =
   | { readonly kind: 'voice'; readonly prompt: VoicePrompt; readonly playback: VoicePlayback }
   | { readonly kind: 'receipt'; readonly prompt: VoicePrompt };
 
-const trade = {
-  sellAmount: '10',
-  sellAsset: 'NEAR',
-  receiveAsset: 'USDC',
-  minimumReceived: '28.40',
-  slippage: '0.5%',
-  fee: '0.00005',
-  signer: 'alex.near',
+type SampleTrade = {
+  readonly transaction: TxDisplayModel;
+  readonly network: string;
+  readonly explorer: string;
+  readonly receiptHash: string;
 };
-const transaction: TxDisplayModel = {
-  chain: 'near',
-  signerAccount: trade.signer,
-  operations: [
-    {
-      id: 'swap',
-      kind: 'near.action',
-      actionType: 'functionCall',
-      label: t('voiceTradeAction')
-        .replaceAll('{asset}', trade.sellAsset)
-        .replaceAll('{receiveAsset}', trade.receiveAsset),
-      fields: [
-        { label: t('minimumReceived'), value: `${trade.minimumReceived} ${trade.receiveAsset}` },
-        { label: t('slippageLimit'), value: trade.slippage },
-        { label: t('receivingAccount'), value: trade.signer },
-        { label: t('quoteValidity'), value: t('exampleQuoteValidity') },
+
+const nearExplorer = 'https://nearblocks.io/';
+
+function tradeLabel(asset: string): string {
+  return t('voiceTradeAction').replaceAll('{asset}', asset).replaceAll('{receiveAsset}', 'USDC');
+}
+
+function tradeFields(minimumReceived: string, account: string): TxDisplayField[] {
+  return [
+    { label: t('minimumReceived'), value: `${minimumReceived} USDC` },
+    { label: t('slippageLimit'), value: '0.5%' },
+    { label: t('receivingAccount'), value: account },
+    { label: t('quoteValidity'), value: t('exampleQuoteValidity') },
+  ];
+}
+
+/** The English page sells NEAR for USDC on NEAR. */
+function nearTrade(): SampleTrade {
+  const signer = 'alex.near';
+  return {
+    transaction: {
+      chain: 'near',
+      signerAccount: signer,
+      operations: [
+        {
+          id: 'swap',
+          kind: 'near.action',
+          actionType: 'functionCall',
+          label: tradeLabel('NEAR'),
+          fields: tradeFields('28.40', signer),
+        },
       ],
+      totals: {
+        nativeValue: '10',
+        nativeSymbol: 'NEAR',
+        estimatedFee: '0.00005',
+        feeSymbol: 'NEAR',
+      },
     },
-  ],
-  totals: {
-    nativeValue: trade.sellAmount,
-    nativeSymbol: trade.sellAsset,
-    estimatedFee: trade.fee,
-    feeSymbol: trade.sellAsset,
-  },
-};
-const explorer = 'https://nearblocks.io/';
+    network: 'NEAR',
+    explorer: nearExplorer,
+    receiptHash: '4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw',
+  };
+}
+
+/** The Japanese page sells JPYC for USDC: the wallet sends JPYC to the swap's deposit address. */
+function stablecoinTrade(): SampleTrade {
+  return {
+    transaction: tokenTransferModel({
+      token: stablecoin,
+      amount: stablecoinAmount,
+      signer: sampleEvmAccount,
+      recipient: `0xD3F0${'0'.repeat(32)}5A11`,
+      label: tradeLabel(stablecoin.symbol),
+      fields: tradeFields('9.60', sampleEvmAccount),
+    }),
+    network: stablecoin.network,
+    explorer: stablecoin.explorer,
+    receiptHash: `0x3c9e${'0'.repeat(56)}5a17`,
+  };
+}
+
+const trade = locale === 'ja' ? stablecoinTrade() : nearTrade();
 
 /**
  * A VoiceID unlock opens a signing session, and the session signs without a
@@ -85,7 +122,7 @@ export class VoiceIdDemo {
     const stage = document.getElementById('root');
     if (!stage) throw new Error('The VoiceID demo root is unavailable.');
     this.stage = stage;
-    sendExplorerLinksHome(this.stage, explorer);
+    sendExplorerLinksHome(this.stage, trade.explorer);
     this.start();
   }
 
@@ -96,21 +133,21 @@ export class VoiceIdDemo {
         kind: 'transaction',
         capture,
         review: {
-          model: transaction,
-          tree: buildDisplayTreeFromModel(transaction),
+          model: trade.transaction,
+          tree: buildDisplayTreeFromModel(trade.transaction),
           detailsInitiallyOpen: false,
         },
         header: {
           heading: t('reviewTrade'),
           website: { kind: 'ready', text: 'shop.example.com' },
-          chainDetails: { kind: 'ready', text: 'NEAR' },
+          chainDetails: { kind: 'ready', text: trade.network },
         },
         body: { kind: 'empty' },
         prompt: { kind: 'session' },
         transaction: {
           tree: null,
           theme: showcasePreset.mode,
-          explorers: { near: explorer },
+          explorers: { near: nearExplorer, evm: stablecoin.explorer },
           decision: { kind: 'ready', onConfirm: this.confirm },
           confirmText: t('confirmWithVoiceId'),
           cancelText: t('cancel'),
@@ -156,10 +193,7 @@ export class VoiceIdDemo {
   private sign = (): void => {
     if (this.state.kind !== 'voice') return;
     this.state = { kind: 'receipt', prompt: this.state.prompt };
-    this.stopLifecycle = playReceiptLifecycle(
-      this.showReceipt,
-      '4wBqpZM9xaSheZzJSMawUKKwhdpChKbZ5eu5ky4Vigw',
-    );
+    this.stopLifecycle = playReceiptLifecycle(this.showReceipt, trade.receiptHash);
   };
 
   private showReceipt = (state: TransactionReceiptState): void => {

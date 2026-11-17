@@ -1,41 +1,60 @@
-/* A sample merchant: its market card and its own review panel, in neutral
-   greys with the merchant's maroon for actions and highlights. The wallet
-   approval that follows is styled by the SDK. */
+/* A sample shop's own checkout card, shown in the SDK's modal, in neutral
+   greys with the shop's green for actions and choices. checkout.tsx sets the
+   green --checkout-accent* and --checkout-tint properties from the palette in
+   checkoutAppearance.ts, which the wallet approval that follows also takes. */
 .showcase-stage,
 .seams-transaction-review-content.checkout-review {
   --checkout-ink: #171717;
   --checkout-muted: #737373;
   --checkout-line: #e5e5e5;
   --checkout-fill: #f5f5f5;
-  --checkout-accent: #852f43;
-  --checkout-accent-hover: #6e2537;
 
   color: var(--checkout-ink);
   font-family: system-ui, sans-serif;
 }
 
-.checkout-market {
+/* The SDK's quieter card elevation (its sign-in card's) for the dialog shell,
+   which paints the card for both the checkout and the wallet approval. */
+dialog.seams-wallet-overlay-dialog.is-modal[data-transaction-review] {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 20px rgba(15, 23, 42, 0.1),
+    inset 0 0 0 1px var(--seams-colors-borderPrimary) !important;
+}
+
+/* The checkout card, portalled into the overlay's review slot. */
+dialog:not([open]) .checkout-review-slot {
+  inline-size: min(420px, calc(100vw - 32px));
+}
+
+/* The slot stops scroll chaining in the SDK; over the checkout the wheel must
+   reach the homepage, as in showcase.css. */
+.seams-transaction-review-slot.checkout-review-slot {
+  overscroll-behavior: auto;
+}
+
+.seams-transaction-review-content.checkout-review {
   display: grid;
-  gap: 12px;
-  justify-self: center;
-  width: min(340px, 100%);
-  box-sizing: border-box;
-  padding: 18px;
-  border: 1px solid var(--checkout-line);
-  border-radius: 16px;
+  gap: 10px;
+  padding: 18px 20px 16px;
   background: #ffffff;
-  box-shadow: 0 12px 28px -18px rgba(15, 23, 42, 0.22);
 }
 
-/* The homepage frames this page at 440px on wide screens and narrower only on
-   phones, where the card fills the frame as the other demos do. */
-@media (max-width: 439px) {
-  .checkout-market {
-    width: 100%;
-  }
+.checkout-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.checkout-lot,
+.checkout-review h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
 .checkout-eyebrow {
   color: var(--checkout-muted);
   font-size: 10px;
@@ -44,37 +63,15 @@
   text-transform: uppercase;
 }
 
-.checkout-market h1 {
-  margin: -6px 0 0;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+.checkout-review small {
+  display: block;
+  color: var(--checkout-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-.checkout-odds {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  font-size: 12px;
-}
-
-/* Each outcome is a radio: the chosen one lifts to white with a maroon ring. */
-.checkout-odds label {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--checkout-fill);
-  box-shadow: inset 0 0 0 1px transparent;
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    box-shadow 150ms ease;
-}
-
-.checkout-odds input {
+.checkout-choices input {
   position: absolute;
   inset: 0;
   margin: 0;
@@ -82,48 +79,34 @@
   cursor: pointer;
 }
 
-.checkout-odds label:hover {
-  box-shadow: inset 0 0 0 1px var(--checkout-line);
-}
-
-.checkout-odds label:has(input:checked) {
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1.5px var(--checkout-accent);
-}
-
-.checkout-odds label:has(input:checked) strong {
-  color: var(--checkout-accent);
-}
-
-.checkout-odds label:has(input:focus-visible) {
-  outline: 2px solid var(--checkout-accent);
+.checkout-choices label:has(input:focus-visible) {
+  outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 2px;
 }
 
-.checkout-buy,
-.checkout-review .checkout-confirm {
+.checkout-confirm {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  color: #ffffff;
+  /* The wallet's own confirm button is 48px tall with 10px corners; the shop's match it. */
+  min-height: 48px;
+  padding: 12px 16px;
+  color: var(--checkout-on-accent);
   background: var(--checkout-accent);
   border: 0;
   border-radius: 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 150ms ease;
 }
 
-.checkout-buy:hover:not(:disabled),
-.checkout-review .checkout-confirm:hover:not(:disabled) {
+.checkout-confirm:hover:not(:disabled) {
   background: var(--checkout-accent-hover);
 }
 
-.checkout-buy:disabled,
-.checkout-review .checkout-confirm:disabled {
+.checkout-confirm:disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -135,7 +118,7 @@
   text-align: center;
 }
 
-/* A light scrim over the sample market instead of the SDK's 26% black. The
+/* A light scrim behind the shop's card instead of the SDK's 26% black. The
    SDK fades its scrim in with an animation whose end value outranks any plain
    background rule, so this replaces the animation itself. */
 dialog.seams-wallet-overlay-dialog::backdrop {
@@ -151,222 +134,167 @@ dialog.seams-wallet-overlay-dialog::backdrop {
   }
 }
 
-/* The SDK's quieter card elevation (its sign-in card's) for the dialog shell,
-   which paints the card for both the review and the wallet approval. */
-dialog.seams-wallet-overlay-dialog.is-modal[data-transaction-review] {
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 10px 20px rgba(15, 23, 42, 0.1),
-    inset 0 0 0 1px var(--seams-colors-borderPrimary) !important;
-}
-
-/* The review panel, portalled into the overlay's review slot. */
-dialog:not([open]) .checkout-review-slot {
-  inline-size: min(420px, calc(100vw - 32px));
-}
-
-/* The slot stops scroll chaining in the SDK; over the review the wheel must
-   reach the homepage, as in showcase.css. */
-.seams-transaction-review-slot.checkout-review-slot {
-  overscroll-behavior: auto;
-}
-
-.seams-transaction-review-content.checkout-review {
-  display: grid;
-  gap: 14px;
-  padding: 20px;
-  background: #ffffff;
-}
-
-.checkout-review-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.checkout-review h2 {
-  margin: -6px 0 0;
-  font-size: 20px;
-  font-weight: 650;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
-}
-
-.checkout-summary-card {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--checkout-line);
-  border-radius: 12px;
+.checkout-items img {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
   background: var(--checkout-fill);
 }
 
-.checkout-summary-row {
+.checkout-items {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.checkout-items li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
-.checkout-side {
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--checkout-accent);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
+.checkout-items li > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
 }
 
-.checkout-summary-claim {
+.checkout-items li > span:last-child,
+.checkout-totals dd {
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-ship {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 550;
-  line-height: 1.4;
-}
-
-.checkout-summary-values {
-  align-items: end;
-}
-
-.checkout-summary-values > div:last-child {
-  text-align: right;
-}
-
-.checkout-summary-label {
-  display: block;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.checkout-amount {
-  display: block;
-  font-size: 24px;
-  font-weight: 550;
-  line-height: 1.15;
-  letter-spacing: -0.035em;
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-details {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 12px;
   margin: 0;
-  font-size: 12px;
-}
-
-.checkout-details dt {
-  color: var(--checkout-muted);
-}
-
-.checkout-details dd {
-  margin: 0;
-  text-align: right;
-  font-weight: 550;
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-included {
-  color: var(--checkout-muted);
-  font-weight: 400;
-}
-
-.checkout-note {
-  margin: -4px 0 0;
-  color: var(--checkout-muted);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.checkout-expiry {
-  --checkout-expiry-bar: var(--checkout-muted);
-  display: grid;
-  gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--checkout-line);
+  font-size: 12px;
+}
+
+.checkout-ship dt,
+.checkout-choices legend {
+  flex: none;
   color: var(--checkout-muted);
   font-size: 11px;
 }
 
-.checkout-expiry > div {
-  display: flex;
-  justify-content: space-between;
+.checkout-ship dd {
+  margin: 0 0 0 auto;
+  text-align: right;
 }
 
-.checkout-expiry[data-urgent] {
-  --checkout-expiry-bar: var(--checkout-accent);
-}
-
-.checkout-expiry strong {
-  color: var(--checkout-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.checkout-expiry[data-urgent] strong {
-  color: var(--checkout-accent);
-}
-
-.checkout-review .checkout-refresh {
-  padding: 0;
-  color: var(--checkout-accent);
-  background: transparent;
-  border: 0;
-  font: inherit;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.checkout-refresh:focus-visible {
-  outline: 2px solid var(--checkout-accent);
-  outline-offset: 2px;
-}
-
-.checkout-expiry progress {
-  display: block;
-  width: 100%;
-  height: 3px;
-  border: 0;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--checkout-line);
-  accent-color: var(--checkout-expiry-bar);
-}
-
-.checkout-expiry progress::-webkit-progress-bar {
-  background: var(--checkout-line);
-}
-
-.checkout-expiry progress::-webkit-progress-value {
-  background: var(--checkout-expiry-bar);
-}
-
-.checkout-expiry progress::-moz-progress-bar {
-  background: var(--checkout-expiry-bar);
-}
-
-.checkout-actions {
+.checkout-choices {
   display: grid;
-  gap: 2px;
-}
-
-.checkout-review .checkout-cancel {
-  min-height: 32px;
-  padding: 6px;
-  color: var(--checkout-muted);
-  background: transparent;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   border: 0;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
 }
 
-.checkout-confirm:focus-visible,
-.checkout-cancel:focus-visible {
-  outline: 2px solid #852f43;
+.checkout-choices legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* Each choice is a radio card: the chosen one turns pale green with a green ring. */
+.checkout-choices label {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--checkout-fill);
+  box-shadow: inset 0 0 0 1px transparent;
+  font-size: 12px;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.checkout-choices label > span:not(.checkout-token) {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkout-choices label strong {
+  font-weight: 550;
+}
+
+.checkout-choices label:hover {
+  box-shadow: inset 0 0 0 1px var(--checkout-line);
+}
+
+.checkout-choices label:has(input:checked) {
+  background: var(--checkout-tint);
+  box-shadow: inset 0 0 0 1.5px var(--checkout-accent-strong);
+}
+
+.checkout-network {
+  color: var(--checkout-muted);
+  font-size: 11px;
+}
+
+.checkout-token {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2775ca;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.checkout-token[data-token='JPYC'] {
+  background: #16449a;
+}
+
+/* A page with one way to pay gives it the full width. */
+.checkout-choices label:only-of-type {
+  grid-column: 1 / -1;
+}
+
+.checkout-totals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--checkout-line);
+  font-size: 12px;
+}
+
+.checkout-totals dt {
+  color: var(--checkout-muted);
+}
+
+.checkout-totals dd {
+  margin: 0;
+  text-align: right;
+}
+
+.checkout-totals .checkout-total {
+  margin-top: 4px;
+  color: var(--checkout-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.checkout-confirm:focus-visible {
+  outline: 2px solid var(--checkout-accent-strong);
   outline-offset: 3px;
 }

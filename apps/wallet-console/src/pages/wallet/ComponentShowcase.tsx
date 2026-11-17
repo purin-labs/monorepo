@@ -5,12 +5,7 @@ import { ComponentPreview } from './ComponentPreview';
 import { BackgroundPreview, type BackgroundPreviewKind } from './BackgroundPreview';
 import './component-showcase.css';
 
-export type PreviewId =
-  | 'create'
-  | 'transaction-modal'
-  | 'prediction-market'
-  | 'profile'
-  | 'voiceid';
+export type PreviewId = 'create' | 'transaction-modal' | 'checkout' | 'profile' | 'voiceid';
 
 type Preview = {
   id: PreviewId;
@@ -29,9 +24,9 @@ const defaultPreview: Preview = {
 const previews: readonly Preview[] = [
   { id: 'create', label: t('authentication'), x: 0, y: 0 },
   defaultPreview,
-  { id: 'prediction-market', label: t('customComponents'), x: 840, y: -70 },
-  { id: 'profile', label: t('recoverLink'), x: 1260, y: 60 },
-  { id: 'voiceid', label: t('voiceId'), x: 1680, y: -20 },
+  { id: 'profile', label: t('recoverLink'), x: 840, y: 60 },
+  { id: 'voiceid', label: t('voiceId'), x: 1260, y: -20 },
+  { id: 'checkout', label: t('customComponents'), x: 1680, y: -70 },
 ];
 
 type BackgroundPlacement = { kind: BackgroundPreviewKind; x: number; y: number };
@@ -46,12 +41,12 @@ const backgroundPreviews: readonly BackgroundPlacement[] = [
   { kind: 'receipt', x: 0, y: 490 },
   { kind: 'payment', x: 420, y: -360 },
   { kind: 'recovery', x: 420, y: 580 },
-  { kind: 'receipt', x: 840, y: -500 },
-  { kind: 'payment', x: 840, y: 400 },
-  { kind: 'recovery', x: 1260, y: -400 },
-  { kind: 'unlock', x: 1260, y: 520 },
-  { kind: 'unlock', x: 1680, y: -620 },
-  { kind: 'receipt', x: 1680, y: 600 },
+  { kind: 'recovery', x: 840, y: -400 },
+  { kind: 'unlock', x: 840, y: 520 },
+  { kind: 'unlock', x: 1260, y: -620 },
+  { kind: 'receipt', x: 1260, y: 600 },
+  { kind: 'receipt', x: 1680, y: -500 },
+  { kind: 'payment', x: 1680, y: 400 },
   { kind: 'payment', x: 2100, y: -240 },
 ];
 
