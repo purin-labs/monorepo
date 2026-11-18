@@ -36,6 +36,7 @@ import {
   refreshD1ConsoleWalletBalances,
   type D1ConsoleWalletBalanceReaderOptions,
 } from './balances';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 interface D1ConsoleWalletState {
   readonly database: D1DatabaseLike;
@@ -667,11 +668,6 @@ function normalizeWalletUpsert(
   };
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 class D1ConsoleWalletServiceImpl implements ConsoleWalletService {
   readonly [CONSOLE_WALLETS_D1_RUNTIME]: ConsoleWalletsD1Runtime;
 
@@ -783,7 +779,7 @@ class D1ConsoleWalletServiceImpl implements ConsoleWalletService {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleWalletError(
           'wallet_address_conflict',
           409,

@@ -20,6 +20,7 @@ import type {
   CreateConsoleKeyExportRequest,
   ListConsoleKeyExportsRequest,
 } from './types';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 const MAX_CONDITIONAL_RETRIES = 3;
 
@@ -268,11 +269,6 @@ function parseRecordRow(row: D1Row): ConsoleKeyExportRequestRecord {
   };
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 function buildListQuery(input: {
   readonly namespace: string;
   readonly orgId: string;
@@ -410,7 +406,7 @@ class D1ConsoleKeyExportServiceImpl implements ConsoleKeyExportD1Service {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleKeyExportError(
           'key_export_exists',
           409,

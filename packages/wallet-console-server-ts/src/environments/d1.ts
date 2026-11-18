@@ -10,6 +10,7 @@ import {
   formatD1ExecStatement,
   queryD1All,
   queryD1One,
+  isD1UniqueConstraintError,
   type D1Row,
   type D1DatabaseLike,
   type D1PreparedStatementLike,
@@ -190,11 +191,6 @@ function sortEnvironments(items: readonly ConsoleWalletEnvironment[]): ConsoleWa
     if (updatedAtDiff !== 0) return updatedAtDiff;
     return right.createdAt.localeCompare(left.createdAt);
   });
-}
-
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
 }
 
 async function loadProjectRow(input: {
@@ -620,7 +616,7 @@ export async function createD1ConsoleWalletEnvironmentService(
           )
           .run();
       } catch (error: unknown) {
-        if (!isD1ConstraintError(error)) throw error;
+        if (!isD1UniqueConstraintError(error)) throw error;
         throw new ConsoleWalletEnvironmentError(
           'environment_already_exists',
           409,

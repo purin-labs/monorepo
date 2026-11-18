@@ -5,6 +5,7 @@ import {
   formatD1ExecStatement,
   parseD1JsonArrayColumn as parseJsonArray,
   parseD1JsonObjectColumn as parseJsonObject,
+  isD1UniqueConstraintError,
   type D1Row,
 } from '@seams-internal/console-server/boundary/index';
 import type { D1DatabaseLike } from '@seams-internal/console-server/boundary/index';
@@ -279,11 +280,6 @@ function ensureMetadataObject(raw: unknown): Record<string, unknown> {
   return { ...(raw as Record<string, unknown>) };
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 function appendEqualsFilter(
   input: {
     readonly clauses: string[];
@@ -487,7 +483,7 @@ class D1ConsoleApprovalServiceImpl implements ConsoleApprovalService {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleApprovalsError(
           'approval_request_exists',
           409,

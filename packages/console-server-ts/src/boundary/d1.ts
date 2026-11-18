@@ -87,6 +87,24 @@ export function d1ChangedRows(result: D1ResultLike): number {
   return Number.isFinite(changes) ? Math.max(0, Math.trunc(changes)) : 0;
 }
 
+/**
+ * True only when a D1 (SQLite) write failed on a UNIQUE or PRIMARY KEY
+ * constraint: the row already exists, so a caller may report a conflict,
+ * reload the row or retry with a new id.
+ *
+ * SQLite reports both kinds as `UNIQUE constraint failed: ...`; D1 can add the
+ * extended result code. A CHECK, NOT NULL or FOREIGN KEY failure is a bug in
+ * the caller, not a conflict, so it returns false and the caller rethrows it.
+ */
+export function isD1UniqueConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return (
+    message.includes('UNIQUE constraint failed') ||
+    message.includes('SQLITE_CONSTRAINT_UNIQUE') ||
+    message.includes('SQLITE_CONSTRAINT_PRIMARYKEY')
+  );
+}
+
 export function d1Number(value: unknown, fallback = 0): number {
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;

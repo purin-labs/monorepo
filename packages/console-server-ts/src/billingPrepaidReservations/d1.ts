@@ -14,7 +14,13 @@ import { integer, textValue } from '@seams-internal/console-shared/accountPlatfo
 import type { D1AccountPlatformService } from '../accountPlatform/d1';
 import type { ServiceProducerAuthorityV1 } from '../accountPlatform/types';
 import { secureRandomBase36 } from '../boundary';
-import { queryD1All, queryD1One, type D1DatabaseLike, type D1Row } from '../boundary/d1';
+import {
+  isD1UniqueConstraintError,
+  queryD1All,
+  queryD1One,
+  type D1DatabaseLike,
+  type D1Row,
+} from '../boundary/d1';
 import {
   createProductExecutionDebitD1Statements,
   getConsoleBillingD1Runtime,
@@ -223,7 +229,7 @@ function fundsError(error: unknown): FundsErrorCode | null {
   if (message.includes('funds_scope_forbidden')) return 'scope_forbidden';
   if (message.includes('funds_insufficient')) return 'insufficient_funds';
   if (message.includes('funds_execution_unreconciled')) return 'execution_unreconciled';
-  if (message.includes('funds_operation_conflict') || message.includes('UNIQUE constraint failed'))
+  if (message.includes('funds_operation_conflict') || isD1UniqueConstraintError(error))
     return 'operation_conflict';
   return null;
 }

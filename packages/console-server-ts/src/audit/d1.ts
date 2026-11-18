@@ -4,6 +4,7 @@ import {
   formatD1ExecStatement,
   parseD1JsonArrayColumn as parseJsonArray,
   parseD1JsonObjectColumn as parseJsonObject,
+  isD1UniqueConstraintError,
   type D1Row,
 } from '../boundary';
 import type { D1DatabaseLike } from '../boundary';
@@ -430,11 +431,6 @@ function ensureEventIds(raw: unknown): string[] {
   return out;
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 function appendEqualsFilter(
   input: {
     readonly clauses: string[];
@@ -684,7 +680,7 @@ class D1ConsoleAuditServiceImpl implements ConsoleAuditService {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleAuditError(
           'event_already_exists',
           409,
@@ -727,7 +723,7 @@ class D1ConsoleAuditServiceImpl implements ConsoleAuditService {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleAuditError(
           'evidence_already_exists',
           409,
