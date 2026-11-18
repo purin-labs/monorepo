@@ -265,7 +265,7 @@ export const PLATFORM_SERVICE_CATALOGUE_V1: readonly PlatformServiceCatalogueEnt
     }),
     Object.freeze({
       serviceId: 'satyr',
-      displayName: 'Seams Atelier',
+      displayName: 'Seams Pantry',
       contractVersion: 1,
       meters: Object.freeze(['satyr.completed_turn.test', 'satyr.jev_input_tokens'] as const),
       integrationEndpoints: Object.freeze({
