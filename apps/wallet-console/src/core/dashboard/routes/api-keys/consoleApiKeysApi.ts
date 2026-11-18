@@ -5,6 +5,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleEnum, decodeConsoleStatus } from '../../consoleDecode';
 import type { ApiCredentialScope } from './apiKeyScopeCatalog';
 
 export interface DashboardConsoleApiKey {
@@ -94,7 +95,7 @@ function decodeApiKey(raw: unknown): DashboardConsoleApiKey | null {
   if (!id || !orgId) return null;
   return {
     id,
-    kind: String(row.kind || '').trim() === 'publishable_key' ? 'publishable_key' : 'secret_key',
+    kind: decodeConsoleEnum(row.kind, ['secret_key', 'publishable_key'], 'API key kind'),
     orgId,
     name: String(row.name || '').trim() || id,
     environmentId: String(row.environmentId || '').trim(),
@@ -105,7 +106,7 @@ function decodeApiKey(raw: unknown): DashboardConsoleApiKey | null {
     quotaBucket: row.quotaBucket == null ? null : String(row.quotaBucket || '').trim(),
     riskPolicy: readJsonObject(row.riskPolicy),
     paymentPolicy: readJsonObject(row.paymentPolicy),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     secretVersion: Number(row.secretVersion || 0),
     credentialPreview: String(row.secretPreview || '').trim(),
     createdAt: String(row.createdAt || '').trim(),

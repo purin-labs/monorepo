@@ -8,6 +8,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '@core/dashboard/consoleHttp';
+import { decodeConsoleEnum } from '@core/dashboard/consoleDecode';
 import { buildWalletAcceptHeaders, buildWalletJsonHeaders } from '../consoleWalletHttp';
 
 export interface DashboardConsolePolicy {
@@ -136,21 +137,22 @@ function decodeSimulationDenyReasons(
   return out;
 }
 
+const POLICY_KINDS: readonly DashboardConsolePolicy['kind'][] = ['TRANSACTION', 'GAS_SPONSORSHIP'];
+
+const POLICY_STATUSES: readonly DashboardConsolePolicy['status'][] = [
+  'DRAFT',
+  'PUBLISHED',
+  'ARCHIVED',
+];
+
 function decodePolicy(raw: unknown): DashboardConsolePolicy | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
   const id = String(row.id || '').trim();
   const orgId = String(row.orgId || '').trim();
   if (!id || !orgId) return null;
-  const statusRaw = String(row.status || '')
-    .trim()
-    .toUpperCase();
-  const status =
-    statusRaw === 'ARCHIVED' ? 'ARCHIVED' : statusRaw === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
-  const kindRaw = String(row.kind || '')
-    .trim()
-    .toUpperCase();
-  const kind = kindRaw === 'GAS_SPONSORSHIP' ? 'GAS_SPONSORSHIP' : 'TRANSACTION';
+  const status = decodeConsoleEnum(row.status, POLICY_STATUSES, 'policy status');
+  const kind = decodeConsoleEnum(row.kind, POLICY_KINDS, 'policy kind');
   const rulesRaw =
     row.rules && typeof row.rules === 'object' && !Array.isArray(row.rules)
       ? (row.rules as Record<string, unknown>)
@@ -176,15 +178,8 @@ function decodePolicyVersion(raw: unknown): DashboardConsolePolicyVersion | null
   const row = raw as Record<string, unknown>;
   const policyId = String(row.policyId || '').trim();
   if (!policyId) return null;
-  const statusRaw = String(row.status || '')
-    .trim()
-    .toUpperCase();
-  const status =
-    statusRaw === 'ARCHIVED' ? 'ARCHIVED' : statusRaw === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
-  const kindRaw = String(row.kind || '')
-    .trim()
-    .toUpperCase();
-  const kind = kindRaw === 'GAS_SPONSORSHIP' ? 'GAS_SPONSORSHIP' : 'TRANSACTION';
+  const status = decodeConsoleEnum(row.status, POLICY_STATUSES, 'policy status');
+  const kind = decodeConsoleEnum(row.kind, POLICY_KINDS, 'policy kind');
   const rulesRaw =
     row.rules && typeof row.rules === 'object' && !Array.isArray(row.rules)
       ? (row.rules as Record<string, unknown>)

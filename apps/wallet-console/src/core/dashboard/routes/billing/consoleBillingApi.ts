@@ -17,6 +17,11 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import {
+  decodeConsoleEnum,
+  decodeConsoleMinorAmount,
+  decodeConsoleStatus,
+} from '../../consoleDecode';
 
 export interface DashboardBillingOverview {
   usageMetricVersion: string;
@@ -518,6 +523,25 @@ const BILLING_CREDIT_PACK_IDS: readonly DashboardBillingCreditPackId[] = [
   'usd_50',
 ];
 
+const BILLING_ACCOUNT_ACTIVITY_TYPES: readonly DashboardBillingAccountActivityEventType[] = [
+  'CREDIT_PURCHASE',
+  'USAGE_DEBIT',
+  'PRODUCT_EXECUTION_DEBIT',
+  'PLAN_BASE_CHARGE',
+  'PLAN_USAGE_CHARGE',
+  'INVOICE_PAYMENT',
+  'MANUAL_ADJUSTMENT',
+  'REFUND',
+  'DISPUTE_OPENED',
+  'DISPUTE_WON',
+];
+
+const BILLING_ACTOR_TYPES: readonly DashboardBillingAccountActivityEntry['actorType'][] = [
+  'USER',
+  'SYSTEM',
+  'PROVIDER',
+];
+
 export class DashboardBillingApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -757,9 +781,9 @@ function decodeInvoice(raw: unknown): DashboardBillingInvoice | null {
   return {
     id,
     documentType: parseBillingDocumentType(documentTypeRaw),
-    status: String(row.status || '').trim() || 'OPEN',
-    amountDueMinor: Number(row.amountDueMinor || 0),
-    amountPaidMinor: Number(row.amountPaidMinor || 0),
+    status: decodeConsoleStatus(row.status),
+    amountDueMinor: decodeConsoleMinorAmount(row.amountDueMinor, 'invoice amountDueMinor'),
+    amountPaidMinor: decodeConsoleMinorAmount(row.amountPaidMinor, 'invoice amountPaidMinor'),
     periodMonthUtc: String(row.periodMonthUtc || '').trim(),
     dueAt: row.dueAt == null ? null : String(row.dueAt || '').trim() || null,
     createdAt: String(row.createdAt || '').trim(),
@@ -807,8 +831,8 @@ function decodeInvoiceLineItem(raw: unknown): DashboardBillingInvoiceLineItem | 
     itemType: String(row.itemType || '').trim(),
     description: String(row.description || '').trim(),
     quantity: Number(row.quantity || 0),
-    unitAmountMinor: Number(row.unitAmountMinor || 0),
-    amountMinor: Number(row.amountMinor || 0),
+    unitAmountMinor: decodeConsoleMinorAmount(row.unitAmountMinor, 'line item unitAmountMinor'),
+    amountMinor: decodeConsoleMinorAmount(row.amountMinor, 'line item amountMinor'),
     periodMonthUtc: String(row.periodMonthUtc || '').trim(),
   };
 }
@@ -839,7 +863,7 @@ function decodeStripeCheckoutSession(raw: unknown): DashboardStripeCheckoutSessi
     url,
     customerRef,
     creditPackId,
-    amountMinor: Number(row.amountMinor || 0),
+    amountMinor: decodeConsoleMinorAmount(row.amountMinor, 'checkout session amountMinor'),
     expiresAt,
   };
 }
@@ -858,7 +882,7 @@ function decodeCreditPurchase(raw: unknown): DashboardBillingCreditPurchase | nu
     id,
     orgId,
     creditPackId,
-    amountMinor: Number(row.amountMinor || 0),
+    amountMinor: decodeConsoleMinorAmount(row.amountMinor, 'credit purchase amountMinor'),
     currency: 'USD',
     provider: 'stripe',
     createdAt: String(row.createdAt || '').trim(),
@@ -931,7 +955,7 @@ function decodeBillingRefund(raw: unknown): DashboardBillingRefund | null {
     id,
     orgId,
     purchaseId,
-    amountMinor: Number(row.amountMinor || 0),
+    amountMinor: decodeConsoleMinorAmount(row.amountMinor, 'refund amountMinor'),
     currency: 'USD',
     reason,
     origin,
@@ -996,7 +1020,10 @@ function decodeBillingRefundResult(raw: unknown): DashboardBillingRefundResult |
   return {
     created: row.created === true,
     refund,
-    creditBalanceMinor: Number(row.creditBalanceMinor || 0),
+    creditBalanceMinor: decodeConsoleMinorAmount(
+      row.creditBalanceMinor,
+      'refund creditBalanceMinor',
+    ),
   };
 }
 
@@ -1024,31 +1051,24 @@ function decodeInvoiceActivityEntry(raw: unknown): DashboardBillingInvoiceActivi
   const invoiceId = String(row.invoiceId || '').trim();
   const toState = String(row.toState || '').trim();
   if (!id || !invoiceId || !toState) return null;
-  const type = String(row.type || '')
-    .trim()
-    .toUpperCase();
-  const actorType = String(row.actorType || '')
-    .trim()
-    .toUpperCase();
   return {
     id,
-    type: type === 'LEDGER' ? 'LEDGER' : 'DOCUMENT',
+    type: decodeConsoleEnum(row.type, ['DOCUMENT', 'LEDGER'], 'invoice activity type'),
     invoiceId,
     fromState: row.fromState == null ? null : String(row.fromState || '').trim() || null,
     toState,
     occurredAt: String(row.occurredAt || '').trim(),
-    actorType: actorType === 'USER' || actorType === 'PROVIDER' ? actorType : 'SYSTEM',
+    actorType: decodeConsoleEnum(row.actorType, BILLING_ACTOR_TYPES, 'invoice activity actorType'),
     actorUserId: row.actorUserId == null ? null : String(row.actorUserId || '').trim() || null,
     reason: row.reason == null ? null : String(row.reason || '').trim() || null,
     sourceEventId:
       row.sourceEventId == null ? null : String(row.sourceEventId || '').trim() || null,
     summary: String(row.summary || '').trim() || toState,
-    visibility:
-      String(row.visibility || '')
-        .trim()
-        .toUpperCase() === 'INTERNAL'
-        ? 'INTERNAL'
-        : 'CUSTOMER',
+    visibility: decodeConsoleEnum(
+      row.visibility,
+      ['CUSTOMER', 'INTERNAL'],
+      'invoice activity visibility',
+    ),
   };
 }
 
@@ -1074,28 +1094,11 @@ export function parseDashboardBillingAccountActivityEntry(
   const id = String(row.id || '').trim();
   const orgId = String(row.orgId || '').trim();
   if (!id || !orgId) return null;
-  const actorType = String(row.actorType || '')
-    .trim()
-    .toUpperCase();
-  const eventType = String(row.type || '')
-    .trim()
-    .toUpperCase();
   return {
     id,
     orgId,
-    type:
-      eventType === 'CREDIT_PURCHASE' ||
-      eventType === 'USAGE_DEBIT' ||
-      eventType === 'PRODUCT_EXECUTION_DEBIT' ||
-      eventType === 'PLAN_BASE_CHARGE' ||
-      eventType === 'PLAN_USAGE_CHARGE' ||
-      eventType === 'INVOICE_PAYMENT' ||
-      eventType === 'REFUND' ||
-      eventType === 'DISPUTE_OPENED' ||
-      eventType === 'DISPUTE_WON'
-        ? eventType
-        : 'MANUAL_ADJUSTMENT',
-    amountMinor: Number(row.amountMinor || 0),
+    type: decodeConsoleEnum(row.type, BILLING_ACCOUNT_ACTIVITY_TYPES, 'billing activity type'),
+    amountMinor: decodeConsoleMinorAmount(row.amountMinor, 'billing activity amountMinor'),
     currency: 'USD',
     description: String(row.description || '').trim(),
     monthUtc: row.monthUtc == null ? null : String(row.monthUtc || '').trim() || null,
@@ -1105,7 +1108,7 @@ export function parseDashboardBillingAccountActivityEntry(
       row.relatedPurchaseId == null ? null : String(row.relatedPurchaseId || '').trim() || null,
     sourceEventId:
       row.sourceEventId == null ? null : String(row.sourceEventId || '').trim() || null,
-    actorType: actorType === 'USER' || actorType === 'PROVIDER' ? actorType : 'SYSTEM',
+    actorType: decodeConsoleEnum(row.actorType, BILLING_ACTOR_TYPES, 'billing activity actorType'),
     actorUserId: row.actorUserId == null ? null : String(row.actorUserId || '').trim() || null,
     reasonCode: row.reasonCode == null ? null : String(row.reasonCode || '').trim() || null,
     note: row.note == null ? null : String(row.note || '').trim() || null,
@@ -1126,7 +1129,7 @@ function decodePlatformBillingOrganization(
     id,
     name: String(row.name || '').trim() || id,
     slug: String(row.slug || '').trim(),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
   };
 }
 
@@ -1140,7 +1143,7 @@ function decodePlatformBillingProject(raw: unknown): DashboardPlatformBillingPro
     orgId: String(row.orgId || '').trim(),
     name: String(row.name || '').trim() || id,
     slug: String(row.slug || '').trim(),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     environmentCount: Number(row.environmentCount || 0),
   };
 }
@@ -1165,8 +1168,14 @@ function decodePlatformBillingAccountSummary(
     organization,
     ownerEmails: decodeEmailList(row.ownerEmails),
     balance: {
-      creditBalanceMinor: Number(balance.creditBalanceMinor || 0),
-      lowBalanceThresholdMinor: Number(balance.lowBalanceThresholdMinor || 0),
+      creditBalanceMinor: decodeConsoleMinorAmount(
+        balance.creditBalanceMinor,
+        'billing account creditBalanceMinor',
+      ),
+      lowBalanceThresholdMinor: decodeConsoleMinorAmount(
+        balance.lowBalanceThresholdMinor,
+        'billing account lowBalanceThresholdMinor',
+      ),
     },
   };
 }
@@ -1194,7 +1203,10 @@ function decodeBillingManualAdjustmentResult(
   return {
     created: row.created === true,
     adjustment,
-    creditBalanceMinor: Number(row.creditBalanceMinor || 0),
+    creditBalanceMinor: decodeConsoleMinorAmount(
+      row.creditBalanceMinor,
+      'manual adjustment creditBalanceMinor',
+    ),
   };
 }
 

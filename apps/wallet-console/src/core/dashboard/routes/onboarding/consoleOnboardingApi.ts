@@ -5,6 +5,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleStatus } from '../../consoleDecode';
 
 export type DashboardOnboardingStep = 'organization' | 'project' | 'complete';
 export type DashboardOnboardingTelemetryOperation = 'state' | 'organization' | 'project';
@@ -201,7 +202,7 @@ function decodeOrganization(raw: unknown): DashboardOnboardingOrganization | nul
     id,
     name: toTrimmedString(row.name) || id,
     slug: toTrimmedString(row.slug),
-    status: toTrimmedString(row.status) || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
   };
 }
 
@@ -423,7 +424,7 @@ function decodeCreateProjectResult(raw: unknown): DashboardCreateOnboardingProje
       id: projectId,
       name: toTrimmedString(projectRow.name) || projectId,
       slug: toTrimmedString(projectRow.slug),
-      status: toTrimmedString(projectRow.status) || 'ACTIVE',
+      status: decodeConsoleStatus(projectRow.status),
     },
     created: {
       project: toSafeBoolean(createdRow.project),
@@ -454,7 +455,7 @@ function decodeCreateOrganizationResult(
       id: organizationId,
       name: toTrimmedString(organizationRow.name) || organizationId,
       slug: toTrimmedString(organizationRow.slug),
-      status: toTrimmedString(organizationRow.status) || 'ACTIVE',
+      status: decodeConsoleStatus(organizationRow.status),
     },
     created: {
       organization: toSafeBoolean(createdRow.organization),

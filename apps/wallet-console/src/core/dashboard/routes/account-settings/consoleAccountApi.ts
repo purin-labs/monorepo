@@ -6,6 +6,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleStatus } from '../../consoleDecode';
 
 export interface DashboardAccountBackupEmail {
   email: string;
@@ -379,7 +380,7 @@ function parseOrganization(raw: unknown): DashboardAccountOrganization | null {
     id,
     name: name || id,
     slug,
-    status: status || 'ACTIVE',
+    status: decodeConsoleStatus(status),
     createdAt,
     updatedAt,
     isCurrentOrg,

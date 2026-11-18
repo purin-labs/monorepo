@@ -6,6 +6,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from './consoleHttp';
+import { decodeConsoleStatus } from './consoleDecode';
 
 export const DASHBOARD_ENVIRONMENTS_UPDATED_EVENT = 'dashboard:wallet-environments-updated';
 
@@ -83,7 +84,7 @@ function decodeOrganization(raw: unknown): DashboardConsoleOrganization | null {
     id,
     name: String(row.name || '').trim() || id,
     slug: String(row.slug || '').trim(),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     createdAt: String(row.createdAt || '').trim(),
     updatedAt: String(row.updatedAt || '').trim(),
   };
@@ -98,7 +99,7 @@ function decodeProject(raw: unknown): DashboardConsoleProject | null {
     id,
     name: String(row.name || '').trim() || id,
     slug: String(row.slug || '').trim(),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     createdAt: String(row.createdAt || '').trim(),
     updatedAt: String(row.updatedAt || '').trim(),
   };
@@ -124,7 +125,7 @@ function decodeEnvironment(raw: unknown): DashboardConsoleEnvironment | null {
     projectId,
     key: String(row.key || '').trim(),
     name: String(row.name || '').trim() || id,
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     walletSessionLimits: decodeWalletSessionLimits(row.walletSessionLimits),
     createdAt: String(row.createdAt || '').trim(),
     updatedAt: String(row.updatedAt || '').trim(),
