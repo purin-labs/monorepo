@@ -14,15 +14,19 @@ import {
   type DashboardConsoleEnvironment,
   type DashboardWalletSessionLimits,
 } from '@core/dashboard/consoleContextApi';
+import {
+  DEFAULT_TENANT_WALLET_SESSION_LIMITS,
+  MAX_WALLET_SESSION_REMAINING_USES,
+  MAX_WALLET_SESSION_TTL_MS,
+} from '@seams/wallet/advanced';
 import './walletSessions.css';
 
 const DAY_MS = 86_400_000;
-// The wallet gateway owns these numbers (DEFAULT_TENANT_WALLET_SESSION_LIMITS and the
-// platform ceiling in @seams/wallet-server). The Console route checks each value again.
-const DEFAULT_SIGNATURES = 100;
-const DEFAULT_DAYS = 30;
-const MAX_SIGNATURES = 1_000_000;
-const MAX_DAYS = 30;
+// The wallet gateway's own numbers. The Console route checks each value again.
+const DEFAULT_SIGNATURES = DEFAULT_TENANT_WALLET_SESSION_LIMITS.maxRemainingUses;
+const DEFAULT_DAYS = DEFAULT_TENANT_WALLET_SESSION_LIMITS.maxTtlMs / DAY_MS;
+const MAX_SIGNATURES = MAX_WALLET_SESSION_REMAINING_USES;
+const MAX_DAYS = MAX_WALLET_SESSION_TTL_MS / DAY_MS;
 
 const countFormat = new Intl.NumberFormat(consoleLocale, { maximumFractionDigits: 2 });
 
