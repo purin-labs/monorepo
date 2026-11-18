@@ -812,7 +812,15 @@ class D1ConsoleSponsorshipSpendCapServiceImpl implements ConsoleSponsorshipSpend
           disposition: 'replayed',
         };
       }
-      if (isSpendCapExceededError(error) || isD1UniqueConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
+        // Not a replay of this event (checked above), so not a spend-cap refusal either.
+        throw new ConsoleSponsorshipSpendCapError(
+          'reservation_conflict',
+          409,
+          'The spend-cap reservation conflicts with a stored reservation of another event',
+        );
+      }
+      if (isSpendCapExceededError(error)) {
         await throwSpendCapExceededFromBucket({
           database: this.state.database,
           bucket: {
