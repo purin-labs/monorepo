@@ -13,6 +13,7 @@ import {
 import type * as ApiKeysApi from '../../apps/wallet-console/src/core/dashboard/routes/api-keys/consoleApiKeysApi';
 import type * as BillingApi from '../../apps/wallet-console/src/core/dashboard/routes/billing/consoleBillingApi';
 import type * as ApprovalsApi from '../../apps/wallet-console/src/products/wallet/approvals/consoleApprovalsApi';
+import type * as PoliciesApi from '../../apps/wallet-console/src/products/wallet/policy-engine/consolePoliciesApi';
 
 const appRoot = path.resolve(import.meta.dirname, '../../apps/wallet-console');
 const CONSOLE_BASE_URL = 'https://console.example.test';
@@ -190,6 +191,57 @@ test('an approval decision or status that is not known is an error, not APPROVE 
   restore = answerConsoleRequests({ ok: true, approvals: [{ ...approval, status: undefined }] });
   try {
     await expect(api.listDashboardApprovals()).rejects.toThrow('has no approval status');
+  } finally {
+    restore();
+  }
+});
+
+test('the policy simulator refuses a decision it does not know and keeps an unknown deny code', async () => {
+  const api = await loadConsoleModule<typeof PoliciesApi>(
+    'src/products/wallet/policy-engine/consolePoliciesApi.ts',
+  );
+  const simulation = {
+    policyId: 'pol_1',
+    decision: 'DENY',
+    denyReasons: [
+      { code: 'CHAIN_NOT_ALLOWED', message: 'Chain 1 is not allowed' },
+      { code: 'VELOCITY_LIMIT_EXCEEDED', message: 'Too many calls' },
+      { code: 'GEOFENCE' },
+    ],
+    evaluatedAt: '2026-11-18T00:00:00.000Z',
+    policyVersion: 3,
+    normalizedRequest: { action: 'transfer' },
+  };
+  const simulate = () => api.simulateDashboardPolicy({ policyId: 'pol_1', action: 'transfer' });
+
+  let restore = answerConsoleRequests({ ok: true, simulation });
+  try {
+    const result = await simulate();
+    expect(result.decision).toBe('DENY');
+    expect(result.denyReasons).toEqual([
+      { code: 'CHAIN_NOT_ALLOWED', message: 'Chain 1 is not allowed' },
+      { code: 'VELOCITY_LIMIT_EXCEEDED', message: 'Too many calls' },
+      { code: 'GEOFENCE', message: '' },
+    ]);
+  } finally {
+    restore();
+  }
+
+  for (const decision of ['MAYBE', 'allow ', undefined]) {
+    restore = answerConsoleRequests({ ok: true, simulation: { ...simulation, decision } });
+    try {
+      await expect(simulate()).rejects.toThrow('policy simulation decision');
+    } finally {
+      restore();
+    }
+  }
+
+  restore = answerConsoleRequests({
+    ok: true,
+    simulation: { ...simulation, denyReasons: [{ message: 'No code' }] },
+  });
+  try {
+    await expect(simulate()).rejects.toThrow('has no policy deny reason code');
   } finally {
     restore();
   }
