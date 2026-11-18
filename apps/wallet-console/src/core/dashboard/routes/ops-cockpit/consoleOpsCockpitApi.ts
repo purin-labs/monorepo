@@ -4,6 +4,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleEnum } from '../../consoleDecode';
 
 export type DashboardOpsCockpitSectionState = 'ok' | 'not_configured' | 'forbidden' | 'error';
 
@@ -223,11 +224,10 @@ function decodeIsolationRequest(raw: unknown): DashboardOpsCockpitIsolationReque
 function decodeOnboardingAlert(raw: unknown): DashboardOpsCockpitOnboardingAlert | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
-  const severityRaw = toTrimmedString(row.severity).toUpperCase();
   return {
     code: toTrimmedString(row.code),
     operation: toTrimmedString(row.operation),
-    severity: severityRaw === 'CRITICAL' ? 'CRITICAL' : 'WARN',
+    severity: decodeConsoleEnum(row.severity, ['WARN', 'CRITICAL'], 'onboarding alert severity'),
     message: toTrimmedString(row.message),
   };
 }

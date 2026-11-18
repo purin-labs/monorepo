@@ -4,6 +4,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleEnum } from '../../consoleDecode';
 
 export type DashboardConsoleAuditCategory =
   | 'POLICY'
@@ -82,9 +83,6 @@ function decodeAuditEvent(raw: unknown): DashboardConsoleAuditEvent | null {
   if (!id || !orgId || !actorUserId || !CATEGORY_SET.has(category) || !OUTCOME_SET.has(outcome)) {
     return null;
   }
-  const actorType = String(row.actorType || '')
-    .trim()
-    .toUpperCase();
   return {
     id,
     orgId,
@@ -94,7 +92,7 @@ function decodeAuditEvent(raw: unknown): DashboardConsoleAuditEvent | null {
     policyName: String(row.policyName || '').trim() || null,
     policyKind: decodePolicyKind(row.policyKind),
     actorUserId,
-    actorType: actorType === 'SYSTEM' ? 'SYSTEM' : 'USER',
+    actorType: decodeConsoleEnum(row.actorType, ['USER', 'SYSTEM'], 'audit actorType'),
     category,
     action: String(row.action || '').trim(),
     outcome,

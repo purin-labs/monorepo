@@ -1220,11 +1220,12 @@ function decodePlatformBillingLookupResult(
   const activity = decodeAccountActivity(row.activity);
   const refundsRaw = Array.isArray(row.refunds) ? row.refunds : null;
   if (!organization || !overview || !activity || !refundsRaw) return null;
-  const resolvedByRaw = String(row.resolvedBy || '')
-    .trim()
-    .toLowerCase();
   return {
-    resolvedBy: resolvedByRaw === 'project_id' ? 'project_id' : 'org_id',
+    resolvedBy: decodeConsoleEnum(
+      row.resolvedBy,
+      ['org_id', 'project_id'],
+      'platform billing resolvedBy',
+    ),
     organization,
     ownerEmails: decodeEmailList(row.ownerEmails),
     project: row.project == null ? null : decodePlatformBillingProject(row.project),
