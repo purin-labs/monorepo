@@ -270,6 +270,30 @@ test.describe('console policy rules parser and evaluator', () => {
     );
   });
 
+  test('a near delegate action whose methods are not a list of names never allows every method', async () => {
+    const rules = (methods: unknown) => ({
+      kind: 'near_delegate',
+      executionMode: 'near_delegate',
+      scopeType: 'ENVIRONMENT',
+      environmentId: 'env_1',
+      enabled: true,
+      networkClass: 'TESTNET',
+      allowedDelegateActions: [
+        { receiverId: 'token.testnet', methods, maxDepositYocto: '1', allowTransfers: false },
+      ],
+    });
+    for (const methods of ['ft_transfer', ['ft_transfer', ''], [' '], [5], {}]) {
+      await expectPolicyError(
+        () => parseConsolePolicyRulesInput(rules(methods), 'GAS_SPONSORSHIP'),
+        'invalid_body',
+      );
+      const stored = parseStoredConsolePolicyRules(rules(methods), 'GAS_SPONSORSHIP');
+      expect(stored.allowedDelegateActions).toEqual([]);
+    }
+    const named = parseConsolePolicyRulesInput(rules([' ft_transfer ']), 'GAS_SPONSORSHIP');
+    expect(named.allowedDelegateActions[0]?.methods).toEqual(['ft_transfer']);
+  });
+
   test('near gas sponsorship publish validation accepts concrete spend caps and rejects ambiguous ones', async () => {
     const nearTestnetChainId = getNearSpendCapChainId('TESTNET');
     const nearRules = parseConsolePolicyRulesInput(
