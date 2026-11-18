@@ -206,7 +206,15 @@ function syncAuthMenuContainerLock(
 // The wallet client sets this on the menu's anchor once the hosted menu paints there.
 const HOSTED_MENU_PLACEHOLDER_OPACITY_VAR = '--seams-auth-menu-placeholder-opacity';
 
-type DemoMenuPhase = 'preview' | 'opening' | 'live';
+// The hosted menu starts at the preview's height, and keeps that start for its whole life.
+type DemoMenuPhase =
+  | { readonly kind: 'preview' }
+  | { readonly kind: 'opening' | 'live'; readonly previewHeightCssPx: number };
+
+const PREVIEW_PHASE: DemoMenuPhase = { kind: 'preview' };
+
+// The preview is the hosted menu's placeholder, so the menu draws none of its own.
+const NO_PLACEHOLDER = <></>;
 
 function hostedMenuHasPainted(anchor: HTMLElement): boolean {
   return anchor.style.getPropertyValue(HOSTED_MENU_PLACEHOLDER_OPACITY_VAR) === '0';
@@ -216,17 +224,21 @@ function finishOpeningWhenHostedMenuPaints(
   anchor: HTMLElement,
   setPhase: React.Dispatch<React.SetStateAction<DemoMenuPhase>>,
 ): void {
-  if (hostedMenuHasPainted(anchor)) setPhase('live');
+  if (hostedMenuHasPainted(anchor)) setPhase(finishOpening);
 }
 
-// The preview stays over the hosted menu's skeleton until the menu paints, so a
-// visitor never sees the skeleton between the two.
+function finishOpening(phase: DemoMenuPhase): DemoMenuPhase {
+  return phase.kind === 'opening' ? { ...phase, kind: 'live' } : phase;
+}
+
+// The preview stays until the hosted menu paints over it, so a visitor sees one
+// card the whole time.
 function watchHostedMenuPaint(
   containerRef: React.RefObject<HTMLDivElement | null>,
-  phase: DemoMenuPhase,
+  phaseKind: DemoMenuPhase['kind'],
   setPhase: React.Dispatch<React.SetStateAction<DemoMenuPhase>>,
 ): () => void {
-  if (phase !== 'opening') return noop;
+  if (phaseKind !== 'opening') return noop;
   const anchor = containerRef.current?.querySelector<HTMLElement>('[data-seams-auth-menu-host]');
   if (!anchor) return noop;
   const check = finishOpeningWhenHostedMenuPaints.bind(null, anchor, setPhase);
@@ -236,18 +248,28 @@ function watchHostedMenuPaint(
   return observer.disconnect.bind(observer);
 }
 
-function startOpening(phase: DemoMenuPhase): DemoMenuPhase {
-  return phase === 'preview' ? 'opening' : phase;
+function startOpening(previewHeightCssPx: number, phase: DemoMenuPhase): DemoMenuPhase {
+  return phase.kind === 'preview' ? { kind: 'opening', previewHeightCssPx } : phase;
+}
+
+function startDemo(
+  setPhase: React.Dispatch<React.SetStateAction<DemoMenuPhase>>,
+  previewHeightCssPx: number,
+): void {
+  setPhase(startOpening.bind(null, previewHeightCssPx));
 }
 
 export function HostedPasskeyLoginMenu(props: HostedPasskeyLoginMenuProps) {
   const authMenuContainerRef = React.useRef<HTMLDivElement>(null);
   // A landing visitor sees a preview until they use the demo; only then does the
   // wallet host load its runtime and the page load the Google script.
-  const [phase, setPhase] = React.useState<DemoMenuPhase>('preview');
-  const startDemo = React.useCallback(() => setPhase(startOpening), []);
+  const [phase, setPhase] = React.useState<DemoMenuPhase>(PREVIEW_PHASE);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  React.useEffect(watchHostedMenuPaint.bind(null, authMenuContainerRef, phase, setPhase), [phase]);
+  const onPreviewUse = React.useCallback(startDemo.bind(null, setPhase), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(watchHostedMenuPaint.bind(null, authMenuContainerRef, phase.kind, setPhase), [
+    phase.kind,
+  ]);
   // Effect bodies are standalone to keep the component readable.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(subscribeToHostedAuthMenuErrors.bind(null, authMenuContainerRef), []);
@@ -265,7 +287,7 @@ export function HostedPasskeyLoginMenu(props: HostedPasskeyLoginMenuProps) {
   const [googleSsoReadiness, setGoogleSsoReadiness] = React.useState<GoogleSsoReadiness>({
     kind: 'checking',
   });
-  const demoInUse = phase !== 'preview';
+  const demoInUse = phase.kind !== 'preview';
   React.useEffect(() => {
     if (!demoInUse) return;
     let cancelled = false;
@@ -316,16 +338,18 @@ export function HostedPasskeyLoginMenu(props: HostedPasskeyLoginMenuProps) {
     >
       {walletLockState.kind === 'idle' ? (
         <div className="landing-auth-menu-stack">
-          {phase === 'live' ? null : (
+          {phase.kind === 'live' ? null : (
             <AuthMenuPreview
               initialMode={resolvedInitialMode}
-              usable={phase === 'preview'}
-              onUse={startDemo}
+              usable={phase.kind === 'preview'}
+              onUse={onPreviewUse}
             />
           )}
-          {phase === 'preview' ? null : (
+          {phase.kind === 'preview' ? null : (
             <HostedSeamsAuthMenu
               initialMode={resolvedInitialMode}
+              initialHeightCssPx={phase.previewHeightCssPx}
+              placeholder={NO_PLACEHOLDER}
               registrationAccountInput="implicit_wallet"
               showRegistrationInput={false}
               externalAuthBroker={externalAuthBroker}

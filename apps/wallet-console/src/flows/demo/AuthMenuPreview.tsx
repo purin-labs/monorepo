@@ -14,8 +14,11 @@ type AuthMenuPreviewProps = {
   readonly initialMode: HostedAuthMenuMode;
   /** False while the hosted menu opens over it: the preview is then only a picture. */
   readonly usable: boolean;
-  /** Called on the first use of the preview; the caller then mounts the hosted menu. */
-  readonly onUse: () => void;
+  /**
+   * Called on the first use of the preview, with the preview's height. The caller
+   * then mounts the hosted menu at that height.
+   */
+  readonly onUse: (previewHeightCssPx: number) => void;
 };
 
 const PREVIEW_APPEARANCE: AppearanceConfig = SITE_APPEARANCE;
@@ -66,6 +69,15 @@ function previewViewModel(initialMode: HostedAuthMenuMode) {
   return viewModel;
 }
 
+function reportUse(
+  parentRef: React.RefObject<HTMLDivElement | null>,
+  onUse: AuthMenuPreviewProps['onUse'],
+): void {
+  // The layout height: the hero's scale transform changes the painted height only,
+  // and the hosted menu's anchor takes its height in layout pixels.
+  if (parentRef.current) onUse(parentRef.current.offsetHeight);
+}
+
 function mountPreview(
   parentRef: React.RefObject<HTMLDivElement | null>,
   initialMode: HostedAuthMenuMode,
@@ -94,9 +106,11 @@ function syncPreviewInert(parentRef: React.RefObject<HTMLDivElement | null>, usa
 
 export function AuthMenuPreview({ initialMode, usable, onUse }: AuthMenuPreviewProps) {
   const parentRef = React.useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const use = React.useCallback(reportUse.bind(null, parentRef, onUse), [onUse]);
   // The preview mounts once per mode.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  React.useEffect(mountPreview.bind(null, parentRef, initialMode, onUse), [initialMode]);
+  React.useEffect(mountPreview.bind(null, parentRef, initialMode, use), [initialMode]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(syncPreviewInert.bind(null, parentRef, usable), [usable]);
   return (
@@ -104,9 +118,9 @@ export function AuthMenuPreview({ initialMode, usable, onUse }: AuthMenuPreviewP
       ref={parentRef}
       className="landing-auth-menu-preview"
       aria-hidden={usable ? undefined : true}
-      onPointerEnter={usable ? onUse : undefined}
-      onPointerDown={usable ? onUse : undefined}
-      onKeyDown={usable ? onUse : undefined}
+      onPointerEnter={usable ? use : undefined}
+      onPointerDown={usable ? use : undefined}
+      onKeyDown={usable ? use : undefined}
     />
   );
 }
