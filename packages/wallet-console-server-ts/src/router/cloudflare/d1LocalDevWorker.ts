@@ -47,6 +47,7 @@ import { attachConsoleRouteSurface } from '@seams-internal/console-server/router
 import { resolveCompleteWalletConsoleRouteSurface } from '../walletConsoleRouteDefinitions';
 import {
   createCloudflareD1RouterApiAuthService,
+  createProjectEnvironmentWalletSessionLimits,
   LocalRegistrationSetupAuthority,
   D1WalletObjectAddresses,
   WalletHomeCustodyBinding,
@@ -1720,12 +1721,24 @@ function localD1RouterApiAuthServiceOptions(
     env.RELAYER_PUBLIC_KEY ||
     (env.RELAYER_PRIVATE_KEY ? undefined : env.SEAMS_LOCAL_RELAYER_PUBLIC_KEY);
   const tenantRootCustodyLineage = localTenantRootCustodyLineageResolver(env);
+  const namespace = localTenantStorageNamespace(env);
+  const projectId = localConsoleProjectId(env);
+  const envId = localConsoleEnvironmentId(env);
   return {
     database: env.SIGNER_DB,
-    namespace: localTenantStorageNamespace(env),
+    namespace,
     orgId,
-    projectId: localConsoleProjectId(env),
-    envId: localConsoleEnvironmentId(env),
+    projectId,
+    envId,
+    // The tenant's Wallet Session maximum, from the local Console, as on the gateway.
+    walletSessionLimits: createProjectEnvironmentWalletSessionLimits({
+      resolver: createWalletProjectEnvironmentResolver({
+        database: env.CONSOLE_DB,
+        namespace,
+        deploymentId: LOCAL_TENANT_DEPLOYMENT_LANE,
+      }),
+      scope: { orgId, projectId, envId },
+    }),
     relayerAccount: env.RELAYER_ACCOUNT_ID || env.SEAMS_LOCAL_RELAYER_ACCOUNT,
     relayerPublicKey,
     relayerPrivateKey,

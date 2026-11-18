@@ -3,20 +3,20 @@ import type { Locale } from './locale';
 export const messages = {
   companyName: { en: 'Company', ja: '会社名' },
   homePageTitle: {
-    en: 'Seams Atelier: the operating system for modern bakeries & cafés',
-    ja: 'Seams Atelier：モダンなベーカリーとカフェのためのOS',
+    en: 'Seams Pantry: the operating system for modern bakeries & cafés',
+    ja: 'Seams Pantry：モダンなベーカリーとカフェのためのOS',
   },
   homeDescription: {
-    en: 'Seams Atelier: the operating system for modern bakeries & cafés. Sous Chef agents run the online shop, the inbox and the bake plan. Changes that matter wait for your approval.',
-    ja: 'Seams Atelier：モダンなベーカリーとカフェのためのOS。Sous Chefエージェントが、オンラインショップ、受信箱、生産計画を運営します。重要な変更はあなたの承認を待ちます。',
+    en: 'Seams Pantry: the operating system for modern bakeries & cafés. Sous Chef agents run the online shop, the inbox and the bake plan. Changes that matter wait for your approval.',
+    ja: 'Seams Pantry：モダンなベーカリーとカフェのためのOS。Sous Chefエージェントが、オンラインショップ、受信箱、生産計画を運営します。重要な変更はあなたの承認を待ちます。',
   },
   ecommercePageTitle: {
-    en: 'Seams Atelier | Sous Chef agents that run your café’s shop',
-    ja: 'Seams Atelier | カフェのショップを運営するSous Chefエージェント',
+    en: 'Seams Pantry | Sous Chef agents that run your café’s shop',
+    ja: 'Seams Pantry | カフェのショップを運営するSous Chefエージェント',
   },
   ecommerceDescription: {
-    en: 'Seams Atelier connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work in Slack and in the Portal, and every action leaves a receipt.',
-    ja: 'Seams Atelierは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルで働き、すべての操作に記録が残ります。',
+    en: 'Seams Pantry connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work in Slack and in the Portal, and every action leaves a receipt.',
+    ja: 'Seams Pantryは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルで働き、すべての操作に記録が残ります。',
   },
   companyPageTitle: { en: 'Company | Seams', ja: '企業情報 | Seams' },
   companyTitle: {
@@ -24,8 +24,8 @@ export const messages = {
     ja: 'カフェと\u200bパティスリーを\u200b運営する\u200bエージェントを\u200bつくる。',
   },
   companyDescription: {
-    en: 'Seams makes Seams Atelier, the operating system for modern bakeries and cafés, in which Sous Chef agents run the online shop, the inbox and the bake plan. The owner approves each change that matters, and every action leaves a receipt.',
-    ja: 'Seamsは、モダンなベーカリーとカフェのためのOS「Seams Atelier」をつくっています。Sous Chefエージェントがオンラインショップ、受信箱、生産計画を運営し、重要な変更はオーナーが承認します。すべての操作に記録が残ります。',
+    en: 'Seams makes Seams Pantry, the operating system for modern bakeries and cafés, in which Sous Chef agents run the online shop, the inbox and the bake plan. The owner approves each change that matters, and every action leaves a receipt.',
+    ja: 'Seamsは、モダンなベーカリーとカフェのためのOS「Seams Pantry」をつくっています。Sous Chefエージェントがオンラインショップ、受信箱、生産計画を運営し、重要な変更はオーナーが承認します。すべての操作に記録が残ります。',
   },
   contactSales: { en: 'Contact sales', ja: '営業に相談' },
   satyrCopy: {
@@ -33,8 +33,8 @@ export const messages = {
     ja: 'エージェントがオンラインショップ、メニュー、注文、決済、受信箱を運営します。Slackとポータルで、設定した上限の範囲内で動きます。',
   },
   exploreSatyr: {
-    en: 'Explore Seams Atelier',
-    ja: 'Seams Atelierを見る',
+    en: 'Explore Seams Pantry',
+    ja: 'Seams Pantryを見る',
   },
   bakeryCopy: {
     en: 'Orders and preorders become production runs. One run shows as a workflow, a timeline of ovens and staff, and a 3D view of the bakery.',
@@ -107,8 +107,8 @@ export const messages = {
   socials: { en: 'Socials', ja: 'ソーシャル' },
   company: { en: 'Company', ja: '企業情報' },
   theSuite: {
-    en: 'Inside Atelier',
-    ja: 'Atelierの機能',
+    en: 'Inside Pantry',
+    ja: 'Pantryの機能',
   },
   agentWorkflows: {
     en: 'Agent workflows',
@@ -139,8 +139,8 @@ export const messages = {
   openMenu: { en: 'Open menu', ja: 'メニューを開く' },
   closeMenu: { en: 'Close menu', ja: 'メニューを閉じる' },
   satyrProduct: {
-    en: 'Seams Atelier',
-    ja: 'Seams Atelier',
+    en: 'Seams Pantry',
+    ja: 'Seams Pantry',
   },
   satyrNav: {
     en: 'Agents run the online shop, the inbox and the café',
@@ -151,16 +151,16 @@ export const messages = {
     ja: 'ストアとカフェの接続、上限の設定、エージェントの運用',
   },
   satyrTour: {
-    en: 'See Seams Atelier run a café',
-    ja: 'Seams Atelierがカフェを運営する様子を見る',
+    en: 'See Seams Pantry run a café',
+    ja: 'Seams Pantryがカフェを運営する様子を見る',
   },
   satyrTourCopy: {
     en: 'The shop, the inbox, approvals and the bake plan',
     ja: 'ショップ、受信箱、承認、生産計画',
   },
   bakeryNav: {
-    en: 'Production runs for bakeries, inside Atelier',
-    ja: 'Atelierの中で動くベーカリーの生産計画',
+    en: 'Production runs for bakeries, inside Pantry',
+    ja: 'Pantryの中で動くベーカリーの生産計画',
   },
   bakeryDocs: {
     en: 'Production runs for bakeries. Docs are coming soon.',
@@ -195,8 +195,8 @@ export const messages = {
   workEmail: { en: 'Work email', ja: '仕事用メールアドレス' },
   projectDetails: { en: 'Project details', ja: 'プロジェクトの詳細' },
   projectPlaceholder: {
-    en: 'What do you sell, and where can Seams Atelier help?',
-    ja: '販売している商品と、Seams Atelierで解決したいことをお聞かせください。',
+    en: 'What do you sell, and where can Seams Pantry help?',
+    ja: '販売している商品と、Seams Pantryで解決したいことをお聞かせください。',
   },
   emailSales: { en: 'Email sales', ja: 'メールで営業に相談' },
   salesSubject: {

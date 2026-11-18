@@ -2050,14 +2050,22 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
       if (routePolicy) return routePolicy;
       const environmentId = decodePathPart(environmentSettingMatch[1]);
       const body = await readJson(ctx.request);
-      const request =
-        environmentSettingMatch[2] === 'external-auth'
-          ? parseUpdateConsoleWalletEnvironmentRequest({ externalAuth: body })
-          : parseUpdateWalletSessionLimitsRequest(body);
-      return walletEnvironmentResponse(
+      const externalAuth = environmentSettingMatch[2] === 'external-auth';
+      const request = externalAuth
+        ? parseUpdateConsoleWalletEnvironmentRequest({ externalAuth: body })
+        : parseUpdateWalletSessionLimitsRequest(body);
+      const updated = await walletEnvironments.updateEnvironment(
+        environmentContext,
         environmentId,
-        await walletEnvironments.updateEnvironment(environmentContext, environmentId, request),
+        request,
       );
+      await auditWalletEnvironmentChange(
+        ctx,
+        auth.claims,
+        externalAuth ? 'environment.external_auth.update' : 'environment.wallet_session_limits.update',
+        updated,
+      );
+      return walletEnvironmentResponse(environmentId, updated);
     }
     if (ctx.method === 'GET' && ctx.pathname === '/console/environments') {
       const request = parseListConsoleWalletEnvironmentsRequest({
@@ -2094,6 +2102,7 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
         await ensureBillingReadyForLiveEnvironment(ctx.billing, toBillingContext(auth.claims));
       }
       const environment = await walletEnvironments.createEnvironment(environmentContext, request);
+      await auditWalletEnvironmentChange(ctx, auth.claims, 'environment.create', environment);
       return json(
         { ok: true, environment: serializeWalletEnvironment(environment) },
         { status: 201 },
@@ -2105,20 +2114,25 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
       if (routePolicy) return routePolicy;
       const environmentId = decodePathPart(environmentPatchMatch[1]);
       const request = parseUpdateConsoleWalletEnvironmentRequest(await readJson(ctx.request));
-      return walletEnvironmentResponse(
+      const updated = await walletEnvironments.updateEnvironment(
+        environmentContext,
         environmentId,
-        await walletEnvironments.updateEnvironment(environmentContext, environmentId, request),
+        request,
       );
+      await auditWalletEnvironmentChange(ctx, auth.claims, 'environment.update', updated);
+      return walletEnvironmentResponse(environmentId, updated);
     }
 
     if (ctx.method === 'POST' && environmentArchiveMatch) {
       const routePolicy = requireConsoleRoutePolicy(ctx, auth.claims);
       if (routePolicy) return routePolicy;
       const environmentId = decodePathPart(environmentArchiveMatch[1]);
-      return walletEnvironmentResponse(
+      const archived = await walletEnvironments.archiveEnvironment(
+        environmentContext,
         environmentId,
-        await walletEnvironments.archiveEnvironment(environmentContext, environmentId),
       );
+      await auditWalletEnvironmentChange(ctx, auth.claims, 'environment.archive', archived);
+      return walletEnvironmentResponse(environmentId, archived);
     }
   } catch (error: unknown) {
     if (isConsoleBillingError(error)) return sendBillingError(error);
@@ -2126,6 +2140,42 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
   }
 
   return new Response('Not Found', { status: 404 });
+}
+
+const WALLET_ENVIRONMENT_AUDIT_SUMMARIES = {
+  'environment.create': 'Created environment',
+  'environment.update': 'Updated environment',
+  'environment.archive': 'Archived environment',
+  'environment.external_auth.update': 'Changed the external authentication of environment',
+  'environment.wallet_session_limits.update': 'Changed the Wallet Session maximum of environment',
+} as const;
+
+/**
+ * Records one change to an environment, with the settings that it now has. A
+ * change that found no environment records nothing; its response says why.
+ */
+async function auditWalletEnvironmentChange(
+  ctx: CloudflareConsoleContext,
+  claims: ConsoleAuditActorScope,
+  action: keyof typeof WALLET_ENVIRONMENT_AUDIT_SUMMARIES,
+  environment: ConsoleWalletEnvironment | null,
+): Promise<void> {
+  if (!environment) return;
+  await emitConsoleAuditEvent(ctx, claims, {
+    category: 'ORG_PROJECT_ENV',
+    action,
+    summary: `${WALLET_ENVIRONMENT_AUDIT_SUMMARIES[action]} ${environment.id}`,
+    projectId: environment.projectId,
+    environmentId: environment.id,
+    metadata: {
+      status: environment.status,
+      externalAuth: {
+        kind: environment.externalAuth.kind,
+        revision: environment.externalAuth.revision,
+      },
+      walletSessionLimits: environment.walletSessionLimits,
+    },
+  });
 }
 
 function walletEnvironmentResponse(

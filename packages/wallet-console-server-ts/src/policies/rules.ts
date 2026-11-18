@@ -567,14 +567,8 @@ function readGasAllowedDelegateActions(
       continue;
     }
     const receiverId = String(entry.receiverId || '').trim();
-    const methodsRaw = Array.isArray(entry.methods) ? entry.methods : [];
-    const methods = Array.from(
-      new Set(
-        methodsRaw
-          .map((value) => (typeof value === 'string' ? value.trim() : ''))
-          .filter((value) => Boolean(value)),
-      ),
-    );
+    const methods = readGasDelegateActionMethods(entry.methods, mode);
+    if (methods === null) continue;
     const maxDepositYocto = readUnsignedBigIntString(
       entry.maxDepositYocto,
       'allowedDelegateActions[].maxDepositYocto',
@@ -606,6 +600,31 @@ function readGasAllowedDelegateActions(
     });
   }
   return out;
+}
+
+/**
+ * The method allow-list of one delegate action. An absent list or [] allows any
+ * method, so a value that is not a list of method names must never become []:
+ * a request is refused, and a stored entry is skipped (null).
+ */
+function readGasDelegateActionMethods(raw: unknown, mode: ParseMode): string[] | null {
+  if (raw === undefined || raw === null) return [];
+  const names: string[] = [];
+  if (Array.isArray(raw)) {
+    for (const value of raw) {
+      if (typeof value !== 'string' || !value.trim()) break;
+      names.push(value.trim());
+    }
+  }
+  if (!Array.isArray(raw) || names.length !== raw.length) {
+    if (mode === 'request') {
+      throw invalidRulesError(
+        'Policy rule allowedDelegateActions[].methods must be an array of method names',
+      );
+    }
+    return null;
+  }
+  return Array.from(new Set(names));
 }
 
 function readGasSpendCapMode(

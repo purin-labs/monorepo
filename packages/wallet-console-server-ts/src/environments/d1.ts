@@ -673,12 +673,15 @@ export async function createD1ConsoleWalletEnvironmentService(
             );
       const externalAuthJson =
         request.externalAuth === undefined ? null : JSON.stringify(request.externalAuth);
+      // The route parsed the request; store exactly its two fields.
+      const limits = request.walletSessionLimits;
       const walletSessionLimitsJson =
-        request.walletSessionLimits == null
+        limits == null
           ? null
-          : JSON.stringify(
-              parseWalletSessionLimits(request.walletSessionLimits, 'walletSessionLimits'),
-            );
+          : JSON.stringify({
+              maxTtlMs: limits.maxTtlMs,
+              maxRemainingUses: limits.maxRemainingUses,
+            });
       await database
         .prepare(
           `UPDATE environments

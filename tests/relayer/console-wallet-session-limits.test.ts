@@ -8,6 +8,8 @@ import {
   createCloudflareConsoleRouter,
   type ConsoleAuthClaims,
 } from '@seams-internal/wallet-console-server/router/cloudflare-adaptor';
+import { createInMemoryConsoleAuditService } from '../../packages/console-server-ts/src/audit';
+import type { ConsoleAuditService } from '../../packages/console-server-ts/src/audit/service';
 import { createD1ConsoleWalletEnvironmentService } from '../../packages/wallet-console-server-ts/src/environments/d1';
 import type { ConsoleWalletEnvironmentService } from '../../packages/wallet-console-server-ts/src/environments/service';
 import { callCf, makeConsoleAuthAdapter } from './helpers';
@@ -102,11 +104,13 @@ function putLimits(
   claims: ConsoleAuthClaims,
   environmentId: string,
   body: unknown,
+  audit?: ConsoleAuditService,
 ) {
   return callCf(
     createCloudflareConsoleRouter({
       auth: makeConsoleAuthAdapter(claims),
       walletEnvironments: environments,
+      ...(audit ? { audit } : {}),
     }),
     {
       method: 'PUT',
@@ -167,6 +171,47 @@ test('an owner sets, reads and clears the Wallet Session limits of one environme
   expect(cleared.json?.environment).toMatchObject({ id: developmentId, walletSessionLimits: null });
   expect(await storedLimits(environments, developmentId)).toBeNull();
   expect(await storedLimits(environments, productionId)).toEqual(ceiling);
+});
+
+test('each change of the limits writes an audit event with the new value', async () => {
+  const { environments } = await environmentFixture();
+  const audit = createInMemoryConsoleAuditService({ seedDemoData: false });
+
+  const set = await putLimits(environments, OWNER, developmentId, { walletSessionLimits: oneWeek }, audit);
+  expect(set.status, set.text).toBe(200);
+  const cleared = await putLimits(
+    environments,
+    OWNER,
+    developmentId,
+    { walletSessionLimits: null },
+    audit,
+  );
+  expect(cleared.status, cleared.text).toBe(200);
+  // A refused change writes nothing.
+  const refused = await putLimits(
+    environments,
+    OWNER,
+    developmentId,
+    { walletSessionLimits: { maxTtlMs: 0, maxRemainingUses: 1 } },
+    audit,
+  );
+  expect(refused.status, refused.text).toBe(400);
+
+  const events = await audit.listEvents({ orgId, actorUserId: 'owner' }, {});
+  const changes = events
+    .filter((event) => event.action === 'environment.wallet_session_limits.update')
+    .map((event) => ({
+      environmentId: event.environmentId,
+      actorUserId: event.actorUserId,
+      walletSessionLimits: (event.metadata as { walletSessionLimits: unknown }).walletSessionLimits,
+    }));
+  expect(changes).toHaveLength(2);
+  expect(changes).toEqual(
+    expect.arrayContaining([
+      { environmentId: developmentId, actorUserId: 'owner', walletSessionLimits: oneWeek },
+      { environmentId: developmentId, actorUserId: 'owner', walletSessionLimits: null },
+    ]),
+  );
 });
 
 test('only an owner or an admin with projects.manage sets the limits', async () => {

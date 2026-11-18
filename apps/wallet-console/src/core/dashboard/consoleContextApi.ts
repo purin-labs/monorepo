@@ -1,3 +1,4 @@
+import { parseWalletSessionLimits } from '@seams/wallet/advanced';
 import {
   buildConsoleAcceptHeaders,
   buildConsoleJsonHeaders,
@@ -103,16 +104,13 @@ function decodeProject(raw: unknown): DashboardConsoleProject | null {
   };
 }
 
-function decodePositiveInteger(value: unknown): number | null {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
-}
-
+/**
+ * The gateway's own parser. A value that does not parse is an error, so the
+ * page never shows a bad setting as "uses the defaults".
+ */
 function decodeWalletSessionLimits(raw: unknown): DashboardWalletSessionLimits | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const row = raw as Record<string, unknown>;
-  const maxTtlMs = decodePositiveInteger(row.maxTtlMs);
-  const maxRemainingUses = decodePositiveInteger(row.maxRemainingUses);
-  return maxTtlMs && maxRemainingUses ? { maxTtlMs, maxRemainingUses } : null;
+  if (raw === undefined || raw === null) return null;
+  return parseWalletSessionLimits(raw, 'walletSessionLimits');
 }
 
 function decodeEnvironment(raw: unknown): DashboardConsoleEnvironment | null {
