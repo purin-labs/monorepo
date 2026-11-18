@@ -89,16 +89,16 @@ export function IntegrationsWindow(): React.JSX.Element {
         <p className="h2-window__title"># cafe-ops</p>
         <div className="h2-chat">
           <div className="h2-chat__bubble">
-            <small>Seams Atelier · APP · 09:14</small>
+            <small>Seams Pantry · APP · 09:14</small>
             {text.request}
           </div>
           <div className="h2-chat__bubble">
-            <small>Seams Atelier · APP · 09:14</small>
+            <small>Seams Pantry · APP · 09:14</small>
             {text.rule}
           </div>
           <div className="h2-chat__bubble h2-chat__bubble--reply">{text.approved}</div>
           <div className="h2-chat__bubble">
-            <small>Seams Atelier · APP · 09:31</small>
+            <small>Seams Pantry · APP · 09:31</small>
             {text.brief}
           </div>
         </div>
@@ -121,7 +121,7 @@ export type HeroLink = { label: string; to: string };
 /* Compact product forks under the CTAs, each on its own moving gradient chip,
    with the same fields as the navbar's product rows. */
 const productForks: readonly { label: string; to: string; field: GrainFieldName }[] = [
-  { label: 'Seams Atelier', to: '/ecommerce', field: 'azure-coral' },
+  { label: 'Seams Pantry', to: '/ecommerce', field: 'azure-coral' },
   { label: 'Kitchen', to: '/ecommerce#kitchen', field: 'apricot-beam' },
   { label: 'Wallet', to: '/wallet', field: 'teal-peach' },
 ];
