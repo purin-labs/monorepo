@@ -271,10 +271,10 @@ function buildFrontend(site, component, walletLanes) {
     writeCompanyCutoverFiles(site);
     assertFile(path.join(COMPANY_OUTPUT, 'index.html'), 'Company site entry');
     assertFile(path.join(COMPANY_OUTPUT, 'ja', 'index.html'), 'Japanese home entry');
-    assertFile(path.join(COMPANY_OUTPUT, 'ecommerce', 'index.html'), 'Seams Atelier page entry');
+    assertFile(path.join(COMPANY_OUTPUT, 'ecommerce', 'index.html'), 'Seams Pantry page entry');
     assertFile(
       path.join(COMPANY_OUTPUT, 'ja', 'ecommerce', 'index.html'),
-      'Japanese Seams Atelier entry',
+      'Japanese Seams Pantry entry',
     );
     assertFile(path.join(COMPANY_OUTPUT, 'ja', 'company', 'index.html'), 'Japanese company entry');
     assertFile(path.join(COMPANY_OUTPUT, 'sitemap.xml'), 'Company site sitemap');

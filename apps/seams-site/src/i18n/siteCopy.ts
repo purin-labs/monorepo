@@ -1,8 +1,8 @@
 import type { Locale } from './locale';
 
-/* The copy of the home page, the Seams Atelier page and the 404 page. English
+/* The copy of the home page, the Seams Pantry page and the 404 page. English
    is the source; Japanese must fill the same shape, so a missing string fails
-   the type check. Product and area names (Seams Atelier, Sous Chef, Kitchen,
+   the type check. Product and area names (Seams Pantry, Sous Chef, Kitchen,
    Seams Wallet, Slack) and
    Portal screenshots stay in English. A `rest` string follows a bold `lead`
    with no space added, so English starts it with a space and Japanese does not. */
@@ -14,7 +14,7 @@ const Z = '\u200b';
 const en = {
   common: {
     talkToUs: 'Talk to us',
-    exploreSatyr: 'Explore Seams Atelier',
+    exploreSatyr: 'Explore Seams Pantry',
     exploreKitchen: 'Explore the Kitchen',
     exploreWallet: 'Explore Seams Wallet',
     readDocs: 'Read the docs',
@@ -22,7 +22,7 @@ const en = {
     productViews: 'Product views',
   },
   homeHero: {
-    title: 'Seams Atelier:',
+    title: 'Seams Pantry:',
     titleMuted: 'the operating system for modern bakeries & cafés.',
     sub: 'Sous Chef agents run your shop, inbox and bake plan. Changes that matter wait for your approval.',
   },
@@ -32,26 +32,26 @@ const en = {
     views: 'Product views',
     explore: 'Explore {name}',
     features: '{name} features',
-    tabs: { satyr: 'Seams Atelier', kitchen: 'Kitchen' },
+    tabs: { satyr: 'Seams Pantry', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: 'Replies wait for you',
         body: 'An agent drafts each customer reply and shows its sources. Nothing is sent until you approve it.',
-        alt: 'The Inbox in Atelier with a reply that an agent drafted for a customer',
+        alt: 'The Inbox in Pantry with a reply that an agent drafted for a customer',
       },
       activity: {
         title: 'Every Case of the day',
         body: 'See what each agent works on, and which Cases wait for a person.',
-        alt: 'The Activity timeline in Atelier with three Cases that wait for a person',
+        alt: 'The Activity timeline in Pantry with three Cases that wait for a person',
       },
       orders: {
         title: 'Orders that need you',
         body: 'Agents check each order against your rules. When one fails, you see why, with an email ready to approve.',
-        alt: 'The Orders page in Atelier with two orders that need a person',
+        alt: 'The Orders page in Pantry with two orders that need a person',
       },
       plan: {
         title: 'Orders become a bake plan',
-        body: 'Atelier turns the day’s orders into batches, steps and times for the kitchen.',
+        body: 'Pantry turns the day’s orders into batches, steps and times for the kitchen.',
         alt: 'Kitchen: the 3D bakery above the production timeline',
       },
       batch: {
@@ -68,7 +68,7 @@ const en = {
   },
   duo: {
     title: 'From the shop to the oven',
-    copy: 'Atelier runs the sales side of the business, and its Kitchen plans what you bake. Both work from the same orders.',
+    copy: 'Pantry runs the sales side of the business, and its Kitchen plans what you bake. Both work from the same orders.',
     satyr:
       'Agents run the online shop, menus, orders, payments and the inbox. Changes wait for your approval in Slack or in the Portal.',
     kitchen:
@@ -82,25 +82,25 @@ const en = {
   pillars: {
     title: 'One operating system for the whole business',
     sub: 'The online shop, the inbox and the kitchen work from the same orders.',
-    tablist: 'Atelier areas',
+    tablist: 'Pantry areas',
     items: {
       shop: {
         label: 'Shop and menus',
         lead: 'Menus, products and the storefront.',
         rest: ' Agents draft menus and product descriptions with you, and publish a menu when you approve it.',
-        alt: 'The Checkout page in Atelier: how customers buy from the café’s storefront',
+        alt: 'The Checkout page in Pantry: how customers buy from the café’s storefront',
       },
       orders: {
         label: 'Orders and payments',
         lead: 'Orders, payments, refunds and gift cards.',
         rest: ' Card payments go to your own Stripe or Square account. Ask in Slack for a brief on failed payments and late orders.',
-        alt: 'The Orders page in Atelier: two orders that a shop rule holds, each with one action, above the orders that are on track',
+        alt: 'The Orders page in Pantry: two orders that a shop rule holds, each with one action, above the orders that are on track',
       },
       inbox: {
         label: 'Inbox',
         lead: 'Customer and supplier mail, answered.',
         rest: ' The inbox agent drafts each reply with the sources it used, and links each sender to the right customer or supplier.',
-        alt: 'The Inbox in Atelier: a reply that an agent drafted waits for approval',
+        alt: 'The Inbox in Pantry: a reply that an agent drafted waits for approval',
       },
       production: {
         label: 'Production',
@@ -112,7 +112,7 @@ const en = {
         label: 'Vault',
         lead: 'Logins and keys that agents use but never see.',
         rest: ' Keep them in Seams Vault or in your own 1Password.',
-        alt: 'The Vault page in Atelier: logins and API keys that agents use',
+        alt: 'The Vault page in Pantry: logins and API keys that agents use',
       },
     },
   },
@@ -151,7 +151,7 @@ const en = {
       },
       money: {
         title: 'Money moves only from the Portal',
-        copy: 'A chat card cannot approve a refund or a payment. The approval happens in the Portal, and Atelier keeps the provider’s confirmation.',
+        copy: 'A chat card cannot approve a refund or a payment. The approval happens in the Portal, and Pantry keeps the provider’s confirmation.',
       },
       roles: {
         title: 'Roles',
@@ -189,7 +189,7 @@ const en = {
     },
     flow: {
       label: 'A gift box order flowing through checks into the bake plan and a confirmation email',
-      tag: 'Atelier · gift box order',
+      tag: 'Pantry · gift box order',
       newOrder: 'New order',
       giftBoxes: 'Gift boxes ×12',
       giftNote: '¥64,800 · pickup Sat 10:30',
@@ -212,7 +212,7 @@ const en = {
   },
   production: {
     title: 'Kitchen: from orders to the oven',
-    sub: 'Kitchen is the production workspace inside Atelier. It turns orders and preorders into production runs, and it shows one run in three views.',
+    sub: 'Kitchen is the production workspace inside Pantry. It turns orders and preorders into production runs, and it shows one run in three views.',
     items: {
       workflow: {
         title: 'Workflow canvas',
@@ -239,11 +239,11 @@ const en = {
     home: {
       title: 'Put agents to work in your café',
       sub: 'We connect the shop, Slack and your mailbox with you, and we set the first approval rules together.',
-      secondary: 'Explore Seams Atelier',
+      secondary: 'Explore Seams Pantry',
     },
     ecommerce: {
-      title: 'See Atelier run your shop',
-      sub: 'Tell us what you sell and where. We show you Atelier on your own shop.',
+      title: 'See Pantry run your shop',
+      sub: 'Tell us what you sell and where. We show you Pantry on your own shop.',
       secondary: 'See the integrations',
     },
   },
@@ -257,9 +257,9 @@ const en = {
     },
     items: {
       whatIsSatyr: {
-        q: 'What is Seams Atelier?',
-        a: 'Seams Atelier is the operating system for modern bakeries and cafés. Sous Chef agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
-        more: 'Explore Seams Atelier',
+        q: 'What is Seams Pantry?',
+        a: 'Seams Pantry is the operating system for modern bakeries and cafés. Sous Chef agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
+        more: 'Explore Seams Pantry',
       },
       agents: {
         q: 'What can the agents do?',
@@ -277,12 +277,12 @@ const en = {
         more: '',
       },
       tools: {
-        q: 'Which tools does Atelier connect to?',
+        q: 'Which tools does Pantry connect to?',
         a: 'Slack, Gmail, Shopify, Square, Stripe, Google Drive, Dropbox, Notion and Airtable. Card payments go to your own Stripe or Square account.',
         more: 'Integrations',
       },
       models: {
-        q: 'Which AI models does Atelier use?',
+        q: 'Which AI models does Pantry use?',
         a: 'You choose. Sign in with your ChatGPT account, add your own OpenAI API key, or use the models that Seams provides.',
         more: '',
       },
@@ -295,19 +295,19 @@ const en = {
   },
   ecommerceHero: {
     title: 'Agents that run your café’s shop, inside your rules',
-    sub: 'Seams Atelier connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
-    secondary: 'See inside Atelier',
+    sub: 'Seams Pantry connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
+    secondary: 'See inside Pantry',
     scenes: 'Product scenes',
     previous: 'Previous product scene',
     next: 'Next product scene',
     views: {
       portal: {
         label: 'Portal',
-        alt: 'The Agents page in Atelier: the café’s merchant agent has a suggested change for review',
+        alt: 'The Agents page in Pantry: the café’s merchant agent has a suggested change for review',
       },
       activity: {
         label: 'Activity',
-        alt: 'The Activity timeline in Atelier: three Cases wait for a person, and a card shows the steps of a refund request',
+        alt: 'The Activity timeline in Pantry: three Cases wait for a person, and a card shows the steps of a refund request',
       },
       inbox: {
         label: 'Inbox',
@@ -344,7 +344,7 @@ export type SiteCopy = typeof en;
 const ja: SiteCopy = {
   common: {
     talkToUs: 'ご相談はこちら',
-    exploreSatyr: 'Seams Atelierを見る',
+    exploreSatyr: 'Seams Pantryを見る',
     exploreKitchen: 'Kitchenを見る',
     exploreWallet: 'Seams Walletを見る',
     readDocs: 'ドキュメントを読む',
@@ -352,7 +352,7 @@ const ja: SiteCopy = {
     productViews: '製品の画面',
   },
   homeHero: {
-    title: 'Seams Atelier：',
+    title: 'Seams Pantry：',
     titleMuted: `モダンな${Z}ベーカリーと${Z}カフェの${Z}ための${Z}OS。`,
     sub: 'Sous Chefエージェントが、ショップ、受信箱、生産計画を運営します。重要な変更は、あなたの承認を待ちます。',
   },
@@ -362,26 +362,26 @@ const ja: SiteCopy = {
     views: '製品の画面',
     explore: '{name}を見る',
     features: '{name}の機能',
-    tabs: { satyr: 'Seams Atelier', kitchen: 'Kitchen' },
+    tabs: { satyr: 'Seams Pantry', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: '返信はあなたの承認待ち',
         body: 'エージェントがお客様への返信を下書きし、根拠を示します。あなたが承認するまで送信しません。',
-        alt: 'エージェントがお客様への返信を下書きしたAtelierの受信箱',
+        alt: 'エージェントがお客様への返信を下書きしたPantryの受信箱',
       },
       activity: {
         title: '一日のすべてのケース',
         body: '各エージェントの作業と、人の対応を待つケースがわかります。',
-        alt: '人の対応を待つ3件のケースを表示したAtelierのアクティビティ',
+        alt: '人の対応を待つ3件のケースを表示したPantryのアクティビティ',
       },
       orders: {
         title: '対応が必要な注文',
         body: 'エージェントが各注文をあなたのルールで確認します。問題があれば理由と、承認するだけのメールを表示します。',
-        alt: '人の対応が必要な2件の注文を表示したAtelierの注文ページ',
+        alt: '人の対応が必要な2件の注文を表示したPantryの注文ページ',
       },
       plan: {
         title: '注文から生産計画へ',
-        body: 'Atelierがその日の注文を、キッチンのためのバッチ、工程、時刻に変えます。',
+        body: 'Pantryがその日の注文を、キッチンのためのバッチ、工程、時刻に変えます。',
         alt: 'Kitchen：生産タイムラインの上に3Dのベーカリー',
       },
       batch: {
@@ -398,7 +398,7 @@ const ja: SiteCopy = {
   },
   duo: {
     title: `ショップから${Z}オーブンまで`,
-    copy: 'Atelierが販売を担い、その中のKitchenが焼くものを計画します。どちらも同じ注文をもとに動きます。',
+    copy: 'Pantryが販売を担い、その中のKitchenが焼くものを計画します。どちらも同じ注文をもとに動きます。',
     satyr:
       'エージェントがオンラインショップ、メニュー、注文、決済、受信箱を運営します。変更はSlackかポータルで、あなたの承認を待ちます。',
     kitchen:
@@ -412,25 +412,25 @@ const ja: SiteCopy = {
   pillars: {
     title: `ビジネス全体を、${Z}ひとつの${Z}OSで`,
     sub: 'オンラインショップ、受信箱、キッチンが、同じ注文をもとに動きます。',
-    tablist: 'Atelierの領域',
+    tablist: 'Pantryの領域',
     items: {
       shop: {
         label: 'ショップとメニュー',
         lead: 'メニュー、商品、ストアフロント。',
         rest: 'エージェントがあなたと一緒にメニューと商品説明を下書きし、承認するとメニューを公開します。',
-        alt: 'Atelierのチェックアウトページ：お客様がカフェのストアフロントで購入する流れ',
+        alt: 'Pantryのチェックアウトページ：お客様がカフェのストアフロントで購入する流れ',
       },
       orders: {
         label: '注文と決済',
         lead: '注文、決済、返金、ギフトカード。',
         rest: 'カード決済はあなた自身のStripeまたはSquareのアカウントに入ります。決済の失敗や注文の遅れは、Slackで報告を依頼できます。',
-        alt: 'Atelierの注文ページ：ショップのルールで保留中の2件の注文と、順調な注文',
+        alt: 'Pantryの注文ページ：ショップのルールで保留中の2件の注文と、順調な注文',
       },
       inbox: {
         label: '受信箱',
         lead: 'お客様と仕入先のメールに対応。',
         rest: '受信箱のエージェントが、使った根拠とともに返信を下書きし、送信者を該当するお客様や仕入先に結びつけます。',
-        alt: 'Atelierの受信箱：エージェントが下書きした返信が承認を待っています',
+        alt: 'Pantryの受信箱：エージェントが下書きした返信が承認を待っています',
       },
       production: {
         label: '生産',
@@ -442,7 +442,7 @@ const ja: SiteCopy = {
         label: 'Vault',
         lead: 'エージェントが使い、中身は見ないログイン情報とキー。',
         rest: 'Seams Vault、またはあなたの1Passwordに保管します。',
-        alt: 'AtelierのVaultページ：エージェントが使うログイン情報とAPIキー',
+        alt: 'PantryのVaultページ：エージェントが使うログイン情報とAPIキー',
       },
     },
   },
@@ -481,7 +481,7 @@ const ja: SiteCopy = {
       },
       money: {
         title: 'お金はポータルからだけ動く',
-        copy: 'チャットのカードでは返金や支払いを承認できません。承認はポータルで行い、Atelierはプロバイダーの確認結果を保存します。',
+        copy: 'チャットのカードでは返金や支払いを承認できません。承認はポータルで行い、Pantryはプロバイダーの確認結果を保存します。',
       },
       roles: {
         title: 'ロール',
@@ -519,7 +519,7 @@ const ja: SiteCopy = {
     },
     flow: {
       label: 'ギフトボックスの注文が確認を経て、生産計画と確認メールに進む流れ',
-      tag: 'Atelier · ギフトボックスの注文',
+      tag: 'Pantry · ギフトボックスの注文',
       newOrder: '新しい注文',
       giftBoxes: 'ギフトボックス ×12',
       giftNote: '¥64,800 · 土曜 10:30 受け取り',
@@ -542,7 +542,7 @@ const ja: SiteCopy = {
   },
   production: {
     title: `Kitchen：${Z}注文から${Z}オーブンまで`,
-    sub: 'Kitchenは、Atelierの中の生産ワークスペースです。注文と予約から生産ランをつくり、ひとつのランを3つのビューで表示します。',
+    sub: 'Kitchenは、Pantryの中の生産ワークスペースです。注文と予約から生産ランをつくり、ひとつのランを3つのビューで表示します。',
     items: {
       workflow: {
         title: 'ワークフローキャンバス',
@@ -569,11 +569,11 @@ const ja: SiteCopy = {
     home: {
       title: `あなたの${Z}カフェで、${Z}エージェントを${Z}働かせよう`,
       sub: 'ショップ、Slack、メールボックスの接続をご一緒に行い、最初の承認ルールも一緒に設定します。',
-      secondary: 'Seams Atelierを見る',
+      secondary: 'Seams Pantryを見る',
     },
     ecommerce: {
-      title: `Atelierが${Z}あなたの${Z}ショップを${Z}運営する${Z}様子を見る`,
-      sub: '何を、どこで販売しているかをお聞かせください。あなたのショップでAtelierをご紹介します。',
+      title: `Pantryが${Z}あなたの${Z}ショップを${Z}運営する${Z}様子を見る`,
+      sub: '何を、どこで販売しているかをお聞かせください。あなたのショップでPantryをご紹介します。',
       secondary: '連携を見る',
     },
   },
@@ -587,9 +587,9 @@ const ja: SiteCopy = {
     },
     items: {
       whatIsSatyr: {
-        q: 'Seams Atelierとは？',
-        a: 'Seams Atelierは、モダンなベーカリーとカフェのためのOSです。Sous Chefエージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
-        more: 'Seams Atelierを見る',
+        q: 'Seams Pantryとは？',
+        a: 'Seams Pantryは、モダンなベーカリーとカフェのためのOSです。Sous Chefエージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
+        more: 'Seams Pantryを見る',
       },
       agents: {
         q: 'エージェントは何ができますか？',
@@ -607,12 +607,12 @@ const ja: SiteCopy = {
         more: '',
       },
       tools: {
-        q: 'Atelierはどのツールと連携しますか？',
+        q: 'Pantryはどのツールと連携しますか？',
         a: 'Slack、Gmail、Shopify、Square、Stripe、Google Drive、Dropbox、Notion、Airtableと連携します。カード決済は、あなた自身のStripeまたはSquareのアカウントに入ります。',
         more: '連携',
       },
       models: {
-        q: 'AtelierはどのAIモデルを使いますか？',
+        q: 'PantryはどのAIモデルを使いますか？',
         a: 'お選びいただけます。ChatGPTアカウントでサインインする、ご自身のOpenAI APIキーを追加する、またはSeamsが提供するモデルを使う、のいずれかです。',
         more: '',
       },
@@ -625,19 +625,19 @@ const ja: SiteCopy = {
   },
   ecommerceHero: {
     title: `あなたの${Z}ルールの中で、${Z}カフェの${Z}ショップを${Z}運営する${Z}エージェント`,
-    sub: 'Seams Atelierは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
-    secondary: 'Atelierの中を見る',
+    sub: 'Seams Pantryは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
+    secondary: 'Pantryの中を見る',
     scenes: '製品のシーン',
     previous: '前のシーン',
     next: '次のシーン',
     views: {
       portal: {
         label: 'ポータル',
-        alt: 'Atelierのエージェントページ：カフェのマーチャントエージェントが確認用の変更案を出しています',
+        alt: 'Pantryのエージェントページ：カフェのマーチャントエージェントが確認用の変更案を出しています',
       },
       activity: {
         label: 'アクティビティ',
-        alt: 'Atelierのアクティビティ：3件のケースが人の対応を待ち、カードに返金依頼の工程を表示しています',
+        alt: 'Pantryのアクティビティ：3件のケースが人の対応を待ち、カードに返金依頼の工程を表示しています',
       },
       inbox: {
         label: '受信箱',
