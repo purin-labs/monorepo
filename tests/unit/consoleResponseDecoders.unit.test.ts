@@ -13,6 +13,7 @@ import {
 import type * as ApiKeysApi from '../../apps/wallet-console/src/core/dashboard/routes/api-keys/consoleApiKeysApi';
 import type * as BillingApi from '../../apps/wallet-console/src/core/dashboard/routes/billing/consoleBillingApi';
 import type * as ApprovalsApi from '../../apps/wallet-console/src/products/wallet/approvals/consoleApprovalsApi';
+import type * as GasSponsorshipApi from '../../apps/wallet-console/src/products/wallet/gas-sponsorship/consoleGasSponsorshipApi';
 import type * as PoliciesApi from '../../apps/wallet-console/src/products/wallet/policy-engine/consolePoliciesApi';
 
 const appRoot = path.resolve(import.meta.dirname, '../../apps/wallet-console');
@@ -41,7 +42,10 @@ async function loadConsoleModule<T>(relativePath: string): Promise<T> {
             contents:
               args.path === '@core/runtime'
                 ? `export const getActiveFrontendDeployment = () => ({ consoleBaseUrl: '${CONSOLE_BASE_URL}' });`
-                : 'export const parseWalletSessionLimits = (value) => value;',
+                : [
+                    'export const parseWalletSessionLimits = (value) => value;',
+                    'export const keccak256Bytes = () => new Uint8Array(32);',
+                  ].join('\n'),
           }));
         },
       },
@@ -244,5 +248,49 @@ test('the policy simulator refuses a decision it does not know and keeps an unkn
     await expect(simulate()).rejects.toThrow('has no policy deny reason code');
   } finally {
     restore();
+  }
+});
+
+test('a gas sponsorship spend cap never reads as no cap or as a guessed period', async () => {
+  const api = await loadConsoleModule<typeof GasSponsorshipApi>(
+    'src/products/wallet/gas-sponsorship/consoleGasSponsorshipApi.ts',
+  );
+  const spendCap = {
+    mode: 'WALLET_CHAIN_TOTAL',
+    period: 'WEEKLY',
+    capsByChain: [{ chainId: 42_431, capMinor: 5_000 }],
+  };
+  const policyWith = (cap: unknown) => ({
+    id: 'pol_gas',
+    orgId: 'org_1',
+    kind: 'GAS_SPONSORSHIP',
+    status: 'PUBLISHED',
+    name: 'Gas',
+    rules: { kind: 'evm_call', allowedCalls: [], spendCap: cap },
+  });
+
+  let restore = answerConsoleRequests({ ok: true, policies: [policyWith(spendCap)] });
+  try {
+    const [policy] = await api.listDashboardGasSponsorshipPolicies();
+    expect(policy?.spendCap).toEqual(spendCap);
+  } finally {
+    restore();
+  }
+
+  const refused: Array<[unknown, string]> = [
+    [{ ...spendCap, mode: 'PER_WALLET' }, 'unknown gas sponsorship spendCap mode'],
+    [{ ...spendCap, mode: undefined }, 'has no gas sponsorship spendCap mode'],
+    [{ ...spendCap, period: 'DAILY' }, 'unknown gas sponsorship spendCap period'],
+    [{ ...spendCap, period: undefined }, 'has no gas sponsorship spendCap period'],
+    [undefined, 'has no gas sponsorship spendCap'],
+    [{ ...spendCap, capsByChain: [{ chainId: 42_431 }] }, 'spend cap capMinor'],
+  ];
+  for (const [cap, message] of refused) {
+    restore = answerConsoleRequests({ ok: true, policies: [policyWith(cap)] });
+    try {
+      await expect(api.listDashboardGasSponsorshipPolicies()).rejects.toThrow(message);
+    } finally {
+      restore();
+    }
   }
 });
