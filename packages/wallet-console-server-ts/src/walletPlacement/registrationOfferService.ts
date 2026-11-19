@@ -84,15 +84,6 @@ export async function handleRegistrationOfferCommand(
         }),
       });
     }
-    case 'complete': {
-      const input = object(raw.input);
-      return Response.json({
-        value: await store.complete({
-          attemptId: requiredString(input.attemptId),
-          walletId: requiredString(input.walletId),
-        }),
-      });
-    }
     case 'claimCandidate': {
       const input = object(raw.input);
       return Response.json({

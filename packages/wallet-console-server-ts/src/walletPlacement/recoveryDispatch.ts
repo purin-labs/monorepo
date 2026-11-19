@@ -74,7 +74,6 @@ function isRecoveryRoute(path: string): boolean {
     path === '/wallets/recovery/finalize' ||
     path === '/wallets/recovery/google/verify' ||
     path === '/wallets/recovery/email-otp/verify' ||
-    path === '/wallets/recovery/email-otp/release' ||
     path === '/wallets/recovery/google-email-otp/finalize'
   );
 }

@@ -86,7 +86,6 @@ export async function verifyRegionalRecoveryRouting({
       'finalize',
       'google/verify',
       'email-otp/verify',
-      'email-otp/release',
       'google-email-otp/finalize',
     ]) {
       const response = await ingress.fetch(
