@@ -28,6 +28,7 @@ import type {
   ListConsoleRuntimeSnapshotsRequest,
   PublishConsoleRuntimeSnapshotRequest,
 } from './types';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 const DEFAULT_RETENTION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const DEFAULT_RETENTION_PRUNE_INTERVAL_MS = 1000 * 60 * 5;
@@ -426,11 +427,6 @@ function readEffectiveAtMs(input: string | undefined, fallback: Date): number {
   return asDate.getTime();
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 function buildOutboxPayload(snapshot: ConsoleRuntimeSnapshot): Record<string, unknown> {
   return {
     eventType: 'runtime_snapshot.published.v1',
@@ -713,7 +709,7 @@ async function publishD1RuntimeSnapshot(
       return inserted;
     } catch (error: unknown) {
       lastError = error;
-      if (!isD1ConstraintError(error)) throw error;
+      if (!isD1UniqueConstraintError(error)) throw error;
     }
   }
   throw lastError instanceof Error ? lastError : new Error(String(lastError));

@@ -627,6 +627,15 @@ function readGasDelegateActionMethods(raw: unknown, mode: ParseMode): string[] |
   return Array.from(new Set(names));
 }
 
+/**
+ * A stored spend cap that this server cannot read exactly. The policy row is
+ * refused, so cap enforcement never turns off and a cap never gets a guessed
+ * window: the caller fails closed and nothing is sponsored under this policy.
+ */
+function unreadableStoredSpendCap(message: string): ConsolePolicyError {
+  return new ConsolePolicyError('invalid_stored_rules', 500, `Stored policy rule ${message}`);
+}
+
 function readGasSpendCapMode(
   raw: unknown,
   mode: ParseMode,
@@ -641,7 +650,7 @@ function readGasSpendCapMode(
         `Policy rule spendCap.mode must be one of ${Array.from(GAS_SPEND_CAP_MODES).join(', ')}`,
       );
     }
-    return 'NONE';
+    throw unreadableStoredSpendCap(`spendCap.mode is unknown: ${JSON.stringify(raw)}`);
   }
   return value;
 }
@@ -660,7 +669,7 @@ function readGasSpendCapPeriod(
         `Policy rule spendCap.period must be one of ${Array.from(GAS_SPEND_CAP_PERIODS).join(', ')}`,
       );
     }
-    return 'MONTHLY';
+    throw unreadableStoredSpendCap(`spendCap.period is unknown: ${JSON.stringify(raw)}`);
   }
   return value;
 }
@@ -677,13 +686,14 @@ function readGasSpendCap(raw: unknown, mode: ParseMode): ConsoleGasSponsorshipPo
     if (mode === 'request') {
       throw invalidRulesError('Policy rule spendCap must be a JSON object');
     }
-    return {
-      mode: 'NONE',
-      period: 'MONTHLY',
-      capsByChain: [],
-    };
+    throw unreadableStoredSpendCap(`spendCap is not a JSON object: ${JSON.stringify(raw)}`);
   }
   const modeValue = readGasSpendCapMode(raw.mode, mode);
+  const periodMissing = raw.period === undefined || raw.period === null || raw.period === '';
+  if (mode === 'storage' && modeValue !== 'NONE' && periodMissing) {
+    // The server always stores the period of a cap, so a cap without one is unreadable.
+    throw unreadableStoredSpendCap('spendCap.period is missing for an active cap');
+  }
   const capsRaw = raw.capsByChain;
   if (capsRaw !== undefined && capsRaw !== null && !Array.isArray(capsRaw)) {
     if (mode === 'request') {

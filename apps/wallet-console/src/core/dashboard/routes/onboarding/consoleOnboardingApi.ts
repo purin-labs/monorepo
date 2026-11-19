@@ -5,6 +5,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleEnum, decodeConsoleStatus } from '../../consoleDecode';
 
 export type DashboardOnboardingStep = 'organization' | 'project' | 'complete';
 export type DashboardOnboardingTelemetryOperation = 'state' | 'organization' | 'project';
@@ -201,7 +202,7 @@ function decodeOrganization(raw: unknown): DashboardOnboardingOrganization | nul
     id,
     name: toTrimmedString(row.name) || id,
     slug: toTrimmedString(row.slug),
-    status: toTrimmedString(row.status) || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
   };
 }
 
@@ -332,10 +333,11 @@ function buildDashboardCompleteOnboardingState(
 }
 
 function decodeTelemetryOperation(raw: unknown): DashboardOnboardingTelemetryOperation {
-  const operation = toTrimmedString(raw).toLowerCase();
-  if (operation === 'organization') return 'organization';
-  if (operation === 'project') return 'project';
-  return 'state';
+  return decodeConsoleEnum(
+    raw,
+    ['state', 'organization', 'project'],
+    'onboarding telemetry operation',
+  );
 }
 
 function decodeTelemetryOperationSnapshot(
@@ -369,16 +371,14 @@ function decodeTelemetryOperationSnapshot(
 function decodeTelemetryAlert(raw: unknown): DashboardOnboardingTelemetryAlert | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
-  const codeRaw = toTrimmedString(row.code) as DashboardOnboardingTelemetryAlertCode;
-  const code: DashboardOnboardingTelemetryAlertCode =
-    codeRaw === 'onboarding_error_rate_slo_breached'
-      ? 'onboarding_error_rate_slo_breached'
-      : 'onboarding_latency_slo_breached';
-  const severityRaw = toTrimmedString(row.severity).toUpperCase();
   return {
-    code,
+    code: decodeConsoleEnum(
+      row.code,
+      ['onboarding_latency_slo_breached', 'onboarding_error_rate_slo_breached'],
+      'onboarding alert code',
+    ),
     operation: decodeTelemetryOperation(row.operation),
-    severity: severityRaw === 'CRITICAL' ? 'CRITICAL' : 'WARN',
+    severity: decodeConsoleEnum(row.severity, ['WARN', 'CRITICAL'], 'onboarding alert severity'),
     message: toTrimmedString(row.message),
   };
 }
@@ -423,7 +423,7 @@ function decodeCreateProjectResult(raw: unknown): DashboardCreateOnboardingProje
       id: projectId,
       name: toTrimmedString(projectRow.name) || projectId,
       slug: toTrimmedString(projectRow.slug),
-      status: toTrimmedString(projectRow.status) || 'ACTIVE',
+      status: decodeConsoleStatus(projectRow.status),
     },
     created: {
       project: toSafeBoolean(createdRow.project),
@@ -454,7 +454,7 @@ function decodeCreateOrganizationResult(
       id: organizationId,
       name: toTrimmedString(organizationRow.name) || organizationId,
       slug: toTrimmedString(organizationRow.slug),
-      status: toTrimmedString(organizationRow.status) || 'ACTIVE',
+      status: decodeConsoleStatus(organizationRow.status),
     },
     created: {
       organization: toSafeBoolean(createdRow.organization),

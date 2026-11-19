@@ -21,6 +21,7 @@ import type {
   ListConsoleSponsoredCallRecordsRequest,
 } from './types';
 import type { ConsoleSponsoredCallContext, ConsoleSponsoredCallService } from './service';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 export const CONSOLE_SPONSORED_CALL_D1_RUNTIME = Symbol('consoleSponsoredCallD1Runtime');
 
@@ -357,11 +358,6 @@ function maybeAppendListFilter(input: {
 }): void {
   if (input.value === undefined || input.value === null || input.value === '') return;
   appendListFilter(input);
-}
-
-function isD1UniqueConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
 }
 
 function buildRecordInsertValues(input: {

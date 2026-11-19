@@ -18,6 +18,7 @@ import {
   d1ChangedRows,
   queryD1All,
   queryD1One,
+  isD1UniqueConstraintError,
   type D1Row,
 } from '../boundary';
 import type { D1DatabaseLike, D1PreparedStatementLike, D1ResultLike } from '../boundary';
@@ -315,11 +316,6 @@ function normalizeListLimit(input: number | undefined, fallback: number, max: nu
   const parsed = Number(input);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return Math.max(1, Math.min(max, Math.trunc(parsed)));
-}
-
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
 }
 
 function parseLedgerActorType(value: unknown): BillingLedgerEntry['actorType'] {
@@ -2263,7 +2259,7 @@ async function reconcileUsageDebitCoverageD1(input: {
       ...notificationStatements,
     ]);
   } catch (error: unknown) {
-    if (!isD1ConstraintError(error)) throw error;
+    if (!isD1UniqueConstraintError(error)) throw error;
   }
 }
 
@@ -2611,7 +2607,7 @@ async function settleCreditPurchaseD1(input: {
   try {
     await input.state.database.batch(statements);
   } catch (error: unknown) {
-    if (!isD1ConstraintError(error)) throw error;
+    if (!isD1UniqueConstraintError(error)) throw error;
   }
 
   const updated = await loadCreditPurchaseById({
@@ -2728,7 +2724,7 @@ async function finalizeRefundD1(input: {
         ...lowBalanceStateStatements,
       ]);
     } catch (error: unknown) {
-      if (!isD1ConstraintError(error)) throw error;
+      if (!isD1UniqueConstraintError(error)) throw error;
       const committed = await loadRefundById({
         database: input.state.database,
         namespace: input.state.namespace,
@@ -3026,7 +3022,7 @@ async function createRefundD1(input: {
       )
       .run();
   } catch (error: unknown) {
-    if (!isD1ConstraintError(error)) throw error;
+    if (!isD1UniqueConstraintError(error)) throw error;
     const concurrent = await loadRefundByIdempotencyKey({
       database: input.state.database,
       namespace: input.state.namespace,

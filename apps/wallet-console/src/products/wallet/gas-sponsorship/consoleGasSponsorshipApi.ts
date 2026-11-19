@@ -12,6 +12,11 @@ import {
   type DashboardConsolePolicy,
 } from '../policy-engine/consolePoliciesApi';
 import { keccak256Bytes } from '@seams/wallet/advanced';
+import {
+  ConsoleDecodeError,
+  decodeConsoleEnum,
+  decodeConsoleMinorAmount,
+} from '@core/dashboard/consoleDecode';
 
 export interface DashboardGasSponsorshipAllowedCall {
   chainId: number;
@@ -158,57 +163,46 @@ function decodeAllowedDelegateActions(
     .filter((entry): entry is DashboardGasSponsorshipAllowedDelegateAction => entry !== null);
 }
 
+const SPEND_CAP_MODES: readonly DashboardGasSponsorshipSpendCapMode[] = [
+  'NONE',
+  'CHAIN_TOTAL',
+  'WALLET_CHAIN_TOTAL',
+];
+
+const SPEND_CAP_PERIODS: readonly DashboardGasSponsorshipSpendCapPeriod[] = ['WEEKLY', 'MONTHLY'];
+
+/**
+ * The spend cap as the server sent it. The server always sends a mode and a
+ * period, so a missing or unknown part is a decode error: it never reads as
+ * "no cap" (NONE) or as a guessed period.
+ */
 function decodeSpendCap(raw: unknown): DashboardGasSponsorshipSpendCap {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return {
-      mode: 'NONE',
-      period: 'MONTHLY',
-      capsByChain: [],
-    };
+    throw new ConsoleDecodeError('gas sponsorship spendCap', raw);
   }
   const row = raw as Record<string, unknown>;
-  const modeRaw = normalizeString(row.mode).toUpperCase();
-  const periodRaw = normalizeString(row.period).toUpperCase();
-  const capsByChainRaw = Array.isArray(row.capsByChain) ? row.capsByChain : [];
-  const mode =
-    modeRaw === 'CHAIN_TOTAL' || modeRaw === 'WALLET_CHAIN_TOTAL'
-      ? (modeRaw as DashboardGasSponsorshipSpendCapMode)
-      : 'NONE';
-  return {
-    mode,
-    period: periodRaw === 'WEEKLY' ? 'WEEKLY' : 'MONTHLY',
-    capsByChain:
-      mode === 'NONE'
-        ? []
-        : Array.from(
-            new Map(
-              capsByChainRaw
-                .map((entry) => {
-                  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
-                  const cap = entry as Record<string, unknown>;
-                  const chainId = Number(cap.chainId || 0);
-                  const capMinor = Number(cap.capMinor || 0);
-                  if (!Number.isFinite(chainId) || chainId <= 0) return null;
-                  if (!Number.isFinite(capMinor) || capMinor < 0) return null;
-                  return [
-                    Math.floor(chainId),
-                    {
-                      chainId: Math.floor(chainId),
-                      capMinor: Math.floor(capMinor),
-                    },
-                  ] as const;
-                })
-                .filter(
-                  (
-                    entry,
-                  ): entry is readonly [
-                    number,
-                    DashboardGasSponsorshipSpendCap['capsByChain'][number],
-                  ] => entry !== null,
-                ),
-            ).values(),
-          ),
-  };
+  const mode = decodeConsoleEnum(row.mode, SPEND_CAP_MODES, 'gas sponsorship spendCap mode');
+  const period = decodeConsoleEnum(
+    row.period,
+    SPEND_CAP_PERIODS,
+    'gas sponsorship spendCap period',
+  );
+  if (mode === 'NONE') return { mode, period, capsByChain: [] };
+  if (!Array.isArray(row.capsByChain)) {
+    throw new ConsoleDecodeError('gas sponsorship spendCap capsByChain', row.capsByChain);
+  }
+  const capsByChain = new Map<number, DashboardGasSponsorshipSpendCap['capsByChain'][number]>();
+  for (const entry of row.capsByChain) {
+    const cap = readObject(entry);
+    const chainId = cap.chainId;
+    if (typeof chainId !== 'number' || !Number.isSafeInteger(chainId) || chainId <= 0) {
+      throw new ConsoleDecodeError('gas sponsorship spend cap chainId', chainId);
+    }
+    const capMinor = decodeConsoleMinorAmount(cap.capMinor, 'gas sponsorship spend cap capMinor');
+    if (capMinor < 0) throw new ConsoleDecodeError('gas sponsorship spend cap capMinor', capMinor);
+    capsByChain.set(chainId, { chainId, capMinor });
+  }
+  return { mode, period, capsByChain: Array.from(capsByChain.values()) };
 }
 
 function decodeGasSponsorshipPolicy(

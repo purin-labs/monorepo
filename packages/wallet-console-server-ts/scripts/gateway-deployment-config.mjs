@@ -387,11 +387,10 @@ function parseSigningSessionSeal(value) {
   const seal = requireObject(value, 'signingSessionSeal');
   requireExactKeys(
     seal,
-    ['algorithm', 'groupId', 'currentKeyVersion', 'acceptedWarmKeyVersions'],
+    ['algorithm', 'currentKeyVersion', 'acceptedWarmKeyVersions'],
     'signingSessionSeal',
   );
-  requireExactString(seal.algorithm, 'shamir3pass-v2', 'signingSessionSeal.algorithm');
-  requireExactString(seal.groupId, 'rfc2409-group2', 'signingSessionSeal.groupId');
+  requireExactString(seal.algorithm, 'ristretto255-sha512-poprf-v1', 'signingSessionSeal.algorithm');
   const currentKeyVersion = requireString(
     seal.currentKeyVersion,
     'signingSessionSeal.currentKeyVersion',
@@ -404,8 +403,7 @@ function parseSigningSessionSeal(value) {
     throw new Error('signingSessionSeal.acceptedWarmKeyVersions must include currentKeyVersion');
   }
   return {
-    algorithm: 'shamir3pass-v2',
-    groupId: 'rfc2409-group2',
+    algorithm: 'ristretto255-sha512-poprf-v1',
     currentKeyVersion,
     acceptedWarmKeyVersions,
   };

@@ -4,6 +4,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '@core/dashboard/consoleHttp';
+import { decodeConsoleEnum } from '@core/dashboard/consoleDecode';
 import { buildWalletAcceptHeaders, buildWalletJsonHeaders } from '../consoleWalletHttp';
 
 export type DashboardConsoleApprovalOperationType = 'POLICY_PUBLISH' | 'KEY_EXPORT';
@@ -56,34 +57,22 @@ interface ConsoleApprovalsMutationResponse {
   approval?: unknown;
 }
 
-const OPERATION_TYPE_SET = new Set<DashboardConsoleApprovalOperationType>([
+const OPERATION_TYPES: readonly DashboardConsoleApprovalOperationType[] = [
   'POLICY_PUBLISH',
   'KEY_EXPORT',
-]);
+];
 
-const STATUS_SET = new Set<DashboardConsoleApprovalStatus>([
+const STATUSES: readonly DashboardConsoleApprovalStatus[] = [
   'PENDING',
   'APPROVED',
   'REJECTED',
   'CANCELED',
-]);
+];
+
+const DECISIONS: readonly DashboardConsoleApprovalDecision[] = ['APPROVE', 'REJECT'];
 
 function normalizeString(value: unknown): string {
   return String(value || '').trim();
-}
-
-function decodeOperationType(raw: unknown): DashboardConsoleApprovalOperationType {
-  const value = normalizeString(raw).toUpperCase();
-  return OPERATION_TYPE_SET.has(value as DashboardConsoleApprovalOperationType)
-    ? (value as DashboardConsoleApprovalOperationType)
-    : 'POLICY_PUBLISH';
-}
-
-function decodeStatus(raw: unknown): DashboardConsoleApprovalStatus {
-  const value = normalizeString(raw).toUpperCase();
-  return STATUS_SET.has(value as DashboardConsoleApprovalStatus)
-    ? (value as DashboardConsoleApprovalStatus)
-    : 'PENDING';
 }
 
 function decodePolicyKind(raw: unknown): DashboardConsolePolicyKind | null {
@@ -95,9 +84,7 @@ function decodePolicyKind(raw: unknown): DashboardConsolePolicyKind | null {
 function decodeDecision(raw: unknown): DashboardConsoleApprovalDecisionRecord | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
-  const decisionRaw = normalizeString(row.decision).toUpperCase();
-  const decision: DashboardConsoleApprovalDecision =
-    decisionRaw === 'REJECT' ? 'REJECT' : 'APPROVE';
+  const decision = decodeConsoleEnum(row.decision, DECISIONS, 'approval decision');
   const actorUserId = normalizeString(row.actorUserId);
   const reason = normalizeString(row.reason);
   const decidedAt = normalizeString(row.decidedAt);
@@ -129,8 +116,8 @@ function decodeApproval(raw: unknown): DashboardConsoleApprovalRequest | null {
   return {
     id,
     orgId,
-    operationType: decodeOperationType(row.operationType),
-    status: decodeStatus(row.status),
+    operationType: decodeConsoleEnum(row.operationType, OPERATION_TYPES, 'approval operationType'),
+    status: decodeConsoleEnum(row.status, STATUSES, 'approval status'),
     reason,
     requestedByUserId,
     requiredApprovals: Math.max(1, Number(row.requiredApprovals || 1)),

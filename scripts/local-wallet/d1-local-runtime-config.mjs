@@ -170,7 +170,6 @@ export function prepareRouterAbD1LocalRuntimeConfig(input) {
       runtimeConfig,
       'SIGNING_SESSION_SEAL_CURRENT_KEY_VERSION',
     ),
-    signingSessionSealGroupId: 'rfc2409-group2',
     signingSessionSealAcceptedWarmKeyVersions: readTomlStringAssignment(
       runtimeConfig,
       'SIGNING_SESSION_SEAL_ACCEPTED_WARM_KEY_VERSIONS',

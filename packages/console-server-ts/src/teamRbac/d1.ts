@@ -3,6 +3,7 @@ import { secureRandomBase36 } from '../boundary';
 import {
   d1ChangedRows,
   d1Number,
+  isD1UniqueConstraintError,
   parseD1JsonArrayColumn,
   queryD1All,
   queryD1One,
@@ -1990,8 +1991,7 @@ class D1ConsoleOrganizationAccessService implements ConsoleOrganizationAccessD1S
     try {
       await this.state.database.batch(statements);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('UNIQUE constraint failed')) {
+      if (isD1UniqueConstraintError(error)) {
         throw accessError(
           'membership_already_exists',
           409,

@@ -638,7 +638,7 @@ function simulationSummary(result: DashboardConsolePolicySimulation): string {
     return t('policySimAllowed', summaryParams);
   }
   const denySummary = result.denyReasons
-    .map((entry) => `${entry.code}: ${entry.message}`)
+    .map((entry) => (entry.message ? `${entry.code}: ${entry.message}` : entry.code))
     .join(' ');
   return t('policySimDenied', { ...summaryParams, reasons: denySummary });
 }

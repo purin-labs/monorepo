@@ -1296,11 +1296,15 @@ async function requireActiveApiKeyEnvironmentForCreate(
       );
     }
     if (environment.status !== 'ACTIVE') {
+      const refusal =
+        environment.status === 'DISABLED'
+          ? { code: 'environment_disabled', state: 'disabled' }
+          : { code: 'environment_archived', state: 'archived' };
       return json(
         {
           ok: false,
-          code: 'environment_archived',
-          message: `Environment ${environmentId} is archived and cannot be used for API keys`,
+          code: refusal.code,
+          message: `Environment ${environmentId} is ${refusal.state} and cannot be used for API keys`,
         },
         { status: 409 },
       );
@@ -2062,7 +2066,9 @@ async function handleConsoleEnvironments(ctx: CloudflareConsoleContext): Promise
       await auditWalletEnvironmentChange(
         ctx,
         auth.claims,
-        externalAuth ? 'environment.external_auth.update' : 'environment.wallet_session_limits.update',
+        externalAuth
+          ? 'environment.external_auth.update'
+          : 'environment.wallet_session_limits.update',
         updated,
       );
       return walletEnvironmentResponse(environmentId, updated);

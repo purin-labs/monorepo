@@ -873,7 +873,6 @@ class RegionalRealScenario {
       '/wallets/recovery/prepare',
       '/wallets/recovery/google/verify',
       '/wallets/recovery/email-otp/verify',
-      '/wallets/recovery/email-otp/release',
       '/wallets/recovery/google-email-otp/finalize',
     ]) {
       assert.ok(gateway.requests.some(isSuccessfulForward.bind(undefined, path)), path);

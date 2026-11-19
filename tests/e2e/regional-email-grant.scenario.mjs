@@ -33,11 +33,7 @@ export async function verifyRegionalEmailGrant({ api, runtime, bridges, signerSc
     linkPublicKeyB64u: payload.linkPublicKeyB64u,
     devicePublicKeyB64u: payload.devicePublicKeyB64u,
     permission: payload.requestedPermission,
-    targetFactor: {
-      kind: 'email_otp',
-      targetEmail: 'regional-grant@example.test',
-      enrollment: { kind: 'new_enrollment' },
-    },
+    targetFactor: { kind: 'email_otp', targetEmail: 'regional-grant@example.test' },
     ownerAuthorization: api.buildWalletSessionLinkedDeviceOwnerAuthorizationV1({
       walletSessionId: owner.walletSessionId,
       authorizationId: owner.authorizationId,
@@ -75,9 +71,6 @@ export async function verifyRegionalEmailGrant({ api, runtime, bridges, signerSc
     issuer: {},
     verifier: controlled,
     enrollments: controlled,
-    walletAuthMethods: {},
-    walletAuthorities: {},
-    serverSeal: {},
     grants: store,
   };
   home.linkRoutes.emailOtpTargetFactor = new api.D1LinkedDeviceEmailOtpTargetFactorV1(options);
@@ -87,7 +80,6 @@ export async function verifyRegionalEmailGrant({ api, runtime, bridges, signerSc
     expectedRevision: session.revision,
     challenge: {
       challengeId,
-      workerEphemeralPublicKey65B64u: deliveryRecipient(),
       maskedEmailHint: 'regional-grant@example.test',
       expiresAtMs: approval.expiresAtMs,
       resendAvailableAtMs: Date.now(),

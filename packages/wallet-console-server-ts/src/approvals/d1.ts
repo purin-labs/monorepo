@@ -5,6 +5,7 @@ import {
   formatD1ExecStatement,
   parseD1JsonArrayColumn as parseJsonArray,
   parseD1JsonObjectColumn as parseJsonObject,
+  isD1UniqueConstraintError,
   type D1Row,
 } from '@seams-internal/console-server/boundary/index';
 import type { D1DatabaseLike } from '@seams-internal/console-server/boundary/index';
@@ -193,11 +194,23 @@ function makeId(prefix: string, now: Date): string {
   return `${prefix}_${now.getTime().toString(36)}_${secureRandomBase36(8, 'console IDs')}`;
 }
 
+/**
+ * A stored value that this server does not know. The row is refused: an unknown
+ * decision must never count as an approval, and an unknown operation type must
+ * never get the weaker defaults of another type.
+ */
+function unknownStoredApprovalValue(field: string, raw: unknown): Error {
+  return new Error(`Stored approval has an unknown ${field}: ${JSON.stringify(raw)}`);
+}
+
 function parseDecision(raw: unknown): ConsoleApprovalDecisionRecord | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const row = raw as Record<string, unknown>;
   const decisionRaw = normalizeString(row.decision).toUpperCase();
-  const decision: ConsoleApprovalDecision = decisionRaw === 'REJECT' ? 'REJECT' : 'APPROVE';
+  if (decisionRaw !== 'APPROVE' && decisionRaw !== 'REJECT') {
+    throw unknownStoredApprovalValue('decision', row.decision);
+  }
+  const decision: ConsoleApprovalDecision = decisionRaw;
   const actorUserId = normalizeString(row.actorUserId);
   const reason = normalizeString(row.reason);
   const decidedAt = normalizeString(row.decidedAt);
@@ -222,7 +235,8 @@ function parseDecisions(raw: unknown): ConsoleApprovalDecisionRecord[] {
 
 function parseOperationType(raw: unknown): ConsoleApprovalOperationType {
   const value = normalizeString(raw).toUpperCase();
-  return value === 'KEY_EXPORT' ? 'KEY_EXPORT' : 'POLICY_PUBLISH';
+  if (value === 'KEY_EXPORT' || value === 'POLICY_PUBLISH') return value;
+  throw unknownStoredApprovalValue('operation type', raw);
 }
 
 function parseStatus(raw: unknown): ConsoleApprovalStatus {
@@ -234,7 +248,7 @@ function parseStatus(raw: unknown): ConsoleApprovalStatus {
     case 'PENDING':
       return value;
     default:
-      return 'PENDING';
+      throw unknownStoredApprovalValue('status', raw);
   }
 }
 
@@ -277,11 +291,6 @@ function countApprovals(decisions: readonly ConsoleApprovalDecisionRecord[]): nu
 function ensureMetadataObject(raw: unknown): Record<string, unknown> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
   return { ...(raw as Record<string, unknown>) };
-}
-
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
 }
 
 function appendEqualsFilter(
@@ -487,7 +496,7 @@ class D1ConsoleApprovalServiceImpl implements ConsoleApprovalService {
         )
         .run();
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
         throw new ConsoleApprovalsError(
           'approval_request_exists',
           409,

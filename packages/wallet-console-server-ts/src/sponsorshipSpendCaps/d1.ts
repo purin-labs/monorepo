@@ -29,6 +29,7 @@ import type {
   ConsoleSponsorshipSpendCapReservationStatus,
   ConsoleSponsorshipSpendCapWindowUsage,
 } from './types';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 interface D1ConsoleSponsorshipSpendCapState {
   readonly database: D1DatabaseLike;
@@ -633,11 +634,6 @@ function isSpendCapInconsistentError(error: unknown): boolean {
   return message.includes('sponsorship_spend_cap_inconsistent');
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 async function throwSpendCapExceededFromBucket(input: {
   readonly database: D1DatabaseLike;
   readonly bucket: SpendCapBucketKey;
@@ -816,7 +812,15 @@ class D1ConsoleSponsorshipSpendCapServiceImpl implements ConsoleSponsorshipSpend
           disposition: 'replayed',
         };
       }
-      if (isSpendCapExceededError(error) || isD1ConstraintError(error)) {
+      if (isD1UniqueConstraintError(error)) {
+        // Not a replay of this event (checked above), so not a spend-cap refusal either.
+        throw new ConsoleSponsorshipSpendCapError(
+          'reservation_conflict',
+          409,
+          'The spend-cap reservation conflicts with a stored reservation of another event',
+        );
+      }
+      if (isSpendCapExceededError(error)) {
         await throwSpendCapExceededFromBucket({
           database: this.state.database,
           bucket: {

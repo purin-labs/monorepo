@@ -4,6 +4,7 @@ import {
   formatD1ExecStatement,
   queryD1All,
   queryD1One,
+  isD1UniqueConstraintError,
   type D1Row,
 } from '../boundary';
 import type { D1DatabaseLike } from '../boundary';
@@ -213,11 +214,6 @@ function sortOrganizationSearchResults(
   });
 }
 
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
-}
-
 async function loadOrganization(input: {
   database: D1DatabaseLike;
   namespace: string;
@@ -360,7 +356,7 @@ async function createProjectInD1(input: {
       createdAtMs: currentNowMs,
     });
   } catch (error: unknown) {
-    if (!isD1ConstraintError(error)) throw error;
+    if (!isD1UniqueConstraintError(error)) throw error;
     throw new ConsoleOrgProjectError(
       'project_already_exists',
       409,

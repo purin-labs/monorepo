@@ -30,7 +30,6 @@ import {
   parseLinkSessionStateV1,
   parseLinkedDeviceTargetPreparationV1,
   type ActivateInstalledAuthorityResultV1,
-  type LinkedDeviceTargetPreparationV1,
 } from '@shared/device-linking';
 import { parseWalletAuthMethodId, parseWalletId } from '@shared/utils/domainIds';
 import {
@@ -274,15 +273,6 @@ function requireActiveInstalledAuthorityResult(
 
 function assertNeverLinkedDeviceResult(value: never): never {
   throw new Error(`Unsupported linked-device result: ${String(value)}`);
-}
-
-function isPasskeyTargetPreparation(
-  preparation: LinkedDeviceTargetPreparationV1,
-): preparation is Extract<
-  LinkedDeviceTargetPreparationV1,
-  { readonly targetFactor: { readonly kind: 'passkey_prf' } }
-> {
-  return preparation.targetFactor.kind === 'passkey_prf';
 }
 
 function requireGoogleIdToken(): string {
@@ -3999,7 +3989,7 @@ async function setupEmailLinkedOwnerPair(
       'challengeId',
       'Email linked-device challenge response',
     );
-    /* The challenge names the base enrollment it protects. */
+    /* The challenge names the masked address that receives the code. */
     requireStringField(challenge, 'maskedEmailHint', 'Email linked-device challenge response');
     const preparationResponse = await linkedDeviceFailureMonitor.race(targetPreparation);
     if (!preparationResponse.ok()) {
@@ -4010,11 +4000,7 @@ async function setupEmailLinkedOwnerPair(
     const preparation = parseLinkedDeviceTargetPreparationV1(await preparationResponse.json());
     expect(preparation.walletId).toBe(publicIdentity.walletId);
     expect(preparation.targetFactor.kind).toBe('email_otp');
-    if (!preparation.targetEmail || !preparation.enrollment) {
-      throw new Error('Email linked-device target preparation omitted its enrollment identity');
-    }
     expect(preparation.targetEmail).toBe(targetEmail);
-    const preparationEnrollment = preparation.enrollment;
     expect(preparation.ordinarySignerMaterialRecipientRequirements.length).toBeGreaterThan(0);
     const device2Wallet = await linkedDeviceFailureMonitor.race(walletFrame(device2Page));
     const otpInput = device2Wallet.getByRole('textbox', { name: 'Email verification code' });
@@ -4043,15 +4029,11 @@ async function setupEmailLinkedOwnerPair(
     expect(verification.verificationGrant.challengeId).toBe(challengeId);
     expect(verification.verificationGrant.walletId).toBe(publicIdentity.walletId);
     expect(verification.verificationGrant.targetEmail).toBe(targetEmail);
-    if (passkeyOwner) {
-      expect(preparationEnrollment.kind).toBe('new_enrollment');
-      expect(verification.verificationGrant.enrollment.kind).toBe('new_enrollment');
-      expect(verification.factorRelease).toBeNull();
-    } else {
-      expect(preparationEnrollment.kind).toBe('existing_enrollment');
-      expect(verification.verificationGrant.enrollment.kind).toBe('existing_enrollment');
-      expect(verification.factorRelease?.challengeId).toBe(challengeId);
-    }
+    /* The server picks the branch from the wallet's enrollment: a passkey owner
+       has none, so the device creates it with its own factor. */
+    expect(verification.verificationGrant.enrollment.kind).toBe(
+      passkeyOwner ? 'new_enrollment' : 'existing_enrollment',
+    );
     const credentialCommitted = await linkedDeviceFailureMonitor
       .race(targetCredentialCommit)
       .catch((error: unknown) => {
@@ -4070,11 +4052,8 @@ async function setupEmailLinkedOwnerPair(
       credentialCommitted.request().postDataJSON(),
       'Email linked-device credential registration request',
     );
-    if (passkeyOwner) {
-      expect(registrationRequest.emailOtpEnrollment).toBeDefined();
-    } else {
-      expect(registrationRequest.emailOtpEnrollment).toBeUndefined();
-    }
+    // The device enrolls its own factor on both branches.
+    expect(registrationRequest.emailOtpEnrollment).toBeDefined();
     const credentialResponse = requireRecord(
       await credentialCommitted.json(),
       'Email linked-device credential response',

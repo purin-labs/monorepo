@@ -12,11 +12,11 @@ import {
 } from './satyrProvisioning';
 
 export interface SatyrProvisioningEnvironment {
-  readonly SATYR_DEPLOYMENT_ID?: string;
-  readonly SATYR_SERVICE_ORIGIN?: string;
-  readonly SATYR_PROVISION_PLACEMENT_CELL_ID?: string;
-  readonly SATYR_PROVISION_ENVIRONMENT?: string;
-  readonly SATYR_PROVISION_TOKEN?: string;
+  readonly PANTRY_DEPLOYMENT_ID?: string;
+  readonly PANTRY_SERVICE_ORIGIN?: string;
+  readonly PANTRY_PROVISION_PLACEMENT_CELL_ID?: string;
+  readonly PANTRY_PROVISION_ENVIRONMENT?: string;
+  readonly PANTRY_PROVISION_TOKEN?: string;
   readonly ACCOUNT_PROVISION_ASSERTION_ISSUER?: string;
   readonly ACCOUNT_PROVISION_ASSERTION_AUDIENCE?: string;
   readonly ACCOUNT_PROVISION_ASSERTION_KEY_ID?: string;
@@ -36,23 +36,23 @@ async function loadSatyrProvisioningAdapter(
   access: D1AccountServiceAccess,
   transport: typeof fetch,
 ): Promise<SatyrServiceProvisioningAdapterV1 | null> {
-  if (environment.SATYR_SERVICE_ORIGIN === undefined) return null;
-  const nativeEnvironment = environment.SATYR_PROVISION_ENVIRONMENT;
+  if (environment.PANTRY_SERVICE_ORIGIN === undefined) return null;
+  const nativeEnvironment = environment.PANTRY_PROVISION_ENVIRONMENT;
   if (nativeEnvironment !== 'development' && nativeEnvironment !== 'production') {
-    throw new Error('SATYR_PROVISION_ENVIRONMENT must be development or production');
+    throw new Error('PANTRY_PROVISION_ENVIRONMENT must be development or production');
   }
   return SatyrServiceProvisioningAdapterV1.create({
     access,
     transport,
     configuration: {
-      deploymentId: textValue(environment.SATYR_DEPLOYMENT_ID, 'SATYR_DEPLOYMENT_ID'),
-      origin: textValue(environment.SATYR_SERVICE_ORIGIN, 'SATYR_SERVICE_ORIGIN'),
+      deploymentId: textValue(environment.PANTRY_DEPLOYMENT_ID, 'PANTRY_DEPLOYMENT_ID'),
+      origin: textValue(environment.PANTRY_SERVICE_ORIGIN, 'PANTRY_SERVICE_ORIGIN'),
       placementCellId: textValue(
-        environment.SATYR_PROVISION_PLACEMENT_CELL_ID,
-        'SATYR_PROVISION_PLACEMENT_CELL_ID',
+        environment.PANTRY_PROVISION_PLACEMENT_CELL_ID,
+        'PANTRY_PROVISION_PLACEMENT_CELL_ID',
       ),
       environment: nativeEnvironment,
-      bearerToken: textValue(environment.SATYR_PROVISION_TOKEN, 'SATYR_PROVISION_TOKEN'),
+      bearerToken: textValue(environment.PANTRY_PROVISION_TOKEN, 'PANTRY_PROVISION_TOKEN'),
       ownerAssertion: {
         issuer: textValue(
           environment.ACCOUNT_PROVISION_ASSERTION_ISSUER,
@@ -90,11 +90,11 @@ class ConfiguredSatyrProvisioning implements AccountServiceProvisioningAdapterV1
   ) {
     this.authority = {
       serviceId: 'satyr' as const,
-      deploymentId: textValue(environment.SATYR_DEPLOYMENT_ID, 'SATYR_DEPLOYMENT_ID'),
+      deploymentId: textValue(environment.PANTRY_DEPLOYMENT_ID, 'PANTRY_DEPLOYMENT_ID'),
     };
     this.consoleHref = new URL(
       '/portal',
-      textValue(environment.SATYR_SERVICE_ORIGIN, 'SATYR_SERVICE_ORIGIN'),
+      textValue(environment.PANTRY_SERVICE_ORIGIN, 'PANTRY_SERVICE_ORIGIN'),
     ).href;
   }
   createBinding(scope: PlatformScopeV1): ServiceBindingRequestV1 {
@@ -121,16 +121,16 @@ export function createSatyrProvisioningAdapterFromEnvironment(
   access: D1AccountServiceAccess,
   transport: typeof fetch,
 ): AccountServiceProvisioningAdapterV1 | null {
-  if (environment.SATYR_SERVICE_ORIGIN === undefined) return null;
-  const nativeEnvironment = environment.SATYR_PROVISION_ENVIRONMENT;
+  if (environment.PANTRY_SERVICE_ORIGIN === undefined) return null;
+  const nativeEnvironment = environment.PANTRY_PROVISION_ENVIRONMENT;
   if (nativeEnvironment !== 'development' && nativeEnvironment !== 'production')
-    throw new Error('SATYR_PROVISION_ENVIRONMENT must be development or production');
+    throw new Error('PANTRY_PROVISION_ENVIRONMENT must be development or production');
   return new ConfiguredSatyrProvisioning(
     environment,
     access,
     transport,
     nativeEnvironment,
-    textValue(environment.SATYR_PROVISION_PLACEMENT_CELL_ID, 'SATYR_PROVISION_PLACEMENT_CELL_ID'),
+    textValue(environment.PANTRY_PROVISION_PLACEMENT_CELL_ID, 'PANTRY_PROVISION_PLACEMENT_CELL_ID'),
   );
 }
 

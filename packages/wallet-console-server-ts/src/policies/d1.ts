@@ -49,6 +49,7 @@ import type {
   UpsertConsolePolicyAssignmentRequest,
   UpdateConsolePolicyRequest,
 } from './types';
+import { isD1UniqueConstraintError } from '@seams-internal/console-server/boundary/d1';
 
 const DEFAULT_POLICY_NAME = 'Default Policy';
 const DEFAULT_POLICY_DESCRIPTION = 'Default policy profile for this organization';
@@ -226,11 +227,6 @@ function normalizeOptionalString(value: unknown): string | null {
 
 function makeId(prefix: string, now: Date): string {
   return `${prefix}_${now.getTime().toString(36)}_${secureRandomBase36(8, 'console IDs')}`;
-}
-
-function isD1ConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('UNIQUE constraint failed') || message.includes('constraint failed');
 }
 
 function parseBooleanFlag(value: unknown): boolean {
@@ -535,7 +531,7 @@ async function ensureDefaultPolicy(
       ]);
       return;
     } catch (error: unknown) {
-      if (!isD1ConstraintError(error)) throw error;
+      if (!isD1UniqueConstraintError(error)) throw error;
       const concurrentDefault = await findSystemDefaultPolicy({ state, orgId: ctx.orgId });
       if (concurrentDefault) return;
     }
@@ -679,7 +675,7 @@ async function createPolicyInD1(input: {
       }
       return policy;
     } catch (error: unknown) {
-      if (isD1ConstraintError(error)) continue;
+      if (isD1UniqueConstraintError(error)) continue;
       throw error;
     }
   }

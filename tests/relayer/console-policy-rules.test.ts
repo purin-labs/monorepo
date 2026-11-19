@@ -294,6 +294,46 @@ test.describe('console policy rules parser and evaluator', () => {
     expect(named.allowedDelegateActions[0]?.methods).toEqual(['ft_transfer']);
   });
 
+  test('a stored spend cap that the server cannot read refuses the policy, never turns the cap off', async () => {
+    const rules = (spendCap: unknown) => ({
+      kind: 'evm_call',
+      executionMode: 'evm_eoa',
+      scopeType: 'ENVIRONMENT',
+      environmentId: 'env_1',
+      enabled: true,
+      networkClass: 'TESTNET',
+      allowedCalls: [],
+      spendCap,
+    });
+    const cap = {
+      mode: 'CHAIN_TOTAL',
+      period: 'WEEKLY',
+      capsByChain: [{ chainId: 1, capMinor: 500 }],
+    };
+
+    const stored = parseStoredConsolePolicyRules(rules(cap), 'GAS_SPONSORSHIP');
+    expect(stored.spendCap).toEqual(cap);
+    // No cap stored, or an explicit NONE, is still no cap.
+    expect(parseStoredConsolePolicyRules(rules(undefined), 'GAS_SPONSORSHIP').spendCap.mode).toBe(
+      'NONE',
+    );
+    expect(
+      parseStoredConsolePolicyRules(rules({ mode: 'NONE' }), 'GAS_SPONSORSHIP').spendCap,
+    ).toEqual({ mode: 'NONE', period: 'MONTHLY', capsByChain: [] });
+
+    for (const unreadable of [
+      { ...cap, mode: 'PER_WALLET_DAILY' },
+      { ...cap, period: 'DAILY' },
+      { ...cap, period: undefined },
+      'CHAIN_TOTAL',
+    ]) {
+      await expectPolicyError(
+        () => parseStoredConsolePolicyRules(rules(unreadable), 'GAS_SPONSORSHIP'),
+        'invalid_stored_rules',
+      );
+    }
+  });
+
   test('near gas sponsorship publish validation accepts concrete spend caps and rejects ambiguous ones', async () => {
     const nearTestnetChainId = getNearSpendCapChainId('TESTNET');
     const nearRules = parseConsolePolicyRulesInput(

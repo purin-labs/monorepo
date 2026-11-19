@@ -6,6 +6,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '../../consoleHttp';
+import { decodeConsoleStatus } from '../../consoleDecode';
 
 export interface DashboardConsoleWebhookEndpoint {
   id: string;
@@ -131,7 +132,7 @@ function decodeEndpoint(raw: unknown): DashboardConsoleWebhookEndpoint | null {
     orgId,
     url,
     eventCategories: readEventCategories(row.eventCategories),
-    status: String(row.status || '').trim() || 'ACTIVE',
+    status: decodeConsoleStatus(row.status),
     secretVersion: Number(row.secretVersion || 0),
     secretPreview: String(row.secretPreview || '').trim(),
     createdAt: String(row.createdAt || '').trim(),

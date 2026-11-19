@@ -8,6 +8,7 @@ import {
   parseConsoleJson,
   requireConsoleBaseUrl,
 } from '@core/dashboard/consoleHttp';
+import { ConsoleDecodeError, decodeConsoleEnum } from '@core/dashboard/consoleDecode';
 import { buildWalletAcceptHeaders, buildWalletJsonHeaders } from '../consoleWalletHttp';
 
 export interface DashboardConsolePolicy {
@@ -39,13 +40,9 @@ export interface DashboardConsolePolicyVersion {
 export interface DashboardConsolePolicySimulation {
   policyId: string;
   decision: 'ALLOW' | 'DENY';
+  /** The deny code as the server sent it, also a code that this Console does not know. */
   denyReasons: Array<{
-    code:
-      | 'ACTION_BLOCKED'
-      | 'CHAIN_NOT_ALLOWED'
-      | 'AMOUNT_LIMIT_EXCEEDED'
-      | 'CONTRACT_NOT_ALLOWED'
-      | 'FUNCTION_NOT_ALLOWED';
+    code: string;
     message: string;
   }>;
   evaluatedAt: string;
@@ -109,32 +106,36 @@ interface ConsolePolicyAssignmentsResponse {
   assignments?: unknown;
 }
 
+/**
+ * Each deny reason as the server sent it. A code that this Console does not
+ * know keeps its raw text, so the page still shows why the policy denied the
+ * call. A reason without a code is a decode error.
+ */
 function decodeSimulationDenyReasons(
   raw: unknown,
 ): DashboardConsolePolicySimulation['denyReasons'] {
-  if (!Array.isArray(raw)) return [];
-  const out: DashboardConsolePolicySimulation['denyReasons'] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-    const row = entry as Record<string, unknown>;
-    const code = String(row.code || '')
-      .trim()
-      .toUpperCase();
-    const message = String(row.message || '').trim();
-    if (!message) continue;
-    if (
-      code !== 'ACTION_BLOCKED' &&
-      code !== 'CHAIN_NOT_ALLOWED' &&
-      code !== 'AMOUNT_LIMIT_EXCEEDED' &&
-      code !== 'CONTRACT_NOT_ALLOWED' &&
-      code !== 'FUNCTION_NOT_ALLOWED'
-    ) {
-      continue;
-    }
-    out.push({ code, message });
-  }
-  return out;
+  if (!Array.isArray(raw)) throw new ConsoleDecodeError('policy simulation denyReasons', raw);
+  return raw.map((entry: unknown) => {
+    const row =
+      entry && typeof entry === 'object' && !Array.isArray(entry)
+        ? (entry as Record<string, unknown>)
+        : {};
+    const code = typeof row.code === 'string' ? row.code.trim() : '';
+    if (!code) throw new ConsoleDecodeError('policy deny reason code', row.code);
+    return {
+      code,
+      message: typeof row.message === 'string' ? row.message.trim() : '',
+    };
+  });
 }
+
+const POLICY_KINDS: readonly DashboardConsolePolicy['kind'][] = ['TRANSACTION', 'GAS_SPONSORSHIP'];
+
+const POLICY_STATUSES: readonly DashboardConsolePolicy['status'][] = [
+  'DRAFT',
+  'PUBLISHED',
+  'ARCHIVED',
+];
 
 function decodePolicy(raw: unknown): DashboardConsolePolicy | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -142,15 +143,8 @@ function decodePolicy(raw: unknown): DashboardConsolePolicy | null {
   const id = String(row.id || '').trim();
   const orgId = String(row.orgId || '').trim();
   if (!id || !orgId) return null;
-  const statusRaw = String(row.status || '')
-    .trim()
-    .toUpperCase();
-  const status =
-    statusRaw === 'ARCHIVED' ? 'ARCHIVED' : statusRaw === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
-  const kindRaw = String(row.kind || '')
-    .trim()
-    .toUpperCase();
-  const kind = kindRaw === 'GAS_SPONSORSHIP' ? 'GAS_SPONSORSHIP' : 'TRANSACTION';
+  const status = decodeConsoleEnum(row.status, POLICY_STATUSES, 'policy status');
+  const kind = decodeConsoleEnum(row.kind, POLICY_KINDS, 'policy kind');
   const rulesRaw =
     row.rules && typeof row.rules === 'object' && !Array.isArray(row.rules)
       ? (row.rules as Record<string, unknown>)
@@ -176,15 +170,8 @@ function decodePolicyVersion(raw: unknown): DashboardConsolePolicyVersion | null
   const row = raw as Record<string, unknown>;
   const policyId = String(row.policyId || '').trim();
   if (!policyId) return null;
-  const statusRaw = String(row.status || '')
-    .trim()
-    .toUpperCase();
-  const status =
-    statusRaw === 'ARCHIVED' ? 'ARCHIVED' : statusRaw === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
-  const kindRaw = String(row.kind || '')
-    .trim()
-    .toUpperCase();
-  const kind = kindRaw === 'GAS_SPONSORSHIP' ? 'GAS_SPONSORSHIP' : 'TRANSACTION';
+  const status = decodeConsoleEnum(row.status, POLICY_STATUSES, 'policy status');
+  const kind = decodeConsoleEnum(row.kind, POLICY_KINDS, 'policy kind');
   const rulesRaw =
     row.rules && typeof row.rules === 'object' && !Array.isArray(row.rules)
       ? (row.rules as Record<string, unknown>)
@@ -206,13 +193,9 @@ function decodeSimulation(raw: unknown): DashboardConsolePolicySimulation | null
   const row = raw as Record<string, unknown>;
   const policyId = String(row.policyId || '').trim();
   if (!policyId) return null;
-  const decisionRaw = String(row.decision || '')
-    .trim()
-    .toUpperCase();
-  const decision = decisionRaw === 'DENY' ? 'DENY' : 'ALLOW';
   return {
     policyId,
-    decision,
+    decision: decodeConsoleEnum(row.decision, ['ALLOW', 'DENY'], 'policy simulation decision'),
     denyReasons: decodeSimulationDenyReasons(row.denyReasons),
     evaluatedAt: String(row.evaluatedAt || '').trim(),
     policyVersion: Number(row.policyVersion || 0),

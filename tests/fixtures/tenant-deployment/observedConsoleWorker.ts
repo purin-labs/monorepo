@@ -79,8 +79,8 @@ function walletRequestEnvironment(
   if (!request.headers.has('x-test-account-keys-unavailable')) return env;
   return {
     ...env,
-    SATYR_SERVICE_ORIGIN: 'https://satyr.invalid',
-    SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: 'Unavailable on Wallet routes',
+    PANTRY_SERVICE_ORIGIN: 'https://satyr.invalid',
+    PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: 'Unavailable on Wallet routes',
     ACCOUNT_PROVISION_ASSERTION_PRIVATE_JWK_JSON: 'Unavailable on Wallet routes',
   };
 }

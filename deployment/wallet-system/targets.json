@@ -162,8 +162,7 @@
               "issuer": "seams-gateway-staging"
             },
             "signingSessionSeal": {
-              "algorithm": "shamir3pass-v2",
-              "groupId": "rfc2409-group2",
+              "algorithm": "ristretto255-sha512-poprf-v1",
               "currentKeyVersion": "signing-session-seal-staging-r3",
               "acceptedWarmKeyVersions": ["signing-session-seal-staging-r3"]
             },
@@ -423,8 +422,7 @@
               "issuer": "seams-gateway-production-testnet"
             },
             "signingSessionSeal": {
-              "algorithm": "shamir3pass-v2",
-              "groupId": "rfc2409-group2",
+              "algorithm": "ristretto255-sha512-poprf-v1",
               "currentKeyVersion": "signing-session-seal-production-testnet-r3",
               "acceptedWarmKeyVersions": ["signing-session-seal-production-testnet-r3"]
             },
@@ -657,8 +655,7 @@
               "issuer": "seams-gateway-production"
             },
             "signingSessionSeal": {
-              "algorithm": "shamir3pass-v2",
-              "groupId": "rfc2409-group2",
+              "algorithm": "ristretto255-sha512-poprf-v1",
               "currentKeyVersion": "signing-session-seal-production-r3",
               "acceptedWarmKeyVersions": ["signing-session-seal-production-r3"]
             },
