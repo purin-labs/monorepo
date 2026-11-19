@@ -11,12 +11,12 @@ import type { D1BillingUsageService } from '../billing/usage';
 import type { Logger } from '../boundary/logger';
 
 export interface AccountServiceIngressEnvironment {
-  readonly SATYR_DEPLOYMENT_ID?: string;
-  readonly SATYR_ACCOUNT_ASSERTION_ISSUER?: string;
-  readonly SATYR_ACCOUNT_ASSERTION_AUDIENCE?: string;
-  readonly SATYR_ACCOUNT_USER_ASSERTION_KEY_ID?: string;
-  readonly SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON?: string;
-  readonly SATYR_GOOGLE_OIDC_CLIENT_ID?: string;
+  readonly PANTRY_DEPLOYMENT_ID?: string;
+  readonly PANTRY_ACCOUNT_ASSERTION_ISSUER?: string;
+  readonly PANTRY_ACCOUNT_ASSERTION_AUDIENCE?: string;
+  readonly PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID?: string;
+  readonly PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON?: string;
+  readonly PANTRY_GOOGLE_OIDC_CLIENT_ID?: string;
 }
 
 interface AccountServiceIngressServices {
@@ -28,9 +28,9 @@ interface AccountServiceIngressServices {
 }
 
 function publicAssertionJwk(input: string): JsonWebKey {
-  const record = object(JSON.parse(input), 'Satyr user assertion public JWK');
+  const record = object(JSON.parse(input), 'Pantry user assertion public JWK');
   if (record.kty !== 'OKP' || record.crv !== 'Ed25519' || record.d !== undefined) {
-    throw new Error('Satyr user assertions require an Ed25519 public JWK');
+    throw new Error('Pantry user assertions require an Ed25519 public JWK');
   }
   return { kty: 'OKP', crv: 'Ed25519', x: textValue(record.x, 'public JWK x') };
 }
@@ -55,12 +55,12 @@ export async function createAccountServiceProducerFromEnvironment(
   environment: AccountServiceIngressEnvironment,
 ): Promise<AuthenticatedAccountServiceProducerV1 | null> {
   const values = [
-    environment.SATYR_DEPLOYMENT_ID,
-    environment.SATYR_ACCOUNT_ASSERTION_ISSUER,
-    environment.SATYR_ACCOUNT_ASSERTION_AUDIENCE,
-    environment.SATYR_ACCOUNT_USER_ASSERTION_KEY_ID,
-    environment.SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON,
-    environment.SATYR_GOOGLE_OIDC_CLIENT_ID,
+    environment.PANTRY_DEPLOYMENT_ID,
+    environment.PANTRY_ACCOUNT_ASSERTION_ISSUER,
+    environment.PANTRY_ACCOUNT_ASSERTION_AUDIENCE,
+    environment.PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID,
+    environment.PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON,
+    environment.PANTRY_GOOGLE_OIDC_CLIENT_ID,
   ];
   let configured = false;
   for (const value of values) if (value !== undefined) configured = true;
@@ -68,31 +68,31 @@ export async function createAccountServiceProducerFromEnvironment(
   return AuthenticatedAccountServiceProducerV1.fromServiceBinding({
     authority: {
       serviceId: 'satyr',
-      deploymentId: textValue(environment.SATYR_DEPLOYMENT_ID, 'SATYR_DEPLOYMENT_ID'),
+      deploymentId: textValue(environment.PANTRY_DEPLOYMENT_ID, 'PANTRY_DEPLOYMENT_ID'),
     },
     userAssertion: {
       issuer: textValue(
-        environment.SATYR_ACCOUNT_ASSERTION_ISSUER,
-        'SATYR_ACCOUNT_ASSERTION_ISSUER',
+        environment.PANTRY_ACCOUNT_ASSERTION_ISSUER,
+        'PANTRY_ACCOUNT_ASSERTION_ISSUER',
       ),
       audience: textValue(
-        environment.SATYR_ACCOUNT_ASSERTION_AUDIENCE,
-        'SATYR_ACCOUNT_ASSERTION_AUDIENCE',
+        environment.PANTRY_ACCOUNT_ASSERTION_AUDIENCE,
+        'PANTRY_ACCOUNT_ASSERTION_AUDIENCE',
       ),
       keyId: textValue(
-        environment.SATYR_ACCOUNT_USER_ASSERTION_KEY_ID,
-        'SATYR_ACCOUNT_USER_ASSERTION_KEY_ID',
+        environment.PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID,
+        'PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID',
       ),
       publicJwk: publicAssertionJwk(
         textValue(
-          environment.SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON,
-          'SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON',
+          environment.PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON,
+          'PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON',
         ),
       ),
     },
     googleClientId: textValue(
-      environment.SATYR_GOOGLE_OIDC_CLIENT_ID,
-      'SATYR_GOOGLE_OIDC_CLIENT_ID',
+      environment.PANTRY_GOOGLE_OIDC_CLIENT_ID,
+      'PANTRY_GOOGLE_OIDC_CLIENT_ID',
     ),
   });
 }

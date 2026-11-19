@@ -97,16 +97,16 @@ async function satyrEnvironment() {
   ])) as CryptoKeyPair;
   const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
   return {
-    SATYR_DEPLOYMENT_ID: satyr.deploymentId,
-    SATYR_ACCOUNT_ASSERTION_ISSUER: 'https://satyr.unavailable.invalid',
-    SATYR_ACCOUNT_ASSERTION_AUDIENCE: 'https://account.unavailable.invalid',
-    SATYR_ACCOUNT_USER_ASSERTION_KEY_ID: 'satyr-unavailable-log',
-    SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: JSON.stringify({
+    PANTRY_DEPLOYMENT_ID: satyr.deploymentId,
+    PANTRY_ACCOUNT_ASSERTION_ISSUER: 'https://satyr.unavailable.invalid',
+    PANTRY_ACCOUNT_ASSERTION_AUDIENCE: 'https://account.unavailable.invalid',
+    PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID: 'satyr-unavailable-log',
+    PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: JSON.stringify({
       kty: publicJwk.kty,
       crv: publicJwk.crv,
       x: publicJwk.x,
     }),
-    SATYR_GOOGLE_OIDC_CLIENT_ID: 'unavailable-log.apps.googleusercontent.com',
+    PANTRY_GOOGLE_OIDC_CLIENT_ID: 'unavailable-log.apps.googleusercontent.com',
   };
 }
 

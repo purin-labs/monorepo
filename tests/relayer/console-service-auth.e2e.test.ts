@@ -389,14 +389,14 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
     GITHUB_OAUTH_CLIENT_SECRET: 'isolated-console-github-secret',
     GITHUB_OAUTH_CALLBACK_URL: `${origin}/dashboard/login`,
     CONSOLE_CORS_ORIGINS: `${origin},https://platform.example.test,https://wallet-console.example.test`,
-    SATYR_DEPLOYMENT_ID: 'satyr-preflight',
-    SATYR_ACCOUNT_ASSERTION_ISSUER: 'https://satyr.test',
-    SATYR_ACCOUNT_ASSERTION_AUDIENCE: 'https://account.test',
-    SATYR_ACCOUNT_USER_ASSERTION_KEY_ID: 'satyr-preflight',
-    SATYR_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: JSON.stringify(
+    PANTRY_DEPLOYMENT_ID: 'satyr-preflight',
+    PANTRY_ACCOUNT_ASSERTION_ISSUER: 'https://satyr.test',
+    PANTRY_ACCOUNT_ASSERTION_AUDIENCE: 'https://account.test',
+    PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID: 'satyr-preflight',
+    PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: JSON.stringify(
       assertionKeys.publicKey.export({ format: 'jwk' }),
     ),
-    SATYR_GOOGLE_OIDC_CLIENT_ID: 'test-google',
+    PANTRY_GOOGLE_OIDC_CLIENT_ID: 'test-google',
   });
   const runtime = new Miniflare({
     host: '127.0.0.1',
