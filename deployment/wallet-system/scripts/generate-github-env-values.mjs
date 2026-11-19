@@ -1077,8 +1077,7 @@ function buildGatewayDeploymentConfig(input) {
       issuer: configuration.relaySessionIssuer,
     },
     signingSessionSeal: {
-      algorithm: 'shamir3pass-v2',
-      groupId: 'rfc2409-group2',
+      algorithm: 'ristretto255-sha512-poprf-v1',
       currentKeyVersion: input.generatedSecrets.signingSession.currentKeyVersion,
       acceptedWarmKeyVersions: input.generatedSecrets.signingSession.acceptedWarmKeyVersions,
     },

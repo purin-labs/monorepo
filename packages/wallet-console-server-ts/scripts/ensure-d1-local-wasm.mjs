@@ -9,8 +9,8 @@ const requiredArtifacts = [
   'dist/esm/wasm/near_signer/pkg/wasm_signer_worker_bg.wasm',
   'dist/esm/wasm/evm_crypto/pkg/evm_crypto.js',
   'dist/esm/wasm/evm_crypto/pkg/evm_crypto_bg.wasm',
-  'dist/esm/wasm/shamir3pass_runtime/pkg/shamir3pass_runtime.js',
-  'dist/esm/wasm/shamir3pass_runtime/pkg/shamir3pass_runtime_bg.wasm',
+  'dist/esm/wasm/oprf_runtime/pkg/oprf_runtime.js',
+  'dist/esm/wasm/oprf_runtime/pkg/oprf_runtime_bg.wasm',
 ];
 
 const missingArtifacts = requiredArtifacts.filter(
