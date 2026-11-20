@@ -121,7 +121,7 @@ function parseOptions() {
   return {
     release: identity.release,
     identityId: identity.id,
-    environmentPrefix: deploymentEnvironmentPrefix(identity),
+    environmentPrefix: deploymentEnvironmentPrefix(component, identity),
     lane: identity.lane,
     site: identity.site,
     component,
@@ -132,8 +132,9 @@ function parseOptions() {
   };
 }
 
-function deploymentEnvironmentPrefix(identity) {
-  if (!identity.lane) return identity.site.id;
+function deploymentEnvironmentPrefix(component, identity) {
+  // The frontend workflows run in the environment named after the site.
+  if (component === 'site') return identity.site.id;
   const deploymentEnvironment = identity.lane.resources.router.deploymentEnvironment;
   return deploymentEnvironment.kind === 'named'
     ? deploymentEnvironment.name
