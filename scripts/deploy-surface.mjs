@@ -539,7 +539,8 @@ async function deployFrontend(site, component, walletLanes) {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
     const project = process.env[site.docsPagesProjectEnv];
-    await deployPagesProject(WALLET_DOCS_OUTPUT, site, project);
+    // One docs project serves both sites: production from main, staging as the dev preview.
+    await deployPagesProject(WALLET_DOCS_OUTPUT, site, project, 'main');
     if (site.id === 'production') await ensurePagesCustomDomain(site.docsOrigin, project);
   } else if (component === 'wallet-site') {
     const consoles = readConsoleFrontendSite(site.id);
@@ -586,8 +587,13 @@ async function withCompanyCloudflareAccount(operation) {
   }
 }
 
-async function deployPagesProject(outputDirectory, site, projectName) {
-  await ensurePagesProject(projectName, site.branch);
+async function deployPagesProject(
+  outputDirectory,
+  site,
+  projectName,
+  productionBranch = site.branch,
+) {
+  await ensurePagesProject(projectName, productionBranch);
   const args = [
     'exec',
     'wrangler',
@@ -605,8 +611,8 @@ async function deployPagesProject(outputDirectory, site, projectName) {
   runCommand('pnpm', args);
 }
 
-/* A new Cloudflare account has no Pages projects. The site's branch is the
-   production branch, so a deploy from it serves the custom domains. */
+/* A new Cloudflare account has no Pages projects. The production branch serves the
+   custom domains: the site's branch, or main for the shared docs project. */
 async function ensurePagesProject(projectName, productionBranch) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
