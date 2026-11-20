@@ -649,9 +649,9 @@
             },
             "tenant": {
               "namespace": "seams-production",
-              "orgId": "org_ty5o34k5w9p7",
-              "projectId": "proj_mu6auwge_v8ulud",
-              "environmentId": "proj_mu6auwge_v8ulud:prod"
+              "orgId": "org_ri0bh5kt0er2",
+              "projectId": "proj_e8f2db07d5d24c109a8c27f0c2dc86cc",
+              "environmentId": "proj_e8f2db07d5d24c109a8c27f0c2dc86cc:dev"
             },
             "origins": {
               "gateway": "https://api.seams.sh",
