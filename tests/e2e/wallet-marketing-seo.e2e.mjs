@@ -214,7 +214,7 @@ try {
     .locator(`footer a[href^="${docsOrigin}/"]:visible`)
     .first()
     .getAttribute('href');
-  assert.ok(docsLink, 'Wallet footer must link to docs.wallet.seams.sh');
+  assert.ok(docsLink, 'Wallet footer must link to docs.seams.sh');
   const docs = await context.request.get(docsLink);
   assert.equal(docs.status(), 200);
   assert.match(docs.headers()['cache-control'] || '', /no-transform/);
@@ -224,7 +224,7 @@ try {
   );
   const receipt = JSON.parse(await saveResponse(receiptResponse, 'docs-receipt'));
   assert.equal(receipt.repository, 'seams-tech/seams-wallet');
-  // Only a production deploy publishes docs.wallet.seams.sh. A staging deploy
+  // Only a production deploy publishes docs.seams.sh. A staging deploy
   // publishes its docs to its own Pages project, so the public host can still
   // serve the previous release while staging is verified.
   if (!noindex) assert.equal(receipt.revision, process.env.SEAMS_WALLET_DOCS_REVISION);

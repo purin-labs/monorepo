@@ -307,7 +307,7 @@ test('frontend plan runs without deployment secrets', () => {
   );
 
   expect(result.status).toBe(0);
-  expect(result.stdout).toContain('Origin: https://docs.wallet.seams.sh');
+  expect(result.stdout).toContain('Origin: https://docs.seams.sh');
   expect(result.stdout).toContain('Pages project environment: CF_PAGES_PROJECT_WALLET_DOCS');
 });
 
@@ -353,8 +353,8 @@ test('frontend build uses canonical Console origins for every production lane', 
   const resolved = buildFrontendEnvironment(site, site.walletSiteOrigin, environment);
 
   expect(resolved.VITE_TESTNET_CONSOLE_BASE_URL).toBe('https://test.console.seams.sh');
-  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://wallet.seams.sh');
-  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://console.seams.sh');
+  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://seams.sh');
+  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://account.seams.sh');
 });
 
 test('frontend Pages headers align with hosted wallet asset policies', () => {

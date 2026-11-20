@@ -263,8 +263,10 @@
   "production": {
     "branch": "main",
     "site": {
-      "origin": "https://seams.sh",
-      "walletSiteOrigin": "https://wallet.seams.sh",
+      "origin": "https://purin.io",
+      "walletSiteOrigin": "https://seams.sh",
+      "formerWalletSiteOrigins": ["https://wallet.seams.sh"],
+      "formerDocsOrigins": ["https://docs.wallet.seams.sh"],
       "googleOidcClientId": "971053349716-p10qdg7lsjh24lcocbsckt4f85is5igs.apps.googleusercontent.com",
       "defaultNetwork": "testnet",
       "availableNetworks": ["testnet", "mainnet"],
@@ -274,7 +276,7 @@
     },
     "lanes": {
       "testnet": {
-        "gatewayOrigin": "https://test.api.wallet.seams.sh",
+        "gatewayOrigin": "https://test.api.seams.sh",
         "walletOrigin": "https://test.sign.seams.sh",
         "walletPagesProjectEnv": "CF_PAGES_PROJECT_WALLET_TESTNET",
         "emailOtpDelivery": {
@@ -286,7 +288,8 @@
         },
         "resources": {
           "gateway": {
-            "workerName": "seams-sdk-d1-gateway-testnet"
+            "workerName": "seams-sdk-d1-gateway-testnet",
+            "consoleD1Name": "seams-console-testnet-sin"
           },
           "router": {
             "workerName": "router-ab-mpc-router-testnet",
@@ -367,7 +370,7 @@
               "ingressRegion": "APAC",
               "consoleD1": {
                 "name": "seams-console-testnet-sin",
-                "id": "c5bfd5d4-b605-49bd-a8a3-bee2e5e6ab4a"
+                "id": "8700ed4b-8b26-41f1-97a0-a5fd40e32c34"
               },
               "regions": {
                 "US": {
@@ -376,7 +379,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-testnet-us",
-                    "id": "9c3d3444-9b8f-42d8-9ac5-509da2f29701"
+                    "id": "4c368a76-e230-46c6-af1e-2272a50c0457"
                   }
                 },
                 "WEUR": {
@@ -385,7 +388,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-testnet-weur",
-                    "id": "94530070-41a2-43de-96ac-9b1d7a5f9e28"
+                    "id": "c5be8c10-d0b9-4dd4-b74f-58b93b37f5a2"
                   }
                 },
                 "APAC": {
@@ -394,7 +397,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-testnet-sin",
-                    "id": "a3820849-d700-48ad-a6ec-5434421d6a3a"
+                    "id": "46e8bf5f-5a73-4c18-8ea8-566dd92e7c1a"
                   }
                 },
                 "OC": {
@@ -403,7 +406,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-testnet-oc",
-                    "id": "e59c0185-3aee-4cf5-8896-6cfc0f822841"
+                    "id": "d049cee5-9407-47dd-8968-e725f65c276a"
                   }
                 }
               }
@@ -415,8 +418,10 @@
               "environmentId": "proj_6d5399e80124498aa29d6866e84a9de4:dev"
             },
             "origins": {
-              "gateway": "https://test.api.wallet.seams.sh",
+              "gateway": "https://test.api.seams.sh",
+              "formerGateways": ["https://test.api.wallet.seams.sh"],
               "allowedCors": [
+                "https://purin.io",
                 "https://seams.sh",
                 "https://wallet.seams.sh",
                 "https://test.sign.seams.sh"
@@ -511,7 +516,7 @@
         }
       },
       "mainnet": {
-        "gatewayOrigin": "https://api.wallet.seams.sh",
+        "gatewayOrigin": "https://api.seams.sh",
         "walletOrigin": "https://sign.seams.sh",
         "walletPagesProjectEnv": "CF_PAGES_PROJECT_WALLET_MAINNET",
         "emailOtpDelivery": {
@@ -523,7 +528,8 @@
         },
         "resources": {
           "gateway": {
-            "workerName": "seams-sdk-d1-gateway"
+            "workerName": "seams-sdk-d1-gateway",
+            "consoleD1Name": "seams-console"
           },
           "router": {
             "workerName": "router-ab-mpc-router",
@@ -600,7 +606,7 @@
               "ingressRegion": "APAC",
               "consoleD1": {
                 "name": "seams-console",
-                "id": "b928549b-8cd8-41db-9e66-36e95afbe295"
+                "id": "f6e040fb-5d39-4120-804b-92d60e5b5818"
               },
               "regions": {
                 "US": {
@@ -609,7 +615,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-us",
-                    "id": "7d19f495-dd40-4950-ad5a-d2da3b421adf"
+                    "id": "42e4fa72-f866-457a-ac2f-2dafa51cbc4f"
                   }
                 },
                 "WEUR": {
@@ -618,7 +624,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-weur",
-                    "id": "cd9026b7-d5cd-4478-aff1-d5d03ab1a500"
+                    "id": "fcd5ba52-51d7-4cb1-a732-f3e4178bd896"
                   }
                 },
                 "APAC": {
@@ -627,7 +633,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-sin",
-                    "id": "8a009ce1-fcf8-4521-8e2e-87ca0a6336df"
+                    "id": "2c65b4b7-9986-47fd-8b49-8034a6285183"
                   }
                 },
                 "OC": {
@@ -636,7 +642,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-oc",
-                    "id": "c963d120-99d8-422d-97ae-63efe560087f"
+                    "id": "3976d655-1e6d-4056-a168-78ea80b542c3"
                   }
                 }
               }
@@ -648,8 +654,10 @@
               "environmentId": "proj_mu6auwge_v8ulud:prod"
             },
             "origins": {
-              "gateway": "https://api.wallet.seams.sh",
+              "gateway": "https://api.seams.sh",
+              "formerGateways": ["https://api.wallet.seams.sh"],
               "allowedCors": [
+                "https://purin.io",
                 "https://seams.sh",
                 "https://wallet.seams.sh",
                 "https://sign.seams.sh"

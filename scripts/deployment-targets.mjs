@@ -36,7 +36,7 @@ const CONSOLE_LANE_IDS = Object.freeze([
 ]);
 const FRONTEND_SITE_IDS = Object.freeze(['staging', 'production']);
 const CONSOLE_FRONTEND_SITE_IDS = Object.freeze(['staging', 'production']);
-export const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.wallet.seams.sh';
+export const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.seams.sh';
 
 export const BACKEND_COMPONENTS = Object.freeze([
   'signing-worker',

@@ -23,13 +23,13 @@
     "production-testnet": {
       "environment": "production-testnet-console",
       "origin": "https://test.console.seams.sh",
-      "siteOrigin": "https://wallet.seams.sh",
+      "siteOrigin": "https://seams.sh",
       "workerName": "seams-sdk-d1-console-testnet",
       "platformSupportEmails": ["n6378056@gmail.com"],
       "placementRegion": "aws:ap-southeast-1",
       "database": {
         "name": "seams-console-testnet-sin",
-        "id": "c5bfd5d4-b605-49bd-a8a3-bee2e5e6ab4a"
+        "id": "8700ed4b-8b26-41f1-97a0-a5fd40e32c34"
       },
       "emailDelivery": {
         "kind": "resend",
@@ -42,14 +42,14 @@
     },
     "production-mainnet": {
       "environment": "production-console",
-      "origin": "https://wallet.seams.sh",
-      "siteOrigin": "https://wallet.seams.sh",
+      "origin": "https://seams.sh",
+      "siteOrigin": "https://seams.sh",
       "workerName": "seams-sdk-d1-console",
       "platformSupportEmails": ["n6378056@gmail.com"],
       "placementRegion": "aws:ap-southeast-1",
       "database": {
         "name": "seams-console",
-        "id": "b928549b-8cd8-41db-9e66-36e95afbe295"
+        "id": "f6e040fb-5d39-4120-804b-92d60e5b5818"
       },
       "emailDelivery": {
         "kind": "resend",
@@ -73,8 +73,9 @@
     },
     "production": {
       "branch": "main",
-      "platformOrigin": "https://console.seams.sh",
-      "walletConsoleOrigin": "https://console.wallet.seams.sh",
+      "platformOrigin": "https://account.seams.sh",
+      "walletConsoleOrigin": "https://console.seams.sh",
+      "formerWalletConsoleOrigins": ["https://console.wallet.seams.sh"],
       "platformPagesProjectEnv": "CF_PAGES_PROJECT_PLATFORM_CONSOLE",
       "walletConsolePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_CONSOLE"
     }

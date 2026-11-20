@@ -17,7 +17,7 @@ import {
 import { translate as translateFeatures } from './src/pages/features/catalog';
 import { translate as translatePricing } from './src/pages/pricing/catalog';
 
-const walletSiteUrl = new URL(process.env.VITE_WALLET_SITE_ORIGIN || 'https://wallet.seams.sh/');
+const walletSiteUrl = new URL(process.env.VITE_WALLET_SITE_ORIGIN || 'https://seams.sh/');
 walletSiteUrl.pathname = `${walletSiteUrl.pathname.replace(/\/$/, '')}/`;
 
 function pageUrl(page: WalletPage, locale: Locale): string {
