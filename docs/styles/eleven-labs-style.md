@@ -16,15 +16,15 @@ Use this guide when creating or revising UI in `apps/seams-site`. The SDK themin
 
 ## Sources of truth
 
-| Area                                                                  | Source                                                                                                                               |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Marketing palette, typography, content rail, cards, and section rules | [`apps/seams-site/src/styles/h2.css`](../../apps/seams-site/src/styles/h2.css)                                                       |
-| Site semantic aliases and global typography                           | [`apps/seams-site/src/app.css`](../../apps/seams-site/src/app.css)                                                                   |
-| Navigation structure and light appearance                             | [`apps/seams-site/src/components/Navbar/Navbar.css`](../../apps/seams-site/src/components/Navbar/Navbar.css)                         |
-| Console palette, shell, forms, tables, and responsive behavior        | [`apps/seams-site/src/pages/dashboard/styles.css`](../../apps/seams-site/src/pages/dashboard/styles.css)                             |
-| SDK Paper theme and other demo presets                                | [`apps/seams-site/src/context/app-themes.ts`](../../apps/seams-site/src/context/app-themes.ts)                                       |
+| Area                                                                  | Source                                                                                                                             |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Marketing palette, typography, content rail, cards, and section rules | [`apps/seams-site/src/styles/h2.css`](../../apps/seams-site/src/styles/h2.css)                                                     |
+| Site semantic aliases and global typography                           | [`apps/seams-site/src/app.css`](../../apps/seams-site/src/app.css)                                                                 |
+| Navigation structure and light appearance                             | [`apps/seams-site/src/components/Navbar/Navbar.css`](../../apps/seams-site/src/components/Navbar/Navbar.css)                       |
+| Console palette, shell, forms, tables, and responsive behavior        | [`apps/seams-site/src/pages/dashboard/styles.css`](../../apps/seams-site/src/pages/dashboard/styles.css)                           |
+| Site palette (Paper), written as `--seams-colors-*`                   | [`apps/seams-site/src/context/siteColors.ts`](../../apps/seams-site/src/context/siteColors.ts)                                     |
 | SDK geometry presets                                                  | [`packages/wallet/src/react/components/theme/design-tokens.ts`](../../packages/wallet/src/react/components/theme/design-tokens.ts) |
-| ElevenLabs-inspired gradient assets                                   | [`apps/seams-site/src/public/gradients/README.md`](../../apps/seams-site/src/public/gradients/README.md)                             |
+| ElevenLabs-inspired gradient assets                                   | [`apps/seams-site/src/public/gradients/README.md`](../../apps/seams-site/src/public/gradients/README.md)                           |
 
 Prefer the variables and component patterns already defined in these files. Add a semantic token only when no existing role describes the value.
 
