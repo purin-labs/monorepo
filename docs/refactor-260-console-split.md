@@ -232,7 +232,9 @@ five recommendations:
      or Workers Paid plan yet. With the script in place, that move is: create the Pages
      project in the Purin account, change the two secrets, deploy, then move the `purin.io`
      zone and the custom domains. Refactor 200 Phase 7 does not touch the company Pages
-     project or `purin.io`.
+     project or `purin.io`. Since 2026-11-20, `purin.io` has Email Routing in the source
+     account (`info@purin.io` forwards to the owner's mailbox); keep its MX and TXT records
+     when the zone moves.
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
