@@ -1,8 +1,34 @@
 # Refactor 260 — Split the Seams Console into its own repository
 
-Status: plan, written on 2026-11-20. No path has been cut. `seams-tech/seams-console`
-(public since 2026-11-20) holds an unchanged copy of this repository: `dev` at `83023b1e` and `main` at
-`079aebc1`, pushed on 2026-11-20 with the same commit IDs.
+Status: plan complete on 2026-11-20. The work waits for the Refactor 200 cutover. No path
+has been cut. `seams-tech/seams-console` (public) holds an unchanged copy of this
+repository. "Progress" lists what is done and what each remaining step waits for.
+
+## Progress
+
+Done on 2026-11-20:
+
+- The owner decisions under "Decision", and open questions 1 and 2.
+- `seams-tech/seams-console` holds `dev` at `83023b1e` and `main` at `079aebc1`, with the
+  same commit IDs as this repository. It is behind, because this repository moved on after
+  the push. Step 6 brings it level.
+- `seams-console` is public. Its `validate-repository.yml` run `44690621569` passed on
+  `83023b1e`.
+
+Remaining:
+
+| Step (see "Order")                   | Owner                     | Waits for                                     |
+| ------------------------------------ | ------------------------- | --------------------------------------------- |
+| 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                   |
+| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                       |
+| 3. Pantry's own accounts             | A Pantry plan             | A plan in the Pantry repository               |
+| 4. Cut the couplings                 | This plan                 | Step 1                                        |
+| 5. Remove the Pantry service         | This plan                 | Step 3                                        |
+| 6. Move the deploys                  | This plan                 | Steps 1 and 4, seven secrets, open question 6 |
+| 7. New OIDC identity                 | This plan                 | Part of step 6                                |
+| 8. Delete the moved paths            | This plan                 | Production runs from `seams-console`          |
+| 9. Rename this repository            | This plan                 | Step 8                                        |
+| Open questions 3 to 6                | Owner                     | —                                             |
 
 ## Decision
 
@@ -62,7 +88,7 @@ Each fact below was read from the code on `dev` at `66e51b4c`, and from Pantry `
 | `voiceId/`, most of `docs/` (about 150 of 164 files)                                              | Wallet research, plans and evidence                                                                                                                                                                                                 |
 | `AGENTS.md`                                                                                       | Custody vocabulary, testing policy, commands                                                                                                                                                                                        |
 
-### Stays in `purin-labs/monorepo`
+### Stays in `purin-labs/purin-monorepo` (this repository, renamed)
 
 - `apps/seams-site`, the company site (357 files).
 - `packages/site-navbar-ts` and `packages/grain-field-ts`. Both apps use them, so each
@@ -161,16 +187,28 @@ account data moves.
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
-6. **Move the deploys.** `seams-tech/seams-console` already mirrors this repository;
-   until this step, a fast-forward push keeps it equal. Set up its GitHub environments, and
-   deploy staging from it. Then stop the mirror: each repository deletes the paths that
-   belong to the other one, in an ordinary commit.
+6. **Move the deploys.** Do these in order:
+   1. Fast-forward `dev` and `main` of `seams-tech/seams-console`. Push the Seams branches
+      (`speak-to-sign`, `archive/voiceid-stt-bench`, `archive/voiceid-whisper`). The site
+      branches stay here.
+   2. Freeze the Seams paths here: from now on, commit Seams work only in `seams-console`.
+      Before the freeze, the owners of worktrees of this repository (for example
+      `codex/voiceid-native` and the `voiceid-*` branches) land or move their work.
+   3. In `seams-console`, commit the new OIDC identity (step 7), the repository names in
+      scripts, `README.md` and `AGENTS.md`, and the deletion of the company-site paths. The
+      mirror stops with this commit.
+   4. Create its GitHub environments (see "Repository mechanics"). Deploy staging from it,
+      then production.
+   5. Make the new checkout beside `seams-wallet`, and copy the Seams agent memory to the
+      memory folder of that checkout path.
 7. **Change the GitHub OIDC identity.** `automationRoute.ts` accepts tokens only from
    `purin-labs/monorepo` (`DEPLOYMENT_REPOSITORY`, `DEPLOYMENT_SUBJECT_PREFIX`, and three
    workflow file names). The first deploy from the new repository must carry the new
    values, and it deploys the Console before it activates, as today.
 8. **Delete the moved paths from `purin-labs/monorepo`** after production runs from the new
-   repository.
+   repository. Then delete the Seams GitHub environments here, and keep only the ones that
+   the company site deploy uses. A deleted environment loses its secrets, so the owner
+   confirms the list first.
 9. **Rename `purin-labs/monorepo` to `purin-labs/purin-monorepo`** last. A rename changes
    the OIDC `repository` claim and subject that `automationRoute.ts` pins, so it must come
    after the Seams deploys run from `seams-tech/seams-console`.
@@ -193,13 +231,19 @@ account data moves.
   (`wallet-system:deploy:env-apply`, `console:deploy:env-apply`, the `env-update` commands)
   from the manifests and values files in `~/.seams`. Six secrets have no local copy
   (three production `ROUTER_AB_*_AUTH_SECRET` values, `SEAMS_GITHUB_OAUTH_CLIENT_SECRET`,
-  two `SPEAK_TO_SIGN_*` keys): recover or reissue them first.
+  two `SPEAK_TO_SIGN_*` keys): recover or reissue them first. A seventh,
+  `SEAMS_RELEASE_SIGNING_KEY`, also exists only in GitHub
+  (`docs/recovery-trust-operations.md`); see open question 6. The recovery signing key has
+  a local copy (`~/.seams/recovery-signing-2026-10.env`).
 - **Workflows.** `release-seams-cli.yml` and `sign-recovery-trust.yml` use the protected
   `release-signing` and `recovery-signing` environments. `seams-wallet` names the
   repository that holds them (`crates/seams-cli/trust/README.md`).
 - **Other repositories.** Pantry CI checks out this repository to build the account
   Worker (`pantry/.github/workflows/pantry.yml`, lines 61 to 75). That step goes away with
-  step 3.
+  step 3. `seams-wallet` names `purin-labs/monorepo` in `README.md` and
+  `crates/seams-cli/trust/README.md`; change both to `seams-tech/seams-console` in step 6.
+  The `ink-drawing` skill names an old checkout path of the company site; point it at the
+  `purin-monorepo` checkout in step 9.
 
 ## What Refactor 200 should not build
 
@@ -227,3 +271,15 @@ account data moves.
 5. **Pantry's interim authority.** Recommendation: Pantry keeps the old Console Workers in
    the old Cloudflare account until its own accounts exist (order step 2). The alternative
    is to build Pantry's accounts before the Refactor 200 cutover, which delays the cutover.
+6. **CLI release signing key.** `SEAMS_RELEASE_SIGNING_KEY` exists only in the
+   `release-signing` environment here. The `seams` binary compiles in one release root
+   (`seams-wallet/crates/seams-cli/trust/release-root.json`, format
+   `seams_release_root_v1`, one key). So `seams-console` cannot sign a release that the
+   installed binaries trust. The choices:
+   - (a) A new release root in a new `seams` binary, with no bridge. The recovery root
+     changed this way on 2026-10-23. Installed binaries must be installed again.
+   - (b) A `seams-wallet` change that trusts two release roots, released once with the old
+     key before the move.
+   - (c) Keep `release-seams-cli.yml` and `release-signing` in this repository.
+
+   Recommendation: (a) if no outside user runs the CLI yet, else (b).
