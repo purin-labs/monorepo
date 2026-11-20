@@ -10,8 +10,6 @@ import '@fontsource/hanken-grotesk/600.css';
 import '@fontsource/hanken-grotesk/600-italic.css';
 import '@fontsource/hanken-grotesk/700.css';
 import '@fontsource/hanken-grotesk/700-italic.css';
-// Standalone dev page needs SDK styles globally
-import '@seams/wallet/react/styles';
 
 const rootEl = document.getElementById('app-root');
 
@@ -20,7 +18,16 @@ if (!rootEl) {
 }
 
 const root = createRoot(rootEl);
-const Page = window.location.pathname.replace(/\/$/, '') === '/transaction-mocks'
-  ? lazy(() => import('../components/transaction-mocks/TransactionMocksPage').then((module) => ({ default: module.TransactionMocksPage })))
-  : lazy(() => import('./App'));
-root.render(<Suspense fallback={null}><Page /></Suspense>);
+const Page =
+  window.location.pathname.replace(/\/$/, '') === '/transaction-mocks'
+    ? lazy(() =>
+        import('../components/transaction-mocks/TransactionMocksPage').then((module) => ({
+          default: module.TransactionMocksPage,
+        })),
+      )
+    : lazy(() => import('./App'));
+root.render(
+  <Suspense fallback={null}>
+    <Page />
+  </Suspense>,
+);

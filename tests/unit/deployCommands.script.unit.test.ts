@@ -887,12 +887,17 @@ service = "router-ab-deriver-b-testnet"
 
 test('frontend commands reject backend-only operations and unknown surface arguments', () => {
   expectFailure(
-    runCommand(frontendScript, ['migrate', '--site', 'staging', '--component', 'company']),
+    runCommand(frontendScript, ['migrate', '--site', 'staging', '--component', 'wallet-docs']),
     /usage:/u,
   );
   expectFailure(runCommand(frontendScript, ['plan']), /usage:/u);
   expectFailure(
     runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'gateway']),
+    /--component must be/u,
+  );
+  // The company site deploys through scripts/deploy-company-site.mjs.
+  expectFailure(
+    runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'company']),
     /--component must be/u,
   );
   expectFailure(runCommand(frontendScript, ['plan', '--site', 'development']), /site/u);
@@ -901,7 +906,7 @@ test('frontend commands reject backend-only operations and unknown surface argum
 test('frontend commands reject a site branch mismatch before deployment work', () => {
   const result = runCommand(
     frontendScript,
-    ['smoke', '--site', 'staging', '--component', 'company'],
+    ['smoke', '--site', 'staging', '--component', 'wallet-docs'],
     {
       ...environmentWithoutDeploymentSecrets(),
       GITHUB_REF: 'refs/heads/main',

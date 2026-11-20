@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import {
@@ -14,11 +13,20 @@ import {
   readHostRedirects,
 } from './deployment-targets.mjs';
 import { formatFailedCheck, isFailedCheck, runReadinessChecks } from './deployment-smoke.mjs';
+import {
+  assertDeploymentBranch,
+  assertDirectory,
+  assertFile,
+  deployPagesProject,
+  ensurePagesCustomDomain,
+  requestCloudflareApi,
+  requireEnvironmentValues,
+  runCommand,
+  smokeChecks,
+} from './pages-deploy.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..');
-const COMPANY_ROOT = path.join(REPOSITORY_ROOT, 'apps', 'seams-site');
-const COMPANY_OUTPUT = path.join(COMPANY_ROOT, 'dist');
 const WALLET_SITE_ROOT = path.join(REPOSITORY_ROOT, 'apps', 'wallet-console');
 const WALLET_SITE_OUTPUT = path.join(WALLET_SITE_ROOT, 'dist');
 const WALLET_HOST_OUTPUT = path.join(REPOSITORY_ROOT, '.release-artifacts', 'wallet-host');
@@ -34,7 +42,6 @@ const HOST_REDIRECTS_COMPATIBILITY_DATE = '2026-11-01';
 const SURFACES = Object.freeze([
   'platform-console',
   'wallet-console',
-  'company',
   'wallet-docs',
   'wallet-site',
   'wallet-host',
@@ -70,7 +77,6 @@ async function main(args) {
           'CLOUDFLARE_ACCOUNT_ID',
           consoles.platformPagesProjectEnv,
           consoles.walletConsolePagesProjectEnv,
-          site.pagesProjectEnv,
           site.docsPagesProjectEnv,
           site.walletSitePagesProjectEnv,
           ...walletLanes.map(walletPagesProjectEnvironment),
@@ -79,7 +85,6 @@ async function main(args) {
       );
     }
     for (const surface of SURFACES) {
-      if (surface === 'company' && withoutPublicTraffic()) continue;
       if (surface === 'platform-console' || surface === 'wallet-console') {
         await runConsoleOperation(
           options.operation,
@@ -92,15 +97,12 @@ async function main(args) {
     }
     return;
   }
-  if (options.component === 'company' && withoutPublicTraffic()) {
-    throw new Error('the company site is not part of a deploy without public traffic');
-  }
   await runOperation(options.operation, site, options.component, walletLanes);
 }
 
 /* Before the seams.sh zone moves to a new Cloudflare account, a deploy there uploads
    the Pages builds only: no custom domain, no redirect Worker, no smoke on the public
-   hosts. The company site stays out, because its project still serves live traffic. */
+   hosts. */
 function withoutPublicTraffic() {
   return process.env.SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC === 'true';
 }
@@ -232,7 +234,7 @@ function parseArguments(args) {
 }
 
 function usage() {
-  return 'usage: deploy-surface.mjs <plan|build|deploy|smoke> --site <site> --component <all|company|wallet-docs|wallet-site|wallet-host|platform-console|wallet-console> [--lane <lane>]';
+  return 'usage: deploy-surface.mjs <plan|build|deploy|smoke> --site <site> --component <all|wallet-docs|wallet-site|wallet-host|platform-console|wallet-console> [--lane <lane>]';
 }
 
 function selectWalletLanes(site, options) {
@@ -255,11 +257,6 @@ function requireArgumentValue(args, index, name) {
 
 function printPlan(site, component, walletLanes) {
   const lines = {
-    company: [
-      `Origin: ${site.origin}`,
-      `Pages project environment: ${site.pagesProjectEnv}`,
-      'Artifact: company site only',
-    ],
     'wallet-docs': [
       `Origin: ${site.docsOrigin}`,
       `Pages project environment: ${site.docsPagesProjectEnv}`,
@@ -283,22 +280,6 @@ function printPlan(site, component, walletLanes) {
 }
 
 function buildFrontend(site, component, walletLanes) {
-  if (component === 'company') {
-    runCommand('pnpm', ['-C', 'apps/seams-site', 'exec', 'vite', 'build'], {
-      env: buildFrontendEnvironment(site, site.origin),
-    });
-    writeCompanyCutoverFiles(site);
-    assertFile(path.join(COMPANY_OUTPUT, 'index.html'), 'Company site entry');
-    assertFile(path.join(COMPANY_OUTPUT, 'ja', 'index.html'), 'Japanese home entry');
-    assertFile(path.join(COMPANY_OUTPUT, 'ecommerce', 'index.html'), 'Seams Pantry page entry');
-    assertFile(
-      path.join(COMPANY_OUTPUT, 'ja', 'ecommerce', 'index.html'),
-      'Japanese Seams Pantry entry',
-    );
-    assertFile(path.join(COMPANY_OUTPUT, 'ja', 'company', 'index.html'), 'Japanese company entry');
-    assertFile(path.join(COMPANY_OUTPUT, 'sitemap.xml'), 'Company site sitemap');
-    return;
-  }
   if (component === 'wallet-docs') {
     copyPublicDocsArtifact(WALLET_DOCS_OUTPUT);
     writeWalletDocsHeaders(site);
@@ -412,32 +393,6 @@ function writeWalletDocsHeaders(site) {
   fs.writeFileSync(path.join(WALLET_DOCS_OUTPUT, '_headers'), `${lines.join('\n')}\n`);
 }
 
-function writeCompanyCutoverFiles(site) {
-  const walletOrigin = site.walletSiteOrigin;
-  const redirects = [
-    `/wallet ${walletOrigin}/ 301`,
-    `/wallet/ ${walletOrigin}/ 301`,
-    `/wallet/ja ${walletOrigin}/ja/ 301`,
-    `/wallet/ja/ ${walletOrigin}/ja/ 301`,
-    // Wallet pricing moved to the Wallet site; the company site has no pricing page yet.
-    `/pricing ${walletOrigin}/pricing/ 301`,
-    `/pricing/* ${walletOrigin}/pricing/ 301`,
-    `/ja/pricing ${walletOrigin}/ja/pricing/ 301`,
-    `/ja/pricing/* ${walletOrigin}/ja/pricing/ 301`,
-    '/dashboard/login /wallet-login-restart.html 200',
-    `/dashboard ${walletOrigin}/dashboard 302`,
-    `/dashboard/* ${walletOrigin}/dashboard/:splat 302`,
-    `/platform/* ${walletOrigin}/platform/:splat 302`,
-  ];
-  fs.writeFileSync(path.join(COMPANY_OUTPUT, '_redirects'), `${redirects.join('\n')}\n`);
-  fs.writeFileSync(
-    path.join(COMPANY_OUTPUT, 'wallet-login-restart.html'),
-    '<!doctype html><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>Sign in again</title><p>This sign-in request used the former Console address.</p><p><a href="' +
-      walletOrigin +
-      '/dashboard/login">Start a new sign-in</a></p>\n',
-  );
-}
-
 function copyPublicDocsArtifact(destination) {
   assertDirectory(PUBLIC_DOCS_ARTIFACT_ROOT, 'Public Wallet docs artifact');
   assertFile(
@@ -539,15 +494,7 @@ export function buildFrontendEnvironment(site, frontendOrigin, sourceEnvironment
 
 async function deployFrontend(site, component, walletLanes) {
   requireEnvironmentValues(['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID'], process.env);
-  if (component === 'company') {
-    requireEnvironmentValues([site.pagesProjectEnv], process.env);
-    assertDirectory(COMPANY_OUTPUT, 'Company Pages output');
-    // Refactor 200: the company site may live in another Cloudflare account.
-    await withCompanyCloudflareAccount(async () => {
-      await deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
-      await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
-    });
-  } else if (component === 'wallet-docs') {
+  if (component === 'wallet-docs') {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
     const project = process.env[site.docsPagesProjectEnv];
@@ -568,10 +515,7 @@ async function deployFrontend(site, component, walletLanes) {
     const project = process.env[site.walletSitePagesProjectEnv];
     await deployPagesProject(WALLET_SITE_OUTPUT, site, project);
     if (!prepareOnly) {
-      // The Wallet site can take a host that the company site served before.
-      await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
-        process.env[site.pagesProjectEnv],
-      ]);
+      await ensurePagesCustomDomain(site.walletSiteOrigin, project);
       deployHostRedirects(site);
     }
   } else {
@@ -584,127 +528,6 @@ async function deployFrontend(site, component, walletLanes) {
     }
   }
   process.stdout.write(`Frontend deploy completed: ${site.id}/${component}\n`);
-}
-
-async function withCompanyCloudflareAccount(operation) {
-  const token = String(process.env.COMPANY_CLOUDFLARE_API_TOKEN || '').trim();
-  const accountId = String(process.env.COMPANY_CLOUDFLARE_ACCOUNT_ID || '').trim();
-  if (Boolean(token) !== Boolean(accountId)) {
-    throw new Error('COMPANY_CLOUDFLARE_API_TOKEN and COMPANY_CLOUDFLARE_ACCOUNT_ID go together');
-  }
-  if (!token) return operation();
-  const previous = {
-    CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN,
-    CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID,
-  };
-  process.env.CLOUDFLARE_API_TOKEN = token;
-  process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
-  try {
-    return await operation();
-  } finally {
-    Object.assign(process.env, previous);
-  }
-}
-
-async function deployPagesProject(
-  outputDirectory,
-  site,
-  projectName,
-  productionBranch = site.branch,
-) {
-  await ensurePagesProject(projectName, productionBranch);
-  const args = [
-    'exec',
-    'wrangler',
-    'pages',
-    'deploy',
-    path.relative(REPOSITORY_ROOT, outputDirectory),
-    '--branch',
-    site.branch,
-    '--commit-dirty=false',
-    '--project-name',
-    projectName,
-  ];
-  const sourceSha = String(process.env.DEPLOY_SHA || '').trim();
-  if (sourceSha) args.push('--commit-hash', sourceSha);
-  runCommand('pnpm', args);
-}
-
-/* A new Cloudflare account has no Pages projects. The production branch serves the
-   custom domains: the site's branch, or main for the shared docs project. */
-async function ensurePagesProject(projectName, productionBranch) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
-  const existing = await requestCloudflareApi(
-    `${projectsPath}/${encodeURIComponent(projectName)}`,
-    apiToken,
-    'GET',
-    [200, 404],
-  );
-  if (existing.status === 200) return;
-  await requestCloudflareApi(projectsPath, apiToken, 'POST', [200], {
-    name: projectName,
-    production_branch: productionBranch,
-  });
-  process.stdout.write(
-    `Created Pages project ${projectName} (production branch ${productionBranch})\n`,
-  );
-}
-
-/* Binds the host to the Pages project. `releaseFrom` names the other projects that may
-   hold the host before a move. The deploy token cannot change DNS, so a new binding
-   stops the deploy until the host's DNS record is a proxied CNAME to the project. */
-async function ensurePagesCustomDomain(origin, projectName, releaseFrom = []) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const hostname = new URL(origin).hostname;
-  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
-  const domainPath = (project) =>
-    `${projectsPath}/${encodeURIComponent(project)}/domains/${encodeURIComponent(hostname)}`;
-  const existing = await requestCloudflareApi(domainPath(projectName), apiToken, 'GET', [200, 404]);
-  if (existing.status !== 200) {
-    for (const previous of releaseFrom.filter((name) => name && name !== projectName)) {
-      const held = await requestCloudflareApi(domainPath(previous), apiToken, 'GET', [200, 404]);
-      if (held.status !== 200) continue;
-      await requestCloudflareApi(domainPath(previous), apiToken, 'DELETE', [200]);
-      process.stdout.write(`Released Pages custom domain ${hostname} from ${previous}\n`);
-    }
-    await requestCloudflareApi(
-      `${projectsPath}/${encodeURIComponent(projectName)}/domains`,
-      apiToken,
-      'POST',
-      [200],
-      { name: hostname },
-    );
-    process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
-  }
-  await waitForActivePagesDomain(domainPath(projectName), hostname, projectName, apiToken);
-}
-
-async function waitForActivePagesDomain(domainPath, hostname, projectName, apiToken) {
-  const deadline = Date.now() + 120_000;
-  let status = '';
-  while (Date.now() < deadline) {
-    const response = await requestCloudflareApi(domainPath, apiToken, 'GET', [200]);
-    status = String((await response.json()).result?.status || '');
-    if (status === 'active') return;
-    await new Promise((resolve) => setTimeout(resolve, 10_000));
-  }
-  // A pages.dev subdomain is unique across accounts, so a project in a new account
-  // can have a suffix after its name. Name the target that the project really has.
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const project = await requestCloudflareApi(
-    `/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(projectName)}`,
-    apiToken,
-    'GET',
-    [200],
-  );
-  const target = (await project.json()).result?.subdomain || `${projectName}.pages.dev`;
-  throw new Error(
-    `Pages custom domain ${hostname} is ${status || 'not active'}. ` +
-      `Make its DNS record a proxied CNAME to ${target}, then deploy again.`,
-  );
 }
 
 /* One Worker per site sends every former host to its successor. */
@@ -733,21 +556,6 @@ function deployHostRedirects(site) {
   }
 }
 
-async function requestCloudflareApi(apiPath, apiToken, method, expectedStatuses, body) {
-  const response = await fetch(`https://api.cloudflare.com/client/v4${apiPath}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  if (expectedStatuses.includes(response.status)) return response;
-  throw new Error(
-    `Cloudflare Pages custom-domain request failed (${method} ${apiPath}): ${response.status} ${await response.text()}`,
-  );
-}
-
 async function smokeFrontend(site, component, walletLanes) {
   if (withoutPublicTraffic()) {
     process.stdout.write(
@@ -765,16 +573,6 @@ async function smokeFrontend(site, component, walletLanes) {
 }
 
 async function buildSmokeChecks(site, component, walletLanes) {
-  if (component === 'company')
-    return smokeChecks('company', site.origin, [
-      '/',
-      '/ja/',
-      '/ecommerce/',
-      '/ja/ecommerce/',
-      '/company/',
-      '/ja/company/',
-      '/sitemap.xml',
-    ]);
   if (component === 'wallet-site') {
     return [
       ...smokeChecks('wallet-site', site.walletSiteOrigin, [
@@ -898,17 +696,6 @@ function isPermanentRedirectToWalletDocs(response) {
   );
 }
 
-function smokeChecks(surface, origin, requests) {
-  return requests.map((request) => {
-    const requestPath = typeof request === 'string' ? request : request.path;
-    return {
-      name: `${surface}${requestPath}`,
-      url: new URL(requestPath, origin).toString(),
-      ...(typeof request === 'string' ? {} : { isReady: request.isReady }),
-    };
-  });
-}
-
 async function walletManifestMatchesInstalledVersion(response) {
   const installedWalletRoot = resolveInstalledWalletRoot();
   const installedWalletVersion = readPackageVersion(path.join(installedWalletRoot, 'package.json'));
@@ -975,45 +762,6 @@ function assertWalletSettingsExport() {
 function copyDirectory(source, destination) {
   fs.mkdirSync(destination, { recursive: true });
   runCommand('rsync', ['-a', '--delete', `${source}${path.sep}`, `${destination}${path.sep}`]);
-}
-
-function assertDeploymentBranch(site) {
-  const ref = String(process.env.GITHUB_REF || '').trim();
-  const branch = String(process.env.GITHUB_REF_NAME || '').trim();
-  const received = ref || (branch ? `refs/heads/${branch}` : '');
-  if (received && received !== `refs/heads/${site.branch}`) {
-    throw new Error(`site ${site.id} requires branch ${site.branch}; received ${received}`);
-  }
-}
-
-function requireEnvironmentValues(names, environment) {
-  for (const name of names) {
-    if (!String(environment[name] || '').trim()) throw new Error(`${name} is required`);
-  }
-}
-
-function runCommand(command, args, options = {}) {
-  const child = spawnSync(command, args, {
-    cwd: options.cwd || REPOSITORY_ROOT,
-    env: options.env || process.env,
-    encoding: 'utf8',
-    stdio: 'inherit',
-  });
-  if (child.error) throw child.error;
-  if (child.status !== 0)
-    throw new Error(`${command} ${args.join(' ')} failed with status ${child.status}`);
-}
-
-function assertDirectory(directory, label) {
-  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) {
-    throw new Error(`${label} is missing: ${directory}`);
-  }
-}
-
-function assertFile(filePath, label) {
-  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    throw new Error(`${label} is missing: ${filePath}`);
-  }
 }
 
 function readPackageVersion(packagePath) {

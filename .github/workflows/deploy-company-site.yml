@@ -1,0 +1,57 @@
+name: Deploy / company site
+
+# The company site (apps/seams-site) deploys apart from the Wallet frontends. Its own
+# secrets choose its Cloudflare account, so a move to another account changes only
+# COMPANY_CLOUDFLARE_API_TOKEN and COMPANY_CLOUDFLARE_ACCOUNT_ID.
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Company site to deploy (staging from dev, production from main)
+        required: true
+        type: choice
+        default: staging
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deployment-company-site-${{ inputs.site }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy / company site / ${{ inputs.site }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: ${{ inputs.site }}
+    env:
+      DEPLOY_SITE: ${{ inputs.site }}
+      DEPLOY_SHA: ${{ github.sha }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.COMPANY_CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.COMPANY_CLOUDFLARE_ACCOUNT_ID }}
+      CF_PAGES_PROJECT_VITE: ${{ secrets.CF_PAGES_PROJECT_VITE }}
+    steps:
+      - name: Checkout deployment revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Install exact dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build, deploy and smoke the company site
+        run: |
+          set -euo pipefail
+          for operation in build deploy smoke; do
+            pnpm deploy:company-site "$operation" --site "$DEPLOY_SITE"
+          done

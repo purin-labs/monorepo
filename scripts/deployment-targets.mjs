@@ -606,7 +606,6 @@ function parseSite(value, releaseId, branch) {
       'googleOidcClientId',
       'defaultNetwork',
       'availableNetworks',
-      'pagesProjectEnv',
       'walletSitePagesProjectEnv',
       'docsPagesProjectEnv',
       ...['formerWalletSiteOrigins', 'formerDocsOrigins'].filter((key) => Object.hasOwn(site, key)),
@@ -646,7 +645,6 @@ function parseSite(value, releaseId, branch) {
     ),
     defaultNetwork,
     availableNetworks: Object.freeze(availableNetworks),
-    pagesProjectEnv: requireEnvironmentName(site.pagesProjectEnv, sitePath + '.pagesProjectEnv'),
     walletSitePagesProjectEnv: requireEnvironmentName(
       site.walletSitePagesProjectEnv,
       sitePath + '.walletSitePagesProjectEnv',

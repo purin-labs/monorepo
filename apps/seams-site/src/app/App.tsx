@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useSiteTheme } from '@/shared/hooks/useSiteTheme';
 import { normalizePathname, resolveHref } from '@/app/router/siteRouting';
-import { PAPER_LIGHT_COLORS } from '@/context/app-themes';
+import { PAPER_LIGHT_COLORS } from '@/context/siteColors';
 import { ContactModalHost } from '@/components/contact/ContactModal';
 import { CONTACT_LINK_TARGET } from '@/components/contact/contactLink';
 import { SitePageContext } from '@/i18n/browser';

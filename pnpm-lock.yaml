@@ -63,57 +63,24 @@ importers:
       '@fontsource/hanken-grotesk':
         specifier: 5.2.8
         version: 5.2.8
-      '@radix-ui/react-select':
-        specifier: 2.2.6
-        version: 2.2.6(@types/react-dom@19.1.9(@types/react@19.1.12))(@types/react@19.1.12)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@seams-internal/console-shared':
-        specifier: workspace:*
-        version: link:../../packages/console-shared-ts
       '@seams-internal/grain-field':
         specifier: workspace:*
         version: link:../../packages/grain-field-ts
       '@seams-internal/site-navbar':
         specifier: workspace:*
         version: link:../../packages/site-navbar-ts
-      '@seams-internal/wallet-console-shared':
-        specifier: workspace:*
-        version: link:../../packages/wallet-console-shared-ts
-      '@seams/voiceid':
-        specifier: 0.76.0
-        version: 0.76.0(@seams/wallet@0.76.0(@seams/voice-capture@0.72.0)(jsqr@1.4.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@seams/wallet':
-        specifier: 0.76.0
-        version: 0.76.0(@seams/voice-capture@0.72.0)(jsqr@1.4.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)
-      '@tanstack/react-query':
-        specifier: 5.87.1
-        version: 5.87.1(react@19.1.1)
-      borsh:
-        specifier: 2.0.0
-        version: 2.0.0
-      bs58:
-        specifier: 6.0.0
-        version: 6.0.0
       clsx:
         specifier: 2.1.1
         version: 2.1.1
-      jsqr:
-        specifier: 1.4.0
-        version: 1.4.0
       lucide-react:
         specifier: 0.542.0
         version: 0.542.0(react@19.1.1)
-      qrcode:
-        specifier: 1.5.4
-        version: 1.5.4
       react:
         specifier: 19.1.1
         version: 19.1.1
       react-dom:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
-      sonner:
-        specifier: 1.7.4
-        version: 1.7.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
     devDependencies:
       '@types/node':
         specifier: 22.18.1

@@ -9,7 +9,6 @@
       "googleOidcClientId": "971053349716-p52bppo1gmlei9i88naa8eta5f3ebu2l.apps.googleusercontent.com",
       "defaultNetwork": "testnet",
       "availableNetworks": ["testnet"],
-      "pagesProjectEnv": "CF_PAGES_PROJECT_VITE",
       "walletSitePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_SITE",
       "docsPagesProjectEnv": "CF_PAGES_PROJECT_WALLET_DOCS"
     },
@@ -270,7 +269,6 @@
       "googleOidcClientId": "971053349716-p10qdg7lsjh24lcocbsckt4f85is5igs.apps.googleusercontent.com",
       "defaultNetwork": "testnet",
       "availableNetworks": ["testnet", "mainnet"],
-      "pagesProjectEnv": "CF_PAGES_PROJECT_VITE",
       "walletSitePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_SITE",
       "docsPagesProjectEnv": "CF_PAGES_PROJECT_WALLET_DOCS"
     },

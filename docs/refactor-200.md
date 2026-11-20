@@ -13,9 +13,10 @@ host names change during the move (see "Public hosts"), so build the
 destination resources with the new host names from the start. Use a planned maintenance window
 for the account and domain cutover.
 
-Status: plan updated on 2026-11-20. No Cloudflare resource has moved. The `seamsadmin@gmail.com`
-account (`ea0d54352cf9d80e962154980504b428`) is empty and on the Workers Free plan. The private
-repository moved to `purin-labs/monorepo` on 2026-11-20.
+Status: cut over on 2026-11-20. Every Seams Wallet lane runs in the `seamsadmin@gmail.com`
+account (`ea0d54352cf9d80e962154980504b428`), and the `seams.sh` zone and registration are
+there. The company site serves on `purin.io` from the source account. What remains is in
+"After the cutover".
 
 ### Decisions of 2026-11-20
 
@@ -29,10 +30,10 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
 - Pantry moves to the Purin account with `purin.io` host names. Pantry plans its own move in
   its repository. Pantry reaches the Console through a Cloudflare service binding
   (`ACCOUNT_PLATFORM` to `seams-sdk-d1-console*`), and a binding cannot cross accounts. So
-  Pantry keeps using the old Console Workers and their D1 databases in the source account
-  until it has its own accounts ([Refactor 260](refactor-260-console-split.md)). Do not
-  retire `seams-sdk-d1-console`, `seams-sdk-d1-console-staging` and their databases before
-  that.
+  Pantry keeps using the old production Console Worker `seams-sdk-d1-console` and its D1
+  database in the source account until it has its own accounts
+  ([Refactor 260](refactor-260-console-split.md)). Do not retire them before that. Pantry
+  removed its staging environment on 2026-11-19, so `seams-sdk-d1-console-staging` can retire.
 - `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
 - No host is renamed in the source account first.
 - Decided later on 2026-11-20: the Seams Wallet and its Console become one separate product
@@ -128,6 +129,63 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    Recreate the `seams.sh` Email Routing rules and check the Resend records.
 10. Owner: confirm the retire list and sign `wrangler` in to the old account again. Claude:
     remove the source Seams resources.
+
+## After the cutover
+
+Done on 2026-11-20:
+
+- `seams.sh` is a zone in `seamsadmin` (nameservers `jerry` and `novalee`), active since
+  08:01 UTC. The registration moved with the Registrar inter-account move.
+- Each lane has a fresh tenant: organisation "Seams", project "Seams Wallet", environment
+  `:dev`. Activation passed for staging, production testnet and production mainnet, and the
+  three Gateways answer 200 on `/readyz`.
+- Old hosts redirect through `seams-host-redirects-staging` and `-production`.
+- GitHub OAuth Apps and Google OAuth clients accept the new hosts. Email Routing is on.
+- `purin.io` and `staging.purin.io` point at the company site projects in the source account.
+
+Lessons:
+
+- Routes, Worker custom domains and Pages domains attach to a pending zone. Do this before
+  the Registrar move is accepted.
+- A host with two labels under the zone (`staging.api.seams.sh`) needs its own certificate.
+  Worker custom domains and Pages domains get one; a plain route does not. The certificates
+  came 30 to 60 minutes after the zone turned active.
+- Mainnet uses the `:dev` environment, because a fresh project has Production disabled.
+
+Done after the cutover (2026-11-20):
+
+- Email Routing for `seams.sh`: `confirm@`, `peita@` and `admin@` forward to the owner's
+  address. A test message from `confirm@seams.sh` through Resend shows "Forwarded".
+- The `seamsadmin` API token is rolled. The new value is in the six `~/.seams` values files
+  and in the 24 GitHub environments.
+- `purin.io` has Email Routing in the source account. `info@purin.io` forwards to the
+  owner's address. Keep its MX and TXT records when the zone moves.
+- The contact address in the company site and the Wallet Console is `info@purin.io`.
+- `site:deploy:env-update` writes to the environment named after the site.
+- The obsolete `regional-deployment-config` test is deleted.
+- Pantry CI names `purin-labs/monorepo` (Pantry commit, local on its `main`).
+
+Open:
+
+- Resend sender: add and verify `purin.io` in the Resend dashboard, then change
+  `fromAddress` from `confirm@seams.sh` to `info@purin.io` in both target files. The lane
+  keys can only send, so the domain needs a dashboard sign-in.
+- Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
+  projects and 3 containers are deleted in the source account. The record is the private file
+  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. Left: the
+  `watchbook-analytics` bucket (an expiry rule empties it first), one idle tunnel and the old
+  `seams.sh` zone.
+- Phase 7, Wave 2 waits for Pantry: `seams-sdk-d1-console`, its database, the mainnet
+  Gateways and Wallet Runtimes it binds, and the mainnet Router roles, private databases and
+  backup buckets that those reach.
+- The owner deleted the `seams.tokyo` zone on purpose (2026-11-20). `shop.seams.tokyo` no
+  longer resolves; the Worker `seams-shop` stays for the Purin plan.
+- The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
+  `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
+  the owner decides.
+- Mainnet environment: keep `:dev`, or enable Production.
+- Purin account move: `purin.io` can move from 2026-11-27. The Purin account needs the
+  Workers Paid plan and an API token first.
 
 ## Resource inventory
 

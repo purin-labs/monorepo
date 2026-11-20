@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "sites": {
+    "staging": {
+      "branch": "dev",
+      "origin": "https://staging.purin.io",
+      "walletSiteOrigin": "https://staging.seams.sh",
+      "docsOrigin": "https://docs.seams.sh",
+      "pagesProjectEnv": "CF_PAGES_PROJECT_VITE"
+    },
+    "production": {
+      "branch": "main",
+      "origin": "https://purin.io",
+      "walletSiteOrigin": "https://seams.sh",
+      "docsOrigin": "https://docs.seams.sh",
+      "pagesProjectEnv": "CF_PAGES_PROJECT_VITE"
+    }
+  }
+}

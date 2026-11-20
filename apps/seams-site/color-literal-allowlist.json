@@ -4,8 +4,6 @@
   "files": {
     "apps/seams-site/src/app.css": ["#12161d", "#171b22", "#2a2f38", "#f3f5f8", "#fff"],
     "apps/seams-site/src/components/ArrowRightAnim.css": [],
-    "apps/seams-site/src/components/Carousel/CarouselStyles.css": [],
-    "apps/seams-site/src/components/DemoPage.css": [],
     "apps/seams-site/src/components/Footer.css": [
       "#000",
       "#0b1522",
@@ -27,16 +25,6 @@
       "rgba(17, 32, 52, 0.45)",
       "rgba(255, 255, 255, 0.7)"
     ],
-    "apps/seams-site/src/components/GlassBorder.css": [],
-    "apps/seams-site/src/components/LoadingButton.css": [],
-    "apps/seams-site/src/components/PasskeyLoginMenu.css": [],
-    "apps/seams-site/src/components/Select.css": [
-      "#0b0c10",
-      "rgba(0,0,0,0.2)",
-      "rgba(0,0,0,0.35)"
-    ],
-    "apps/seams-site/src/components/SyncAccount.css": [],
-    "apps/seams-site/src/components/Toaster.css": ["#fff"],
     "apps/seams-site/src/layout.css": [
       "#000",
       "#1f2d3a",
@@ -126,49 +114,6 @@
       "#ffffff",
       "rgba(0, 0, 0, 0.78)",
       "rgba(15, 23, 42, 0.2)"
-    ],
-    "apps/seams-site/src/styles/contact-page.css": [
-      "#6f809c",
-      "#8797b1",
-      "#cf3a3a",
-      "#ffffff"
-    ],
-    "apps/seams-site/src/styles/dashboard-page.css": [
-      "#2f3240",
-      "#4d73ff",
-      "#6d7290",
-      "#707797",
-      "#7982a3",
-      "#7c83a0",
-      "#8089ac",
-      "#8a93b2",
-      "#96a0c0",
-      "#98a0bd",
-      "#cc7513",
-      "#cfd9ea",
-      "#dbe3f0",
-      "#e8edf8",
-      "#eef1fa",
-      "#eef2f8",
-      "#eef2fb",
-      "#eff3ff",
-      "#f3e8da",
-      "#f4f6fb",
-      "#f8fafe",
-      "#ffffff",
-      "rgba(15, 23, 42, 0.34)"
-    ],
-    "apps/seams-site/src/styles/pricing-page.css": [
-      "#0f172a",
-      "#4338ca",
-      "#475569",
-      "#4f46e5",
-      "#d9e0ec",
-      "#f8fafc",
-      "#ffffff",
-      "rgba(15, 23, 42, 0.3)"
-    ],
-    "apps/seams-site/src/styles/security-diagrams.css": ["#000", "#8ea8c6", "#b18897"],
-    "apps/seams-site/src/styles/site-pages.css": []
+    ]
   }
 }

@@ -7,7 +7,7 @@ import './ContactModal.css';
 
 import { CONTACT_LINK_TARGET } from './contactLink';
 
-const SALES_EMAIL_ADDRESS = 'sales@seams.sh';
+const SALES_EMAIL_ADDRESS = 'info@purin.io';
 
 function readFormValue(formData: FormData, name: string): string {
   const value = formData.get(name);

@@ -11,7 +11,7 @@ import {
   type ContactPricingContext,
 } from './pricingContext';
 
-const SALES_EMAIL_ADDRESS = 'sales@seams.sh';
+const SALES_EMAIL_ADDRESS = 'info@purin.io';
 
 function readFormValue(formData: FormData, name: string): string {
   const value = formData.get(name);
