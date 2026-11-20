@@ -30,7 +30,7 @@ const variables = new Map(settings.result.bindings.map(bindingEntry));
 const namespace = variables.get('SEAMS_TENANT_STORAGE_NAMESPACE');
 assert.equal(namespace, 'seams-staging');
 const origin = new URL(variables.get('CONSOLE_BASE_URL')).origin;
-assert.equal(origin, 'https://staging.console.purin.io');
+assert.equal(origin, 'https://staging.console.seams.sh');
 
 function bindingEntry(binding) {
   return [binding.name, binding.text];

@@ -3,6 +3,11 @@
 Status: proposed on 2026-11-20. The repository move is done. No host has moved yet. The names
 in "Other hosts" wait for the owner's approval.
 
+Paused on 2026-11-20: the owner wants the Seams Wallet DNS in the `seamsadmin@gmail.com`
+Cloudflare account (see [Refactor 200](refactor-200.md)). The mechanism for former hosts is on
+`dev`. The staging target values are back on the old hosts until the account question is
+settled.
+
 The owner moved the private repository to `purin-labs/monorepo` on 2026-11-20 (done). The
 same change set moves the public hosts:
 

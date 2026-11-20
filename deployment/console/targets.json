@@ -3,8 +3,8 @@
   "lanes": {
     "staging-testnet": {
       "environment": "staging-console",
-      "origin": "https://staging.seams.sh",
-      "siteOrigin": "https://staging.seams.sh",
+      "origin": "https://staging.wallet.seams.sh",
+      "siteOrigin": "https://staging.wallet.seams.sh",
       "workerName": "seams-sdk-d1-console-staging",
       "platformSupportEmails": ["n6378056@gmail.com"],
       "placementRegion": "aws:ap-southeast-1",
@@ -64,10 +64,8 @@
   "frontends": {
     "staging": {
       "branch": "dev",
-      "platformOrigin": "https://staging.console.purin.io",
-      "formerPlatformOrigins": ["https://staging.console.seams.sh"],
-      "walletConsoleOrigin": "https://console.staging.seams.sh",
-      "formerWalletConsoleOrigins": ["https://console.staging.wallet.seams.sh"],
+      "platformOrigin": "https://staging.console.seams.sh",
+      "walletConsoleOrigin": "https://console.staging.wallet.seams.sh",
       "platformPagesProjectEnv": "CF_PAGES_PROJECT_PLATFORM_CONSOLE",
       "walletConsolePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_CONSOLE"
     },

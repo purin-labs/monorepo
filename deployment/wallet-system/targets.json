@@ -3,9 +3,8 @@
   "staging": {
     "branch": "dev",
     "site": {
-      "origin": "https://staging.purin.io",
-      "walletSiteOrigin": "https://staging.seams.sh",
-      "formerWalletSiteOrigins": ["https://staging.wallet.seams.sh"],
+      "origin": "https://staging.seams.sh",
+      "walletSiteOrigin": "https://staging.wallet.seams.sh",
       "googleOidcClientId": "971053349716-p52bppo1gmlei9i88naa8eta5f3ebu2l.apps.googleusercontent.com",
       "defaultNetwork": "testnet",
       "availableNetworks": ["testnet"],
@@ -15,7 +14,7 @@
     },
     "lanes": {
       "testnet": {
-        "gatewayOrigin": "https://staging.api.seams.sh",
+        "gatewayOrigin": "https://staging.api.wallet.seams.sh",
         "walletOrigin": "https://staging.sign.seams.sh",
         "walletPagesProjectEnv": "CF_PAGES_PROJECT_WALLET",
         "emailOtpDelivery": {
@@ -152,10 +151,8 @@
               "environmentId": "proj_mv5fzezy_4ztf60:dev"
             },
             "origins": {
-              "gateway": "https://staging.api.seams.sh",
-              "formerGateways": ["https://staging.api.wallet.seams.sh"],
+              "gateway": "https://staging.api.wallet.seams.sh",
               "allowedCors": [
-                "https://staging.purin.io",
                 "https://staging.seams.sh",
                 "https://staging.wallet.seams.sh",
                 "https://staging.sign.seams.sh"

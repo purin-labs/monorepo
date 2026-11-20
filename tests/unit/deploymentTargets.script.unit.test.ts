@@ -247,7 +247,7 @@ test('deployment target parsing rejects cross-lane origin reuse', async () => {
   expect(() =>
     module.parseDeploymentTargets(
       withProduction(targets, {
-        testnet: { ...testnet, gatewayOrigin: 'https://staging.api.seams.sh' },
+        testnet: { ...testnet, gatewayOrigin: 'https://staging.api.wallet.seams.sh' },
       }),
     ),
   ).toThrow(/origin/u);
