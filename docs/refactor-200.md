@@ -72,7 +72,12 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
 3. Done: staging storage in `seamsadmin`: 8 D1 databases (APAC primaries in `SIN`) and all 6
    R2 buckets. The Free plan stops at 10 D1 databases, so 14 production databases wait.
    The complete signer (91, head `0091`) and Console (95, head `0118`) migration sets apply
-   cleanly to the empty staging databases.
+   cleanly to the empty staging databases. The ten Wallet Pages projects exist; each has a
+   suffixed `pages.dev` subdomain (for example `seams-wallet-site-staging-3vl.pages.dev`)
+   because the source account holds the plain names. The destination `seams.sh` records are
+   ready as two BIND files in the private inventory folder.
+   4a. Claude, before the production switch: add a former docs origin (`docs.wallet.seams.sh`
+   to `docs.seams.sh`) to the host redirects and change `PUBLIC_WALLET_DOCS_ORIGIN`.
 4. Owner: buy Workers Paid on `seamsadmin` before the production lanes.
 5. Owner: create a `seamsadmin` account API token (Workers Scripts, D1, Workers R2 Storage,
    Cloudflare Pages Edit, Account Settings Read; for all zones Workers Routes Edit, Zone Read,
