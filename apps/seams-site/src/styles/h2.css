@@ -1,4 +1,4 @@
-/* Home2: white-canvas editorial marketing page for the Seams commerce stack.
+/* Home2: white-canvas editorial marketing page for the Purin commerce stack.
    Scoped under .h2-page and independent of the site theme: the palette is
    hardcoded so the page stays light in dark mode too. */
 
@@ -27,7 +27,7 @@
   --h2-graphite: #44403b;
   --h2-smoke: #777169;
   --h2-ash: #a59f97;
-  /* product-visual accent (Seams deck green): never on plain UI chrome */
+  /* product-visual accent (Purin deck green): never on plain UI chrome */
   --h2-green: #157f5f;
   --h2-green-soft: #e4f0eb;
   /* CTA accent: the split-key slab sage-teal (deep slab of .h2-splitkey);
@@ -904,7 +904,7 @@ body:has(.h2-page) {
   margin-inline-end: -2px;
 }
 
-.h2-auth-mock__brand .seams-wordmark {
+.h2-auth-mock__brand .purin-wordmark {
   flex: none;
   color: var(--h2-ink);
 }

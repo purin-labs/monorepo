@@ -8,10 +8,10 @@ import {
   type SiteNavbarConfig,
 } from '@seams-internal/site-navbar';
 
-/* seams.sh is the landing site for three products: Satyr (the ecommerce
-   suite for cafés and pâtisseries), Satyr Kitchen (its production workspace, with
-   robotics to come) and Seams Wallet (a standalone stablecoin wallet). Satyr Kitchen
-   has its section on the Satyr page. Satyr and Satyr Kitchen have no docs yet: these
+/* purin.io is the landing site for three products: Purin Pantry (the operating
+   system for bakeries and cafés), Kitchen (its production workspace, with
+   robotics to come) and Seams Wallet (a standalone stablecoin wallet). Kitchen
+   has its section on the Pantry page. Pantry and Kitchen have no docs yet: these
    placeholder paths are the one place to point them at the real pages. The site
    shows no pricing for now; Wallet pricing lives on the Wallet site. */
 const productLinks = {
@@ -106,11 +106,11 @@ function productsDropdownPane(t: Translate): DropdownPane {
 
 export function getSiteNavbarConfig(locale: Locale): SiteNavbarConfig {
   const t = translate.bind(null, locale);
-  const about = aboutMenu(locale);
+  const about = aboutMenu(locale, 'Purin');
   return {
     labels: {
       primary: t('primary'),
-      home: t('seamsHome'),
+      home: t('purinHome'),
       dashboard: t('dashboard'),
       openMenu: t('openMenu'),
       closeMenu: t('closeMenu'),

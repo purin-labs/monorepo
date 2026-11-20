@@ -51,7 +51,7 @@ function handleContactSubmit(t: Translate, event: React.FormEvent<HTMLFormElemen
 }
 
 /* Mounted once by the app. The form opens while the URL hash is #contact, so a
-   link from another site (for example https://seams.sh/#contact) opens it too. */
+   link from another site (for example https://purin.io/#contact) opens it too. */
 export function ContactModalHost(): React.JSX.Element {
   const t = useTranslation();
   const [open, setOpen] = React.useState<boolean>(readContactHash);
