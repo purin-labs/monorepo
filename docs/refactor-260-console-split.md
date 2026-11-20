@@ -209,6 +209,13 @@ five recommendations:
    Pantry has its own accounts. The two products then already have separate account data.
    Pantry removed its staging environment on 2026-11-19 (Pantry `b343df1`), so
    `seams-sdk-d1-console-staging` and its database do not wait for Pantry.
+   - The old Console Worker has nine service bindings, so more than the Console waits. Kept
+     for Pantry (Refactor 200, Phase 7, Wave 2): `seams-sdk-d1-console`, D1 `seams-console`,
+     the four mainnet Gateways and four Wallet Runtimes that it binds, D1
+     `seams-signer-{sin,us,weur,oc}`, the Workers
+     `router-ab-{mpc-router,deriver-a,deriver-b,signing-worker,tenant-root-control-plane}`,
+     D1 `router-ab-*-private-sin` and R2 `router-ab-deriver-{a,b}-tenant-root-managed-backup`.
+     Wave 1 deleted every other old Seams resource on 2026-11-20.
 3. **Pantry builds its own accounts** (Pantry Plan 95). Then it removes the
    `ACCOUNT_PLATFORM` binding, and `seams-sdk-d1-console` and its database retire.
 4. **Cut the couplings in this repository** (small changes on `dev`):
@@ -324,9 +331,9 @@ five recommendations:
 4. Decided (owner, 2026-11-20): keep `test.console.seams.sh`, the separate Console Worker
    and database of the production testnet lane, until the split ends. Then decide whether
    one Console serves both networks.
-5. Decided (owner, 2026-11-20): Pantry keeps the old Console Worker `seams-sdk-d1-console`
-   in the old Cloudflare account until its own accounts exist (order step 2). The
-   Refactor 200 cutover does not wait for Pantry.
+5. Decided (owner, 2026-11-20): Pantry keeps the old Console Worker `seams-sdk-d1-console`,
+   and what it binds, in the old Cloudflare account until its own accounts exist (order
+   step 2). The Refactor 200 cutover does not wait for Pantry.
 6. Decided (owner, 2026-11-20): a new CLI release root with no bridge, issued in step 6.
    `SEAMS_RELEASE_SIGNING_KEY` exists only in the `release-signing` environment here, and
    the `seams` binary compiles in one release root
