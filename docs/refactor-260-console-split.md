@@ -14,20 +14,23 @@ Done on 2026-11-20:
   the push. Step 6 brings it level.
 - `seams-console` is public. Its `validate-repository.yml` run `44690621569` passed on
   `83023b1e`.
+- Step 1: every Seams Wallet lane runs in `seamsadmin` (Refactor 200, "After the cutover").
+- Step 4, the code part (`480f7209`): the company site carries no Seams Wallet code. Its
+  bundle has no `@seams/wallet`, `@seams/voice*`, `apps/wallet-console` or Console module.
+  Each page has the same height, sections and text as `purin.io`.
 
 Remaining:
 
-| Step (see "Order")                   | Owner                     | Waits for                                      |
-| ------------------------------------ | ------------------------- | ---------------------------------------------- |
-| 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                    |
-| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                        |
-| 3. Pantry's own accounts             | Pantry Plan 95            | Plan 95 steps 1 to 4 (decisions taken)         |
-| 4. Cut the couplings                 | This plan                 | Step 1                                         |
-| 5. Remove the Pantry service         | This plan                 | Step 3                                         |
-| 6. Move the deploys                  | This plan                 | Steps 1 and 4, six secrets, a new release root |
-| 7. New OIDC identity                 | This plan                 | Part of step 6                                 |
-| 8. Delete the moved paths            | This plan                 | Production runs from `seams-console`           |
-| 9. Rename this repository            | This plan                 | Step 8                                         |
+| Step (see "Order")                   | Owner                 | Waits for                                      |
+| ------------------------------------ | --------------------- | ---------------------------------------------- |
+| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7 | Holds until step 3 ends                        |
+| 3. Pantry's own accounts             | Pantry Plan 95        | Plan 95 steps 1 to 4 (decisions taken)         |
+| 4. The company site deploy path      | This plan             | The company site's Purin account move          |
+| 5. Remove the Pantry service         | This plan             | Step 3                                         |
+| 6. Move the deploys                  | This plan             | Steps 1 and 4, six secrets, a new release root |
+| 7. New OIDC identity                 | This plan             | Part of step 6                                 |
+| 8. Delete the moved paths            | This plan             | Production runs from `seams-console`           |
+| 9. Rename this repository            | This plan             | Step 8                                         |
 
 ## Decision
 
@@ -51,11 +54,10 @@ Each fact below was read from the code on `dev` at `66e51b4c`, and from Pantry `
 
 ## What blocks a clean split
 
-1. **The company site imports Wallet app source.**
-   `apps/seams-site/src/components/h2/WalletFigure.tsx` (lines 5 to 11) imports seven files
-   from `apps/wallet-console` by relative path: the figure catalog, five showcase pages and
-   `hairline/embed.js`. `sections.tsx` uses the figure, and the home, ecommerce, company
-   and not-found pages import `sections.tsx`.
+1. **The company site imports Wallet app source.** Resolved in `480f7209`.
+   `apps/seams-site/src/components/h2/WalletFigure.tsx` imported seven files from
+   `apps/wallet-console` by relative path. Only the unused section `H2Security` rendered it,
+   so the figure and the section were deleted.
 2. **The company site deploys through Wallet files.** Its target (`origin`,
    `pagesProjectEnv`) is in `deployment/wallet-system/targets.json`, and its deploy code is
    the `company` branch of `scripts/deploy-surface.mjs`. The `company` build path also
@@ -96,12 +98,20 @@ Each fact below was read from the code on `dev` at `66e51b4c`, and from Pantry `
 - `docs/drawing-style.md`, `docs/styles/`, and a short `AGENTS.md` for the site.
 - A small deploy script and one workflow for the company site only.
 
+The local Caddy setup (`apps/seams-site/Caddyfile`, `run_caddy.sh`, which fills the ignored
+`.wallet-public/`) serves the whole local Seams stack, not the company site. It moves to
+`seams-console` in step 6; `pnpm site`, `tests/scripts/start-intended-services.mjs` and the
+local Wallet pages use it.
+
 ### Deleted, not moved
 
-- The Wallet demo in the company site: `apps/seams-site/src/flows/demo/*` (26 files),
-  `DemoPasskeyColumn` and `context/frontendRuntime.tsx`. Only `H2DemoHero` loads them, and
-  nothing references `H2DemoHero`. Confirm at run time, then delete. `src/config.ts` and
-  the `@seams/voiceid` import go with them.
+- Done in `480f7209`: the Wallet demo in the company site (`src/flows/demo/*`,
+  `DemoPasskeyColumn`, `context/frontendRuntime.tsx`, `src/config.ts`), and the Wallet
+  figures with the unused sections that held them (`WalletFigure.tsx`, `H2Security`,
+  `H2Start`, `H2Networks`, `H2Trusted`, `SplitKeyVisual`). No page rendered either. The
+  demo was still in the bundle, because a module-level `React.lazy` import kept its chunk.
+  The figures needed no copy, so the seven Wallet app files stay in `apps/wallet-console`
+  only.
 - `packages/wasm` (a symlink to a path that does not exist), the empty `packages/wallet/`
   and the stale `packages/README.md`.
 - The Platform Console build, after the account split (see "End state").
@@ -199,9 +209,13 @@ five recommendations:
 3. **Pantry builds its own accounts** (Pantry Plan 95). Then it removes the
    `ACCOUNT_PLATFORM` binding, and `seams-sdk-d1-console` and its database retire.
 4. **Cut the couplings in this repository** (small changes on `dev`):
-   - Copy the seven files that `WalletFigure.tsx` imports into `apps/seams-site`.
-   - Delete the dead Wallet demo from the company site.
-   - Give the company site its own target file and deploy script.
+   - Done (`480f7209`): the company site imports no Wallet app file and no Seams Wallet
+     package. The unused Wallet figures were deleted instead of copied.
+   - Give the company site its own target file and deploy script. Its build no longer needs
+     Wallet lane values; it reads only `VITE_SITE_ORIGIN`, `VITE_WALLET_SITE_ORIGIN` and
+     `VITE_DOCS_ORIGIN`. Do this with the company site's move to the Purin Cloudflare
+     account (Refactor 200), so the new script uses the Purin credentials
+     (`COMPANY_CLOUDFLARE_*`) from the start.
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
