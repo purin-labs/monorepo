@@ -9,8 +9,8 @@ export const messages = {
   enterprisePlan: { en: 'Enterprise plan', ja: 'Enterpriseプラン' },
   removeContext: { en: 'Remove pricing context', ja: '料金情報を削除' },
   copyMessage: {
-    en: 'If your email app did not open, copy this message and send it to sales@seams.sh.',
-    ja: 'メールアプリが開かない場合は、この内容をコピーしてsales@seams.shに送信してください。',
+    en: 'If your email app did not open, copy this message and send it to info@purin.io.',
+    ja: 'メールアプリが開かない場合は、この内容をコピーしてinfo@purin.ioに送信してください。',
   },
   contactTitle: {
     en: 'Tell us what you are building',
