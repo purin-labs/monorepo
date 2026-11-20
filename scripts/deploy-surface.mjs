@@ -530,8 +530,11 @@ async function deployFrontend(site, component, walletLanes) {
   if (component === 'company') {
     requireEnvironmentValues([site.pagesProjectEnv], process.env);
     assertDirectory(COMPANY_OUTPUT, 'Company Pages output');
-    await deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
-    await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
+    // Refactor 200: the company site may live in another Cloudflare account.
+    await withCompanyCloudflareAccount(async () => {
+      await deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
+      await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
+    });
   } else if (component === 'wallet-docs') {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
@@ -561,6 +564,26 @@ async function deployFrontend(site, component, walletLanes) {
     }
   }
   process.stdout.write(`Frontend deploy completed: ${site.id}/${component}\n`);
+}
+
+async function withCompanyCloudflareAccount(operation) {
+  const token = String(process.env.COMPANY_CLOUDFLARE_API_TOKEN || '').trim();
+  const accountId = String(process.env.COMPANY_CLOUDFLARE_ACCOUNT_ID || '').trim();
+  if (Boolean(token) !== Boolean(accountId)) {
+    throw new Error('COMPANY_CLOUDFLARE_API_TOKEN and COMPANY_CLOUDFLARE_ACCOUNT_ID go together');
+  }
+  if (!token) return operation();
+  const previous = {
+    CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN,
+    CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID,
+  };
+  process.env.CLOUDFLARE_API_TOKEN = token;
+  process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
+  try {
+    return await operation();
+  } finally {
+    Object.assign(process.env, previous);
+  }
 }
 
 async function deployPagesProject(outputDirectory, site, projectName) {
