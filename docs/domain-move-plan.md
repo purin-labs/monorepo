@@ -1,6 +1,7 @@
 # Domain move plan
 
-Status: proposed on 2026-11-20. Nothing in this plan is done yet.
+Status: proposed on 2026-11-20. The repository move is done. No host has moved yet. The names
+in "Other hosts" wait for the owner's approval.
 
 The owner moved the private repository to `purin-labs/monorepo` on 2026-11-20 (done). The
 same change set moves the public hosts:
@@ -19,23 +20,52 @@ same change set moves the public hosts:
 | Surface                          | Pages project               | Now                       | After                                      |
 | -------------------------------- | --------------------------- | ------------------------- | ------------------------------------------ |
 | Company site                     | `seams-site`                | `seams.sh`                | `purin.io`                                 |
-| Company site, staging            | `seams-site-staging`        | `staging.seams.sh`        | `staging.purin.io` (open question 1)       |
+| Company site, staging            | `seams-site-staging`        | `staging.seams.sh`        | `staging.purin.io`                         |
 | Wallet site and Console pages    | `seams-wallet-site`         | `wallet.seams.sh`         | `seams.sh`; the old host redirects         |
 | Wallet site and Console, staging | `seams-wallet-site-staging` | `staging.wallet.seams.sh` | `staging.seams.sh`; the old host redirects |
 | Wallet docs                      | `seams-wallet-docs`         | `docs.wallet.seams.sh`    | `docs.seams.sh`; the old host redirects    |
 | Empty docs host                  | `seams-docs`                | `docs.seams.sh` (404)     | releases `docs.seams.sh`                   |
 | Wallet hosts                     | `seams-wallet*`             | `*sign.seams.sh`          | no change                                  |
 
-These hosts are not in the request, so they do not move: `api.wallet.seams.sh`,
-`test.api.wallet.seams.sh`, `staging.api.wallet.seams.sh`, `console.wallet.seams.sh`,
-`console.staging.wallet.seams.sh`, `console.seams.sh`, `staging.console.seams.sh`,
-`test.console.seams.sh` and `staging.docs.seams.sh`.
+## Other hosts (proposed names)
+
+The owner decided that the other hosts move too. On 2026-11-20 the owner chose
+`console.seams.sh` for the Wallet Console and `api.seams.sh` for the mainnet Gateway. The
+other names are a proposal.
+
+| Host now                          | Serves                                      | Proposed                    |
+| --------------------------------- | ------------------------------------------- | --------------------------- |
+| `console.seams.sh`                | Platform Console (`seams-platform-console`) | `console.purin.io`          |
+| `staging.console.seams.sh`        | Platform Console, staging                   | `staging.console.purin.io`  |
+| `console.wallet.seams.sh`         | Wallet Console (`seams-console-wallet`)     | `console.seams.sh` (chosen) |
+| `console.staging.wallet.seams.sh` | Wallet Console, staging                     | `staging.console.seams.sh`  |
+| `api.wallet.seams.sh`             | Gateway, production mainnet                 | `api.seams.sh` (chosen)     |
+| `test.api.wallet.seams.sh`        | Gateway, production testnet                 | `test.api.seams.sh`         |
+| `staging.api.wallet.seams.sh`     | Gateway, staging                            | `staging.api.seams.sh`      |
+| `test.console.seams.sh`           | Console API, production testnet             | see below                   |
+| `staging.docs.seams.sh`           | `seams-docs-staging`, last deploy 2026-09   | remove                      |
+
+`test.console.seams.sh` is the Console API of the production testnet lane: the Worker
+`seams-sdk-d1-console-testnet` with its own D1 database `seams-console-testnet-sin`
+(`deployment/console/targets.json`). The testnet demo on the Wallet site calls it
+(`VITE_TESTNET_CONSOLE_BASE_URL`), and `deploy-live-demo.yml` activates the testnet tenant
+through it. The owner asked to remove it. Removal is safe only after the testnet lane uses
+another Console, so it stays until the owner decides how.
+
+Rules for these hosts:
+
+- `console.seams.sh` and `staging.console.seams.sh` change owner. The Platform Console must
+  leave each host before the Wallet Console takes it.
+- An API host never redirects. A browser does not follow a redirect for a CORS preflight.
+  Each Gateway Worker gets the new host as a second custom domain, and the old host stays
+  until the customers that call it move. Tenant records and published SDK configurations
+  name the old Gateway hosts.
 
 ## What does not break
 
 - Passkeys. The RP IDs are `sign.seams.sh` and `staging.sign.seams.sh`
   (`VITE_RP_ID_BASE`), and those hosts stay.
-- Wallet signing and the Gateways. Their hosts stay.
+- Wallet signing. Its hosts stay.
 
 ## What the move touches
 
@@ -103,17 +133,28 @@ Do staging first, check it, then do production in a release from `main`.
    `wallet.seams.sh`, Pantry, `wallet-marketing-seo.e2e.mjs`, and a sample of old links.
 7. Release seams-wallet with the new links.
 
+## Email
+
+The owner decided on 2026-11-20: `info@purin.io` replaces both addresses.
+
+- `sales@seams.sh` is the contact address of both sites and the recipient of the contact form
+  (`docs/feat-5-contact-form-endpoint.md`).
+- `confirm@seams.sh` is the From address of the Email OTP codes (both production Wallet lanes)
+  and of the Console emails, such as invitations. Resend sends them.
+
+Order:
+
+1. Make `info@purin.io` receive mail, for example with Cloudflare Email Routing.
+2. Verify `purin.io` in Resend (its SPF and DKIM DNS records). Check that `RESEND_API_KEY`
+   can send from that domain.
+3. Change the `fromAddress` values and the contact address. Then deploy.
+
+If step 2 is not done, Email OTP codes and Console emails fail to send.
+
 ## Repository move: what remains
 
-- Production deploys from `main`. Before the next production deploy, `main` needs commit
-  `e9c57a2a`. Without it, tenant activation rejects the OIDC token of `purin-labs/monorepo`.
+- Done: `main` has the repository move (`079aebc1`), so production tenant activation accepts
+  the OIDC token of `purin-labs/monorepo`.
 - Pantry CI checks out `seams-tech/seams-monorepo` (`.github/workflows/pantry.yml`). The
   GitHub redirect keeps it working. Change the name there in a Pantry change.
 - Update any cloud agent environment that names the old repository.
-
-## Open questions
-
-1. The staging host of the company site: `staging.purin.io`?
-2. The company email addresses: keep `sales@seams.sh` and `confirm@seams.sh`, or use
-   `purin.io` addresses on the company site?
-3. Must any host that this plan keeps (the API, Console and `test.*` hosts) also move?
