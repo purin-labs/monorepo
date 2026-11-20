@@ -178,8 +178,8 @@ Open:
 - Phase 7, Wave 2 waits for Pantry: `seams-sdk-d1-console`, its database, the mainnet
   Gateways and Wallet Runtimes it binds, and the mainnet Router roles, private databases and
   backup buckets that those reach.
-- The `seams.tokyo` zone was deleted on 2026-11-20 09:12 UTC by the dashboard login, outside
-  this plan. `shop.seams.tokyo` does not resolve. The owner decides.
+- The owner deleted the `seams.tokyo` zone on purpose (2026-11-20). `shop.seams.tokyo` no
+  longer resolves; the Worker `seams-shop` stays for the Purin plan.
 - The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
   `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
   the owner decides.
