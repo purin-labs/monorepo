@@ -71,6 +71,8 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
 2. Done: `wrangler` on the deployment Mac is signed in as `seamsadmin@gmail.com`. R2 is on.
 3. Done: staging storage in `seamsadmin`: 8 D1 databases (APAC primaries in `SIN`) and all 6
    R2 buckets. The Free plan stops at 10 D1 databases, so 14 production databases wait.
+   The complete signer (91, head `0091`) and Console (95, head `0118`) migration sets apply
+   cleanly to the empty staging databases.
 4. Owner: buy Workers Paid on `seamsadmin` before the production lanes.
 5. Owner: create a `seamsadmin` account API token (Workers Scripts, D1, Workers R2 Storage,
    Cloudflare Pages Edit, Account Settings Read; for all zones Workers Routes Edit, Zone Read,
