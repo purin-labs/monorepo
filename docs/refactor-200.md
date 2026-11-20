@@ -7,8 +7,9 @@ Create fresh Seams Wallet infrastructure in the Cloudflare account owned by
 Remove the source resources after verification to isolate future Cloudflare billing.
 
 Existing wallets, organisations, projects, sessions, signing material, and application records
-are test data and are discarded (owner, 2026-11-20). Create empty destination storage and new
-deployment keys. The public host names change during the move (see "Public hosts"), so build the
+are test data and are discarded (owner, 2026-11-20). Create empty destination storage. The
+deployment keys stay (owner, 2026-11-20), so the recovery certificates stay valid. The public
+host names change during the move (see "Public hosts"), so build the
 destination resources with the new host names from the start. Use a planned maintenance window
 for the account and domain cutover.
 
@@ -29,6 +30,8 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
   authority over HTTPS. Pantry plans its own move in its repository.
 - `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
 - No host is renamed in the source account first.
+- The current deployment keys stay. Only the Cloudflare account values, the storage IDs and
+  the host names change.
 - The r150 benchmarks and the ML-DSA disposable fleet retire: they are not recreated. Their
   evidence files stay.
 - `tatchi` (w3a) and `watchbook` retire with all their Workers and storage.
@@ -61,27 +64,33 @@ The source login is `n6378056@gmail.com` (checked with `wrangler whoami` on 2026
 
 Owner steps need the owner's accounts, money or credentials. Claude does the other steps.
 
-1. Done (`d4562c0b`): the backend workflows run `account-bootstrap` before the role
-   Workers, accept `prepare_only`, and a Pages deploy creates a missing project.
-2. Owner: buy Workers Paid on `seamsadmin@gmail.com` and enable multi-factor
-   authentication.
-3. Owner: invite `n6378056@gmail.com` as an Administrator of the `seamsadmin` account. The
-   `wrangler` login on the deployment Mac then reaches both accounts.
-4. Claude: create the destination D1 databases and R2 buckets with their location hints,
-   check the private D1 primaries in `SIN`, and record the IDs in both target files.
-5. Owner: create a `seamsadmin` API token with Workers Scripts, Workers Routes, D1, R2,
-   Pages, Zone Read and DNS Edit permissions. Put it with the `seamsadmin` account ID in the
-   protected values files under `~/.seams` for each lane.
-6. Claude: apply the values to the lane's GitHub environments with the existing
-   `wallet-system:deploy:env-update` and `console:deploy:env-update` commands, then generate
-   fresh keys with `wallet-system:deploy:env-prepare --rotate` and `console:deploy:env-prepare`.
-7. Claude: run each backend workflow with `prepare_only` and fix what an empty account shows.
+1. Done: the backend workflows run `account-bootstrap` before the role Workers and accept
+   `prepare_only`; a Pages deploy creates a missing project (`d4562c0b`). The company site can
+   use its own `COMPANY_CLOUDFLARE_*` credentials (`b65b871c`). The env-update command also
+   updates the control-plane environment (`49d834d2`).
+2. Done: `wrangler` on the deployment Mac is signed in as `seamsadmin@gmail.com`. R2 is on.
+3. Done: staging storage in `seamsadmin`: 8 D1 databases (APAC primaries in `SIN`) and all 6
+   R2 buckets. The Free plan stops at 10 D1 databases, so 14 production databases wait.
+4. Owner: buy Workers Paid on `seamsadmin` before the production lanes.
+5. Owner: create a `seamsadmin` account API token (Workers Scripts, D1, Workers R2 Storage,
+   Cloudflare Pages Edit, Account Settings Read; for all zones Workers Routes Edit, Zone Read,
+   DNS Edit). In `~/.seams/staging-deployment.env` rename the current Cloudflare pair to
+   `COMPANY_CLOUDFLARE_*` and add the new pair; replace the pair in
+   `~/.seams/console/staging-testnet-deployment.env`.
+6. Claude: apply the values (`wallet-system:deploy:env-update`, `site:deploy:env-update`,
+   `console:deploy:env-update`), set the three private D1 ID variables, and commit the staging
+   target switch (new hosts and storage IDs).
+7. Claude: run the staging backend workflow with `prepare_only` and fix what an empty account
+   shows. Then the same for the production lanes.
 8. Owner: move `seams.sh` to `seamsadmin` through the Cloudflare Registrar inter-account
    transfer. This starts the maintenance window for all lanes.
-9. Claude: deploy each lane with public routes and the new host names, create the fresh
-   Console organisation, project and environment, record their IDs, activate, deploy the
-   frontends and verify.
-10. Owner: confirm the retire list. Claude: remove the source Seams resources.
+9. Claude: deploy each lane with public routes, create the fresh Console organisation,
+   project and environment, record their IDs, activate, deploy the frontends and verify.
+   Recreate the `seams.sh` Email Routing rules and check the Resend records.
+10. Owner: confirm the retire list and sign `wrangler` in to the old account again. Claude:
+    remove the source Seams resources.
+
+## Resource inventory
 
 ### Backend resources
 
