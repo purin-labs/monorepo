@@ -1,7 +1,7 @@
 # Refactor 260 — Split the Seams Console into its own repository
 
 Status: plan, written on 2026-11-20. No path has been cut. `seams-tech/seams-console`
-(private) holds an unchanged copy of this repository: `dev` at `83023b1e` and `main` at
+(public since 2026-11-20) holds an unchanged copy of this repository: `dev` at `83023b1e` and `main` at
 `079aebc1`, pushed on 2026-11-20 with the same commit IDs.
 
 ## Decision
@@ -209,18 +209,15 @@ account data moves.
 
 ## Open questions
 
-1. **Visibility of `seams-console`.** Both organisations are on GitHub Free (`plan.name`
-   from `gh api orgs/<org>`, read on 2026-11-20). The
+1. Decided (owner, 2026-11-20): `seams-console` is public, like this repository. Both
+   organisations are on GitHub Free, and the
    [environments page](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
    says: "Users with GitHub Free plans can only configure environments for public
-   repositories." GitHub Team gives them to private repositories. Private Actions on Free
-   has a $12 monthly allowance (about 2,000 Linux minutes); public repositories run free.
-   The deploys need 26 environments, so the owner must choose: make `seams-console` public,
-   like this repository, or move `seams-tech` to GitHub Team.
-   On 2026-11-20 the first push to the private `seams-console` started run `44690621569`,
-   and GitHub did not start its job: "recent account payments have failed or your spending
-   limit needs to be increased". The public `seams-wallet` CI in the same organisation
-   runs. So a private `seams-console` also needs the `seams-tech` Actions billing fixed.
+   repositories." The 26 deploy environments need that. While the repository was private,
+   GitHub did not start the job of run `44690621569`: "recent account payments have failed
+   or your spending limit needs to be increased". After the change, the rerun of that job
+   started. Do not make `seams-console` private again without GitHub Team and working
+   `seams-tech` Actions billing.
 2. Decided: the Wallet site moves with the Console (`apps/wallet-console` builds both).
 3. **Console API host.** Recommendation: `console.seams.sh/console/*`, with the RP ID kept
    at `seams.sh`.
