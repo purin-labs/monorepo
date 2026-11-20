@@ -1,10 +1,35 @@
 # Refactor 260 — Split the Seams Console into its own repository
 
-Status: plan complete on 2026-11-20. The work waits for the Refactor 200 cutover. No path
-has been cut. `seams-tech/seams-console` (public) holds an unchanged copy of this
-repository. "Progress" lists what is done and what each remaining step waits for.
+Status: on 2026-11-21 this repository moved by a GitHub transfer. `purin-labs/monorepo` is
+now `seams-tech/seams-console`, with the same id, history, environments and secrets. The
+company site has its own repository, `purin-labs/purin-monorepo`. "Progress" lists what is
+done and what each remaining step waits for.
 
 ## Progress
+
+Done on 2026-11-21:
+
+- Owner decision: transfer this repository instead of re-creating its 26 environments in a
+  new one. The re-creation needed six secrets that exist only in GitHub and a new CLI release
+  root; a transfer keeps both. `purin-labs/purin-monorepo` is public, so its two
+  environments work on GitHub Free.
+- The first `seams-tech/seams-console` (the mirror, id 1465065004) was fast-forwarded and
+  then renamed to `seams-tech/seams-console-mirror`. It holds nothing that is not here.
+- The transfer: `purin-labs/monorepo` became `seams-tech/seams-console` (id 1366871528).
+  Before and after, a script compared names only: 26 environments, 232 environment secrets
+  with the same update times, 299 variables, and the same protection rules. The OIDC subject
+  prefix is now `repo:seams-tech@282445520/seams-console@1366871528`. The old URL redirects.
+- Step 7: the Console trusts the new identity (`4d4fe753` on `dev`, `ebd885ea` on `main`).
+  Every lane deploys the Console before it activates, so each next deploy carries the pin.
+- Staging run `44769288323` from `seams-tech/seams-console` deployed every staging Worker
+  with the moved secrets, activated the tenant with the new identity, and deployed the
+  staging frontends. Every job passed.
+- `purin-labs/purin-monorepo` (id 1465628780) starts from the same history. Its `dev` cut
+  (`0924338f`) keeps only the company site, the grain field and navbar packages, the company
+  deploy files and the drawing docs. Its validation run `44770604885` passed. Its
+  `staging` and `production` environments hold `CF_PAGES_PROJECT_VITE`
+  (`seams-site-staging` and `seams-site`, read from the public `pages.dev` hosts).
+- `seams-wallet` names `seams-tech/seams-console` (`0647af091`).
 
 Done on 2026-11-20:
 
@@ -29,15 +54,38 @@ Done on 2026-11-20:
 
 Remaining:
 
-| Step (see "Order")                   | Owner                 | Waits for                              |
-| ------------------------------------ | --------------------- | -------------------------------------- |
-| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7 | Holds until step 3 ends                |
-| 3. Pantry's own accounts             | Pantry Plan 95        | Plan 95 steps 1 to 4 (decisions taken) |
-| 5. Remove the Pantry service         | This plan             | Step 3                                 |
-| 6. Move the deploys                  | This plan             | Six secrets, a new release root        |
-| 7. New OIDC identity                 | This plan             | Part of step 6                         |
-| 8. Delete the moved paths            | This plan             | Production runs from `seams-console`   |
-| 9. Rename this repository            | This plan             | Step 8                                 |
+| Step (see "Order")                        | Owner                 | Waits for                                          |
+| ----------------------------------------- | --------------------- | -------------------------------------------------- |
+| 2. Keep Pantry's old Console Workers      | Refactor 200, Phase 7 | Plan 95 step 5                                     |
+| 3. Pantry's own accounts                  | Pantry Plan 95        | Steps 2 to 4, then the owner's step 5 gate         |
+| 5. Remove the Pantry service              | This plan             | Plan 95 step 4 (see below)                         |
+| 6. Company site deploys from its own repo | Owner, then this plan | Two company secrets in `purin-labs/purin-monorepo` |
+| 8. Delete the company paths here          | This plan             | Step 6                                             |
+
+Steps 7 and 9 are done or void: the transfer moved the OIDC identity (step 7), and
+`purin-labs/purin-monorepo` is a new repository, so nothing is renamed (step 9).
+
+- Step 5 waits for Plan 95 step 4, not only for the production Pantry: Pantry local
+  development binds this checkout's `seams-sdk-d1-local` (`pnpm router`), and its E2E
+  fixture Worker is built here (`tests/helpers/buildSharedAccountPlatformWorker.mjs`).
+  Pantry production binds the old Console Worker in the old account and does not see code
+  changes here. Pantry CI checks out `purin-labs/monorepo` at `3a05ce4`; the redirect keeps
+  that working until Plan 95 step 4 deletes the step.
+- Step 6: the owner puts `COMPANY_CLOUDFLARE_API_TOKEN` and `COMPANY_CLOUDFLARE_ACCOUNT_ID`
+  into the `staging` and `production` environments of `purin-labs/purin-monorepo`. The
+  local copies are in `~/.seams/staging-deployment.env` and `production-deployment.env`.
+  Then run `Deploy / company site` there, staging from `dev`, then production from `main`
+  after `dev` is merged into it. Until then the company site still deploys from here.
+- Step 8 after step 6: freeze `apps/seams-site` here, port any later site commits to
+  `purin-monorepo`, then delete the company site, its deploy files, `docs/drawing-style.md`
+  and `docs/styles/` here. The local Caddy setup (`Caddyfile`, `run_caddy.sh`) serves the
+  Seams stack, so it moves out of `apps/seams-site` and stays here; the local company entry
+  at `localhost:4001/` then needs a new target. Delete the company values
+  (`COMPANY_CLOUDFLARE_*`, `CF_PAGES_PROJECT_VITE`) from the `staging` and `production`
+  environments here. The owner confirms the deletion of `seams-tech/seams-console-mirror`.
+- No production deploy ran for the move. The next production deploy of each lane carries
+  the pin, because `main` has it. Production runs from `main`, which also carries other
+  sessions' unreleased changes (`4017a423`), so its owner chooses when.
 
 ## Decision
 
@@ -249,7 +297,8 @@ five recommendations:
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
-6. **Move the deploys.** Do these in order:
+6. **Move the deploys.** Superseded on 2026-11-21: the transfer moved the deploys with the
+   repository (see "Progress"). The original order was:
    1. Fast-forward `dev` and `main` of `seams-tech/seams-console`. Push the Seams branches
       (`speak-to-sign`, `archive/voiceid-stt-bench`, `archive/voiceid-whisper`). The site
       branches stay here.
@@ -280,6 +329,10 @@ five recommendations:
    after the Seams deploys run from `seams-tech/seams-console`.
 
 ## Repository mechanics
+
+Written for a copy into a new repository. Since the transfer of 2026-11-21, only "History"
+and "Package names" still apply; the environments, secrets and release keys moved with the
+repository.
 
 - **History.** The mirror keeps every commit ID that the docs, the evidence files and the
   agent memory cite. `git filter-repo` would rewrite all of them. So each side cuts by

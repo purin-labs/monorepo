@@ -1,6 +1,6 @@
-# Seams monorepo
+# Seams Console
 
-Private Seams applications, Console management, and deployments. Wallet SDK,
+`seams-tech/seams-console`: Seams applications, Console management, and deployments. Wallet SDK,
 Rust/WASM, CLI, runtime builds, and public documentation are owned by
 [seams-wallet](https://github.com/seams-tech/seams-wallet).
 
