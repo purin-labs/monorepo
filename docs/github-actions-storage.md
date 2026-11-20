@@ -70,9 +70,9 @@ The Gateway exposes readiness at `/readyz` and the active environment at `/.well
 
 All three full-stack pipelines passed on 2026-10-29 at commit `64dc1348`, using SDK `0.27.0`:
 
-- [Staging testnet](https://github.com/seams-tech/seams-monorepo/actions/runs/40815396694).
-- [Production testnet](https://github.com/seams-tech/seams-monorepo/actions/runs/40815400286).
-- [Production mainnet](https://github.com/seams-tech/seams-monorepo/actions/runs/40815404391).
+- [Staging testnet](https://github.com/purin-labs/monorepo/actions/runs/40815396694).
+- [Production testnet](https://github.com/purin-labs/monorepo/actions/runs/40815400286).
+- [Production mainnet](https://github.com/purin-labs/monorepo/actions/runs/40815404391).
 
 These runs included frontend deployment, automatic tenant activation, and final health checks.
 
@@ -100,7 +100,7 @@ See [D1 location](https://developers.cloudflare.com/d1/configuration/data-locati
 [Worker placement](https://developers.cloudflare.com/workers/configuration/placement/)
 and [Container placement](https://developers.cloudflare.com/containers/concepts/placement/).
 
-Protected staging activation [37290571181](https://github.com/seams-tech/seams-monorepo/actions/runs/37290571181)
+Protected staging activation [37290571181](https://github.com/purin-labs/monorepo/actions/runs/37290571181)
 verified all four databases and both writer versions per database. It preserved
 the existing browser key. Additions require fresh operator proofs and activation;
 cutover rejects removal or replacement of an existing database. Migration `0072`
@@ -200,10 +200,10 @@ build transfers now use Actions artifacts instead of the cache service.
 ### Historical artifact quota checks (2026-09-19)
 
 The retention changes are merged in [Wallet PR 5](https://github.com/seams-tech/seams-wallet/pull/5)
-and [monorepo PR 23](https://github.com/seams-tech/seams-monorepo/pull/23).
+and [monorepo PR 23](https://github.com/purin-labs/monorepo/pull/23).
 Mainnet deployment `35443614586` successfully consumed its exact build cache and
 deleted it after deployment. The cache inventory confirms that run's key is gone.
-At 13:14 UTC, a [private upload probe](https://github.com/seams-tech/seams-monorepo/actions/runs/35445137780)
+At 13:14 UTC, a [private upload probe](https://github.com/purin-labs/monorepo/actions/runs/35445137780)
 still failed to upload a 20-byte file with `Artifact storage quota has been hit`.
 The cleanup had occurred around 11:00–11:10 UTC, within GitHub's stated
 reconciliation window. The probe created no artifact; its temporary PR was
@@ -215,7 +215,7 @@ that private artifact uploads are available.
 ### Findings on 2026-10-14
 
 The artifact quota blocked staging again. Staging backend run
-[38502043490](https://github.com/seams-tech/seams-monorepo/actions/runs/38502043490)
+[38502043490](https://github.com/purin-labs/monorepo/actions/runs/38502043490)
 built release 0.10.1 and then failed at `Upload backend artifact` with
 `Artifact storage quota has been hit`. No Worker was deployed. From 02:16 UTC
 the `Validate / repository` runs on `dev` passed every check and then failed
@@ -250,7 +250,7 @@ all five Gateway smoke checks with HTTP 500. Live Worker logs identified
 `WALLET_CONSOLE` binding. Mainnet Console still served the older `7ab2065`
 revision without that endpoint.
 
-[Console deployment `35438878364`](https://github.com/seams-tech/seams-monorepo/actions/runs/35438878364)
+[Console deployment `35438878364`](https://github.com/purin-labs/monorepo/actions/runs/35438878364)
 deployed the current `d64ec200` revision and completed successfully. Console
 readiness is HTTP 200. Gateway smoke now passes the explicitly supported
 bootstrap response, HTTP 503 `tenant_deployment_unavailable`, on all five routes.
@@ -273,9 +273,9 @@ being resolved.
 
 The unavailable public discovery response also lacked CORS headers. Browsers
 could not inspect its HTTP 503 status, so the optional mainnet configuration
-prevented `wallet.seams.sh` from loading its available testnet demo. [PR 24](https://github.com/seams-tech/seams-monorepo/pull/24)
+prevented `wallet.seams.sh` from loading its available testnet demo. [PR 24](https://github.com/purin-labs/monorepo/pull/24)
 now exposes that public, non-cacheable unavailable response to browser callers.
-[Deployment `35443614586`](https://github.com/seams-tech/seams-monorepo/actions/runs/35443614586)
+[Deployment `35443614586`](https://github.com/purin-labs/monorepo/actions/runs/35443614586)
 passed, and a fresh browser reload verified startup without interception.
 Mainnet still needs a supported credit/activation path; its ledger balance is $0.
 Stripe sandbox checkout has not been treated as production payment or used to
@@ -304,8 +304,8 @@ do not establish a production p95. See the canonical
 [optimization plan](https://github.com/seams-tech/seams-wallet/blob/main/docs/optimization-10.md)
 for cohort details and remaining acceptance work.
 
-[PR 25](https://github.com/seams-tech/seams-monorepo/pull/25) merged the placement
-configuration. Standard testnet [deployment `35444951877`](https://github.com/seams-tech/seams-monorepo/actions/runs/35444951877)
+[PR 25](https://github.com/purin-labs/monorepo/pull/25) merged the placement
+configuration. Standard testnet [deployment `35444951877`](https://github.com/purin-labs/monorepo/actions/runs/35444951877)
 then completed successfully. A fresh Cloudflare settings read confirmed the
 placement survived deployment, all five live Gateway smoke routes returned
 HTTP 200, and the run's temporary build cache was removed. The measurements
@@ -349,7 +349,7 @@ On 2026-09-23, both production-testnet databases were migrated to verified
 Tokyo (`NRT`) primaries. Both Deriver Workers now target
 `aws:ap-northeast-1` in `deployment/wallet-system/targets.json`. The Worker
 placement follows the verified database metro; changing Worker placement alone
-does not relocate D1. [PR 41](https://github.com/seams-tech/seams-monorepo/pull/41)
+does not relocate D1. [PR 41](https://github.com/purin-labs/monorepo/pull/41)
 records the committed placement change.
 
 The live migration used this sequence:

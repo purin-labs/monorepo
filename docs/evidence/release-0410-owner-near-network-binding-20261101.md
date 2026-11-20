@@ -24,11 +24,11 @@ Each npm package reports the public revision as `gitHead`.
 | --- | --- | --- |
 | Public Wallet validation | Passed | [Validation](https://github.com/seams-tech/seams-wallet/actions/runs/41306450149) |
 | npm package publication | Passed | [Release](https://github.com/seams-tech/seams-wallet/actions/runs/41306460465) |
-| Private validation on dev | Passed | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41311371843) |
-| Staging full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41312103230) |
-| Private validation on main | Passed | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41313124833) |
-| Production testnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41313876984) |
-| Production mainnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41313879436) |
+| Private validation on dev | Passed | [Validation](https://github.com/purin-labs/monorepo/actions/runs/41311371843) |
+| Staging full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41312103230) |
+| Private validation on main | Passed | [Validation](https://github.com/purin-labs/monorepo/actions/runs/41313124833) |
+| Production testnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41313876984) |
+| Production mainnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41313879436) |
 
 The private frozen installation, lint, type checks, boundary checks, and 53 script checks passed against the published packages.
 

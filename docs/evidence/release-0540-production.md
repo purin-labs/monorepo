@@ -14,9 +14,9 @@ The other commits on private `dev` did not go to `main`.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Private validation on main (`c9165220`) | Passed, 09:29 to 09:37 UTC | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/42467396088) |
-| Production testnet full stack, `deploy-live-demo.yml` (`c9165220`) | Passed, 19 of 19 jobs, 09:37 to 09:49 UTC | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/42467997652) |
-| Production mainnet full stack, `deploy-production-mainnet-backend.yml` (`c9165220`) | Passed, 17 of 17 jobs, 09:49 to 10:00 UTC | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/42468834512) |
+| Private validation on main (`c9165220`) | Passed, 09:29 to 09:37 UTC | [Validation](https://github.com/purin-labs/monorepo/actions/runs/42467396088) |
+| Production testnet full stack, `deploy-live-demo.yml` (`c9165220`) | Passed, 19 of 19 jobs, 09:37 to 09:49 UTC | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/42467997652) |
+| Production mainnet full stack, `deploy-production-mainnet-backend.yml` (`c9165220`) | Passed, 17 of 17 jobs, 09:49 to 10:00 UTC | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/42468834512) |
 
 Each full-stack run deployed the backend, the Console, the tenant activation and the production frontend.
 The runs went one at a time, because both deploy the production frontend.

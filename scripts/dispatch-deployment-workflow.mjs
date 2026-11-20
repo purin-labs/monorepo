@@ -13,11 +13,19 @@ for (let index = 0; index < args.length; index += 2) {
 }
 const laneId = requireOption(args, '--lane');
 const lane = readBackendLane(laneId);
-const repository = readOption(args, '--repo') || 'seams-tech/seams-monorepo';
+const repository = readOption(args, '--repo');
 const ref = readOption(args, '--ref') || (lane.release === 'staging' ? 'dev' : 'main');
 const workflow = resolveWorkflow(authority, laneId);
 
-const command = ['workflow', 'run', workflow, '--repo', repository, '--ref', ref];
+// Without --repo, gh dispatches in the GitHub repository of the current checkout.
+const command = [
+  'workflow',
+  'run',
+  workflow,
+  ...(repository ? ['--repo', repository] : []),
+  '--ref',
+  ref,
+];
 const child = spawnSync(process.env.GITHUB_CLI_BIN || 'gh', command, {
   encoding: 'utf8',
   stdio: 'inherit',

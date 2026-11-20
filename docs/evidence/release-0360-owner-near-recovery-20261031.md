@@ -47,17 +47,17 @@ were verified in npm after its processing delay.
 
 - Isolated consumer revision: `adb02b115973136773ea59f8b4926f23953e5baa`.
 - Frozen installation and full private backend/frontend type checks passed against an archive of that exact revision.
-- [Staging deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41208660853) passed from that revision, including backend and Console readiness.
+- [Staging deployment](https://github.com/purin-labs/monorepo/actions/runs/41208660853) passed from that revision, including backend and Console readiness.
 - The staging host manifest returned HTTP 200 with package `0.36.0` and protocol `22.0.0`.
-- [Private repository validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41208660598) passed for the same revision.
+- [Private repository validation](https://github.com/purin-labs/monorepo/actions/runs/41208660598) passed for the same revision.
 - Production promotion revision: `b4787ea2f26bc00eedbe8464e95be7ef764ae6da`.
 - The promotion preserves the existing main-only commit. Its file tree is identical to verified staging: `10cb5e77650e42dfd7daff3abc8e614b958f9a23`.
 
 Production deployment status:
 
-- [Production testnet](https://github.com/seams-tech/seams-monorepo/actions/runs/41210007064): passed, including activation, backend/Console smoke checks, frontend deployment, and marketing acceptance.
-- [Production mainnet](https://github.com/seams-tech/seams-monorepo/actions/runs/41210009233): passed, including activation, readiness, frontend deployment, and marketing acceptance.
-- [Seams-hosted GetSignal runtime retry](https://github.com/seams-tech/seams-monorepo/actions/runs/41210485627): passed, including resource preflight, runtime deployment, activation, and readiness.
+- [Production testnet](https://github.com/purin-labs/monorepo/actions/runs/41210007064): passed, including activation, backend/Console smoke checks, frontend deployment, and marketing acceptance.
+- [Production mainnet](https://github.com/purin-labs/monorepo/actions/runs/41210009233): passed, including activation, readiness, frontend deployment, and marketing acceptance.
+- [Seams-hosted GetSignal runtime retry](https://github.com/purin-labs/monorepo/actions/runs/41210485627): passed, including resource preflight, runtime deployment, activation, and readiness.
 
 Final independent verification:
 

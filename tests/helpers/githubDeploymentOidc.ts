@@ -19,12 +19,12 @@ export class GithubDeploymentOidcFixture {
       JSON.stringify({
         iss: 'https://token.actions.githubusercontent.com',
         aud: 'seams-tenant-cutover',
-        sub: `repo:seams-tech@282445520/seams-monorepo@1366871528:environment:${staging ? 'staging-gateway' : 'production-live-demo'}`,
-        repository: 'seams-tech/seams-monorepo',
+        sub: `repo:purin-labs@358632792/monorepo@1366871528:environment:${staging ? 'staging-gateway' : 'production-live-demo'}`,
+        repository: 'purin-labs/monorepo',
         ref: staging ? 'refs/heads/dev' : 'refs/heads/main',
         workflow_ref: staging
-          ? 'seams-tech/seams-monorepo/.github/workflows/deploy-staging-backend.yml@refs/heads/dev'
-          : 'seams-tech/seams-monorepo/.github/workflows/deploy-live-demo.yml@refs/heads/main',
+          ? 'purin-labs/monorepo/.github/workflows/deploy-staging-backend.yml@refs/heads/dev'
+          : 'purin-labs/monorepo/.github/workflows/deploy-live-demo.yml@refs/heads/main',
         nbf: now - 10,
         exp: now + 300,
       }),

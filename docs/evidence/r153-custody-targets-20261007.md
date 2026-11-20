@@ -8,7 +8,7 @@ signing passed after each move. The E2E took 28.5 minutes.
 The [machine-readable receipt](r153-custody-targets-20261007.json) records candidate
 commits, deployed versions, exact custody locators, placement observations, timing
 samples, and artifact hashes. Activation workflow
-[37595927309](https://github.com/seams-tech/seams-monorepo/actions/runs/37595927309)
+[37595927309](https://github.com/purin-labs/monorepo/actions/runs/37595927309)
 passed. The deployed backend remained fixed throughout the final run.
 
 ## Implementation and placement

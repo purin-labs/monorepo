@@ -141,8 +141,8 @@ The current SDK target is **0.35.0**, with iframe protocol **21.0.0** and recove
 
 An earlier October 30, 2026 documentation refresh targeted SDK **0.28.0** and iframe protocol **18.0.0**.
 Public docs source `5193e12ab7359cc8f6607e8447dc5444e763c18a` passed its build and link checks.
-The [staging publication](https://github.com/seams-tech/seams-monorepo/actions/runs/40915268527)
-and [production publication](https://github.com/seams-tech/seams-monorepo/actions/runs/40915719280) passed.
+The [staging publication](https://github.com/purin-labs/monorepo/actions/runs/40915268527)
+and [production publication](https://github.com/purin-labs/monorepo/actions/runs/40915719280) passed.
 Live checks verified six English/Japanese pages and the source receipt on each site.
 Results and the previous release artifact are in `.artifacts/docs-0.28-refresh/`.
 

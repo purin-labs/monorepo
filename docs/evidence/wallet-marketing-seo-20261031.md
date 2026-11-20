@@ -11,10 +11,10 @@ Concurrent billing and pricing-funnel changes were excluded from this release.
 
 | Surface                    | Run                                                                                  | Result                                               |
 | -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Staging marketing          | [41192684727](https://github.com/seams-tech/seams-monorepo/actions/runs/41192684727) | Build, publish, smoke, and browser acceptance passed |
-| Production marketing       | [41192873176](https://github.com/seams-tech/seams-monorepo/actions/runs/41192873176) | Build, publish, smoke, and browser acceptance passed |
-| Staging Wallet settings    | [41192874944](https://github.com/seams-tech/seams-monorepo/actions/runs/41192874944) | Build, publish, and smoke passed                     |
-| Production Wallet settings | [41193042136](https://github.com/seams-tech/seams-monorepo/actions/runs/41193042136) | Build, publish, and smoke passed                     |
+| Staging marketing          | [41192684727](https://github.com/purin-labs/monorepo/actions/runs/41192684727) | Build, publish, smoke, and browser acceptance passed |
+| Production marketing       | [41192873176](https://github.com/purin-labs/monorepo/actions/runs/41192873176) | Build, publish, smoke, and browser acceptance passed |
+| Staging Wallet settings    | [41192874944](https://github.com/purin-labs/monorepo/actions/runs/41192874944) | Build, publish, and smoke passed                     |
+| Production Wallet settings | [41193042136](https://github.com/purin-labs/monorepo/actions/runs/41193042136) | Build, publish, and smoke passed                     |
 
 The frontend workflows retain their browser evidence for one day. Downloaded copies remain under `output/playwright/wallet-marketing-seo/hosted-staging-run/` and `hosted-production-run/`.
 Each report has response headers, source/docs revisions, screenshot files, and Playwright traces.
@@ -93,7 +93,7 @@ Keep the `google-site-verification` tag in `apps/wallet-console/index.html` to r
 
 The tag is committed on `dev` as `77c55737`. Its isolated production commit is `1bf2894d49ff24e240075b273b0dc5be91ac52db`, based on the deployed SEO revision.
 This promotion excludes subsequent pricing-funnel changes on `dev`.
-The [production verification-tag deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41194034963) passed build, smoke, and the existing marketing browser acceptance scenario.
+The [production verification-tag deployment](https://github.com/purin-labs/monorepo/actions/runs/41194034963) passed build, smoke, and the existing marketing browser acceptance scenario.
 An independent HTTP request confirmed the tag in the production homepage.
 
 The [Search Console sitemap report](https://search.google.com/search-console/sitemaps?resource_id=https%3A%2F%2Fwallet.seams.sh%2F) shows both entries below:

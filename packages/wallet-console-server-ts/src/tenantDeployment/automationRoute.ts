@@ -14,34 +14,35 @@ const VERIFY_RESOURCE_PATH = '/internal/tenant-deployment/v1/verify-resource';
 const GITHUB_OIDC_ISSUER = 'https://token.actions.githubusercontent.com';
 const GITHUB_OIDC_JWKS = `${GITHUB_OIDC_ISSUER}/.well-known/jwks`;
 const EXPECTED_AUDIENCE = 'seams-tenant-cutover';
+/* The deployment workflows run in this repository. Its OIDC subject uses
+   immutable ids: owner purin-labs (358632792) and repository 1366871528. */
+const DEPLOYMENT_REPOSITORY = 'purin-labs/monorepo';
+const DEPLOYMENT_SUBJECT_PREFIX = 'repo:purin-labs@358632792/monorepo@1366871528';
+
 function deploymentAutomationScope(deploymentLane: string) {
   switch (deploymentLane) {
     case 'staging-testnet':
-      return {
-        subject: 'repo:seams-tech@282445520/seams-monorepo@1366871528:environment:staging-gateway',
-        ref: 'refs/heads/dev',
-        workflow:
-          'seams-tech/seams-monorepo/.github/workflows/deploy-staging-backend.yml@refs/heads/dev',
-      };
+      return protectedWorkflowScope('staging-gateway', 'dev', 'deploy-staging-backend.yml');
     case 'production-testnet':
-      return {
-        subject:
-          'repo:seams-tech@282445520/seams-monorepo@1366871528:environment:production-live-demo',
-        ref: 'refs/heads/main',
-        workflow:
-          'seams-tech/seams-monorepo/.github/workflows/deploy-live-demo.yml@refs/heads/main',
-      };
+      return protectedWorkflowScope('production-live-demo', 'main', 'deploy-live-demo.yml');
     case 'production-mainnet':
-      return {
-        subject:
-          'repo:seams-tech@282445520/seams-monorepo@1366871528:environment:production-gateway',
-        ref: 'refs/heads/main',
-        workflow:
-          'seams-tech/seams-monorepo/.github/workflows/deploy-production-mainnet-backend.yml@refs/heads/main',
-      };
+      return protectedWorkflowScope(
+        'production-gateway',
+        'main',
+        'deploy-production-mainnet-backend.yml',
+      );
     default:
       throw new Error('Automated tenant activation is unavailable for this lane');
   }
+}
+
+function protectedWorkflowScope(environment: string, branch: string, workflowFile: string) {
+  const ref = `refs/heads/${branch}`;
+  return {
+    subject: `${DEPLOYMENT_SUBJECT_PREFIX}:environment:${environment}`,
+    ref,
+    workflow: `${DEPLOYMENT_REPOSITORY}/.github/workflows/${workflowFile}@${ref}`,
+  };
 }
 
 type GithubOidcClaims = {
@@ -110,7 +111,7 @@ function assertClaims(claims: GithubOidcClaims, nowSeconds: number, deploymentLa
     claims.iss !== GITHUB_OIDC_ISSUER ||
     claims.aud !== EXPECTED_AUDIENCE ||
     claims.sub !== scope.subject ||
-    claims.repository !== 'seams-tech/seams-monorepo' ||
+    claims.repository !== DEPLOYMENT_REPOSITORY ||
     claims.ref !== scope.ref ||
     claims.workflow_ref !== scope.workflow ||
     claims.nbf > nowSeconds + 30 ||

@@ -26,11 +26,11 @@ Each npm package reports the public revision as `gitHead`.
 | Public Wallet validation | Passed | [Validation](https://github.com/seams-tech/seams-wallet/actions/runs/41469412776) |
 | Public docs build | Passed | [Build](https://github.com/seams-tech/seams-wallet/actions/runs/41469412711) |
 | npm package publication | Passed | [Release](https://github.com/seams-tech/seams-wallet/actions/runs/41469454112) |
-| Private validation on dev | Passed | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41489138567) |
-| Staging full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41490595241) |
-| Private validation on main | Passed | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41490593869) |
-| Production testnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41493262552) |
-| Production mainnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41570000316) |
+| Private validation on dev | Passed | [Validation](https://github.com/purin-labs/monorepo/actions/runs/41489138567) |
+| Staging full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41490595241) |
+| Private validation on main | Passed | [Validation](https://github.com/purin-labs/monorepo/actions/runs/41490593869) |
+| Production testnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41493262552) |
+| Production mainnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41570000316) |
 
 The first publish attempt failed at the validation gate on a GitHub API error (`HTTP 500`); the rerun of the failed job passed.
 

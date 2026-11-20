@@ -31,7 +31,7 @@ the deployed backend and real MPC signing.
   one native USDC unit, receipt status `0x1`, with 54 confirmations at verification.
 
 Backend deployment and tenant activation passed in
-[workflow 40666336793](https://github.com/seams-tech/seams-monorepo/actions/runs/40666336793).
+[workflow 40666336793](https://github.com/purin-labs/monorepo/actions/runs/40666336793).
 The migration runner fix is committed as `52fb6b5b`. Its remote D1 E2E verified
 row preservation, transaction rollback, resume, and applied-source immutability.
 The public demo review layout fix is committed as `b9e009c01` in `seams-wallet`.

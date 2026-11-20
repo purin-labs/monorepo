@@ -32,11 +32,11 @@ The private key is saved in `~/.seams/recovery-signing-2026-10.env` with mode `0
 The `~/.seams` directory has mode `0700`. This file contains
 `SEAMS_RECOVERY_SIGNING_KEY` and `SEAMS_RECOVERY_SIGNER_KEY_ID`. Never print,
 commit, or pass the key to a runtime Worker. The protected `recovery-signing`
-GitHub environment in `seams-tech/seams-monorepo` holds the same two values.
+GitHub environment in `purin-labs/monorepo` holds the same two values.
 Its [signing run] produced a snapshot that verifies against the new CLI pin.
 GitHub does not return the private value after storage.
 
-[signing run]: https://github.com/seams-tech/seams-monorepo/actions/runs/39909176129
+[signing run]: https://github.com/purin-labs/monorepo/actions/runs/39909176129
 
 Public signed records and their SHA-256 manifest are in
 `~/.seams/recovery-trust-2026-10/` with mode `0700` for the directory and `0600`
@@ -100,7 +100,7 @@ the private [release-signing run] passed. The [GitHub release] and npm package
 CLI and reported version 0.21.0.
 
 [native build]: https://github.com/seams-tech/seams-wallet/actions/runs/39909039762
-[release-signing run]: https://github.com/seams-tech/seams-monorepo/actions/runs/39909273330
+[release-signing run]: https://github.com/purin-labs/monorepo/actions/runs/39909273330
 [GitHub release]: https://github.com/seams-tech/seams-wallet/releases/tag/seams-cli-v0.21.0
 
 Staging control-plane and Console deployed with the new public trust data.
@@ -124,18 +124,18 @@ were checked against each active role's public key before deployment. A
 read-only query found no pending tenant-root operations or recovery-generation
 steps in the mainnet Console D1 database before the rollout.
 
-[staging activation]: https://github.com/seams-tech/seams-monorepo/actions/runs/39911004361
-[updated staging activation]: https://github.com/seams-tech/seams-monorepo/actions/runs/39912377307
-[Wallet Console]: https://github.com/seams-tech/seams-monorepo/actions/runs/39912979576
-[Wallet site]: https://github.com/seams-tech/seams-monorepo/actions/runs/39913113665
-[Wallet host]: https://github.com/seams-tech/seams-monorepo/actions/runs/39913261823
-[production-testnet rollout]: https://github.com/seams-tech/seams-monorepo/actions/runs/39913409945
-[backend deployment]: https://github.com/seams-tech/seams-monorepo/actions/runs/39914391000
-[Console backend deployment]: https://github.com/seams-tech/seams-monorepo/actions/runs/39914780797
-[activation]: https://github.com/seams-tech/seams-monorepo/actions/runs/39915083523
-[production site]: https://github.com/seams-tech/seams-monorepo/actions/runs/39914426200
-[production Console]: https://github.com/seams-tech/seams-monorepo/actions/runs/39915114320
-[production hosts]: https://github.com/seams-tech/seams-monorepo/actions/runs/39914666899
+[staging activation]: https://github.com/purin-labs/monorepo/actions/runs/39911004361
+[updated staging activation]: https://github.com/purin-labs/monorepo/actions/runs/39912377307
+[Wallet Console]: https://github.com/purin-labs/monorepo/actions/runs/39912979576
+[Wallet site]: https://github.com/purin-labs/monorepo/actions/runs/39913113665
+[Wallet host]: https://github.com/purin-labs/monorepo/actions/runs/39913261823
+[production-testnet rollout]: https://github.com/purin-labs/monorepo/actions/runs/39913409945
+[backend deployment]: https://github.com/purin-labs/monorepo/actions/runs/39914391000
+[Console backend deployment]: https://github.com/purin-labs/monorepo/actions/runs/39914780797
+[activation]: https://github.com/purin-labs/monorepo/actions/runs/39915083523
+[production site]: https://github.com/purin-labs/monorepo/actions/runs/39914426200
+[production Console]: https://github.com/purin-labs/monorepo/actions/runs/39915114320
+[production hosts]: https://github.com/purin-labs/monorepo/actions/runs/39914666899
 
 ## Future signer operations
 

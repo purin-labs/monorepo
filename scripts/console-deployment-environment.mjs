@@ -88,7 +88,7 @@ function parseOptions(args) {
     manifestFile: values.has('--manifest-file')
       ? path.resolve(values.get('--manifest-file'))
       : undefined,
-    repository: values.get('--repo') || 'seams-tech/seams-monorepo',
+    repository: values.get('--repo'),
     apply,
     json,
   });
@@ -235,15 +235,16 @@ function writeManifest(laneId, manifest) {
 function applyManifest(input) {
   const manifest = readPrivateJson(input.manifestFile);
   validateManifest(input, manifest);
-  createEnvironment(input.repository, input.target.environment);
+  const repository = resolveRepository(input);
+  createEnvironment(repository, input.target.environment);
   for (const [name, value] of Object.entries(manifest.variables)) {
-    setGitHubVariable(input.repository, input.target.environment, name, value);
+    setGitHubVariable(repository, input.target.environment, name, value);
   }
   for (const [name, value] of Object.entries(manifest.secrets)) {
-    setGitHubSecret(input.repository, input.target.environment, name, value);
+    setGitHubSecret(repository, input.target.environment, name, value);
   }
   printResult(input, {
-    repository: input.repository,
+    repository,
     environment: input.target.environment,
     generationId: manifest.generationId,
     variablesApplied: Object.keys(manifest.variables).length,
@@ -288,19 +289,20 @@ function updateExternalValues(input) {
       'TENANT_ROOT_RECOVERY_CERTIFICATES_JSON',
     );
   }
+  const repository = resolveRepository(input);
   const plan = {
-    repository: input.repository,
+    repository,
     environment: input.target.environment,
     variables,
     secretNames: Object.keys(secrets),
   };
   if (input.apply) {
-    createEnvironment(input.repository, input.target.environment);
+    createEnvironment(repository, input.target.environment);
     for (const [name, value] of Object.entries(variables)) {
-      setGitHubVariable(input.repository, input.target.environment, name, value);
+      setGitHubVariable(repository, input.target.environment, name, value);
     }
     for (const [name, value] of Object.entries(secrets)) {
-      setGitHubSecret(input.repository, input.target.environment, name, value);
+      setGitHubSecret(repository, input.target.environment, name, value);
     }
   }
   printResult(input, { ...plan, applied: input.apply });
@@ -344,6 +346,25 @@ function manifestSha256(manifest) {
   const digestInput = { ...manifest };
   delete digestInput.manifestSha256;
   return createHash('sha256').update(JSON.stringify(digestInput), 'utf8').digest('hex');
+}
+
+/* Without --repo, the GitHub repository of the current checkout receives the values. */
+function resolveRepository(input) {
+  if (input.repository) return input.repository;
+  const child = runGitHubCommand([
+    'repo',
+    'view',
+    '--json',
+    'nameWithOwner',
+    '--jq',
+    '.nameWithOwner',
+  ]);
+  if (child.status !== 0) throwGitHubError(child);
+  const repository = String(child.stdout).trim();
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(repository)) {
+    throw new Error(`GitHub returned an invalid repository name: ${repository}`);
+  }
+  return repository;
 }
 
 function createEnvironment(repository, environment) {

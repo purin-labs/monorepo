@@ -629,7 +629,7 @@ source tree. Avoid repeating this transport-only change without new evidence.
 counts, version audits, local checks, limitations, and restoration evidence.
 
 All thirteen original staging versions were restored. Tenant activation passed
-in [run 37718977503](https://github.com/seams-tech/seams-monorepo/actions/runs/37718977503).
+in [run 37718977503](https://github.com/purin-labs/monorepo/actions/runs/37718977503).
 
 ## 2026-10-08: target preparation overlap and runtime reuse
 
@@ -703,7 +703,7 @@ establish same-site D1 placement.
 Retain the simpler runtime handling and verified overlap without claiming a
 hosted speedup. All 70 signatures verified, and all captured serving versions
 matched. All thirteen original staging versions were restored. Activation passed
-in [run 37724107697](https://github.com/seams-tech/seams-monorepo/actions/runs/37724107697).
+in [run 37724107697](https://github.com/purin-labs/monorepo/actions/runs/37724107697).
 No new resources, production deployment, or npm release was required.
 
 [Sanitized evidence](evidence/r155b-overlapped-target-20261008.json) contains source
@@ -755,7 +755,7 @@ Admission, cancellation, execution claims, and relocation checks remain in place
 Eight of nine attempted wallets completed, and **56 signatures verified**.
 All three candidate wallets passed. All captured serving versions matched.
 All thirteen original staging versions were restored. Activation passed in
-[run 37727820202](https://github.com/seams-tech/seams-monorepo/actions/runs/37727820202).
+[run 37727820202](https://github.com/purin-labs/monorepo/actions/runs/37727820202).
 The final version audit passed after refreshing the local Cloudflare login.
 An optional replacement control was cancelled before any live change because new
 unfinished registration records remained after restoration. Those records were
@@ -2102,7 +2102,7 @@ token endpoint returned HTTP 504. It restored the original cohort and activation
 before one retry. The failure was classified as infrastructure failure. Temporary
 registration leases expired through the existing readiness guard. No guard was
 bypassed. All thirteen original Worker versions and placement settings were restored.
-Final activation [37844020524](https://github.com/seams-tech/seams-monorepo/actions/runs/37844020524)
+Final activation [37844020524](https://github.com/purin-labs/monorepo/actions/runs/37844020524)
 passed. All six observation tails stopped. No new infrastructure was created.
 
 The registration-to-signature target remains unmet. The next bounded investigation
@@ -2193,7 +2193,7 @@ separate Borsh encoder. Modified message, recipient, nonce, and callback fields
 failed verification. Only the NEAR signer loaded; no account funding occurred.
 
 All thirteen original Worker version assignments and placement settings were
-restored. Restoration activation [37848816704](https://github.com/seams-tech/seams-monorepo/actions/runs/37848816704)
+restored. Restoration activation [37848816704](https://github.com/purin-labs/monorepo/actions/runs/37848816704)
 passed. Registration leases expired through the existing deployment guard. No
 guard was bypassed. All observation tails stopped. No new infrastructure was created.
 
@@ -2272,7 +2272,7 @@ identical to the baseline. All six hosted NEP-413 signatures passed independent
 Node.js verification and signed-field tamper checks.
 
 All thirteen original Worker version assignments and placement settings were
-restored. Restoration activation [37853345386](https://github.com/seams-tech/seams-monorepo/actions/runs/37853345386) passed.
+restored. Restoration activation [37853345386](https://github.com/purin-labs/monorepo/actions/runs/37853345386) passed.
 The existing registration leases expired normally. All observation tails stopped.
 No new infrastructure was created.
 
@@ -2340,7 +2340,7 @@ that test. Existing replay scenarios passed. All nine NEP-413 signatures passed
 independent Node.js verification and signed-field tamper checks.
 
 All thirteen original Worker version assignments and placement settings were
-restored. Restoration activation [37870318951](https://github.com/seams-tech/seams-monorepo/actions/runs/37870318951)
+restored. Restoration activation [37870318951](https://github.com/purin-labs/monorepo/actions/runs/37870318951)
 passed. Registration leases expired normally, and all observation tails stopped.
 The experiment used existing staging resources. No infrastructure was added.
 
@@ -2424,7 +2424,7 @@ completed baseline samples were preserved, which increased the time between
 baseline and candidate measurements.
 
 All thirteen original Worker version assignments and placement settings were
-restored. Restoration activation [37876171770](https://github.com/seams-tech/seams-monorepo/actions/runs/37876171770)
+restored. Restoration activation [37876171770](https://github.com/purin-labs/monorepo/actions/runs/37876171770)
 passed. The deployment guard waited for earlier temporary registration leases
 to expire. Final activation can create new temporary probes, which retain their
 normal expiry. All observation tails stopped. The comparison used existing staging
@@ -2529,7 +2529,7 @@ and local browser artifacts. Raw repeatable scripts remain in public
 `.artifacts/r155b-phase6am` and private `.artifacts/r155b-phase6am-hosted/measurement`.
 
 All 13 original Worker assignments and placement settings were restored.
-Restoration activation [37879464385](https://github.com/seams-tech/seams-monorepo/actions/runs/37879464385)
+Restoration activation [37879464385](https://github.com/purin-labs/monorepo/actions/runs/37879464385)
 passed. All six observation process groups stopped. Earlier unfinished registration
 leases expired before version changes. The final activation may create new temporary
 US probes with their normal ten-minute expiry. No probes were force-deleted.
@@ -2624,7 +2624,7 @@ raw artifacts remain in public `.artifacts/r155b-phase6an` and private
 `.artifacts/r155b-phase6an-hosted/measurement`.
 
 All 13 original Worker assignments and placement settings were restored. Restoration
-activation [37884119441](https://github.com/seams-tech/seams-monorepo/actions/runs/37884119441)
+activation [37884119441](https://github.com/purin-labs/monorepo/actions/runs/37884119441)
 passed. All six observation process groups stopped. Existing staging resources were
 reused. The activation's temporary US probes retain their normal ten-minute expiry.
 No new resources, production deployment, or package release were part of this work.
@@ -2701,7 +2701,7 @@ Nested protocol spans include transport and overlap other spans. Requested APAC
 placement does not prove physical colocation.
 
 All 13 original Worker assignments and placement settings were restored.
-Restoration activation [37888714394](https://github.com/seams-tech/seams-monorepo/actions/runs/37888714394) passed.
+Restoration activation [37888714394](https://github.com/purin-labs/monorepo/actions/runs/37888714394) passed.
 All six observation process groups stopped. Existing staging resources were reused.
 Temporary activation probes retain their normal ten-minute expiry. No new resource,
 production deployment, or package release was part of this work.
@@ -2852,7 +2852,7 @@ three independent Gateway, Console, and SDK items in Phases 6AP–6AQ. R155C's
 separate A/B transport measurement remains the next major comparison.
 
 All 13 original Worker assignments and placement settings were restored.
-Restoration activation [37913703147](https://github.com/seams-tech/seams-monorepo/actions/runs/37913703147) passed.
+Restoration activation [37913703147](https://github.com/purin-labs/monorepo/actions/runs/37913703147) passed.
 All observation processes stopped. The experiment reused existing staging resources.
 It created no infrastructure and made no production deployment or package release.
 Temporary activation probes retain their normal ten-minute expiry.
@@ -2954,7 +2954,7 @@ minus duration, and a Worker clock advances only at I/O. Requested APAC
 placement does not prove physical colocation.
 
 All 13 original Worker assignments and placement settings were restored.
-Restoration activation [37916869561](https://github.com/seams-tech/seams-monorepo/actions/runs/37916869561) passed.
+Restoration activation [37916869561](https://github.com/purin-labs/monorepo/actions/runs/37916869561) passed.
 All six observation processes stopped. The experiment reused existing staging
 resources and created no Worker, object namespace, database, or paid plan. It
 uploaded three Worker versions, which staging no longer serves: Router
