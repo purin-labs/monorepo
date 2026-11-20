@@ -1608,7 +1608,24 @@ async function bootstrapAccount(lane) {
 async function reserveWorkerNames(workerNames) {
   for (const workerName of workerNames) {
     if (await readWorkerSettings(workerName)) continue;
-    deployInertWorker(workerName);
+    await deployInertWorkerWithRetry(workerName);
+  }
+}
+
+/* Right after the first upload of a new script, Cloudflare can answer "This Worker
+   does not exist" (code 10007) to wrangler's follow-up request. The next attempt
+   finds the script. */
+async function deployInertWorkerWithRetry(workerName) {
+  const attempts = 4;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      deployInertWorker(workerName);
+      return;
+    } catch (error) {
+      if (attempt === attempts) throw error;
+      process.stdout.write(`Retrying the inert Worker ${workerName} (attempt ${attempt + 1})\n`);
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
   }
 }
 
