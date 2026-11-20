@@ -87,16 +87,17 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    `SIN` (empty databases were recreated until placed), US in ATL or EWR, WEUR in LHR or CDG,
    OC in SYD. The production target switch is a reviewed script in the private folder
    (`apply-production-switch.py`), applied at the production cutover.
-5. Owner: create a `seamsadmin` account API token (Workers Scripts, D1, Workers R2 Storage,
-   Cloudflare Pages Edit, Account Settings Read; for all zones Workers Routes Edit, Zone Read,
-   DNS Edit). In `~/.seams/staging-deployment.env` rename the current Cloudflare pair to
-   `COMPANY_CLOUDFLARE_*` and add the new pair; replace the pair in
-   `~/.seams/console/staging-testnet-deployment.env`.
-6. Claude: apply the values (`wallet-system:deploy:env-update`, `site:deploy:env-update`,
-   `console:deploy:env-update`), set the three private D1 ID variables, and commit the staging
-   target switch (new hosts and storage IDs).
-7. Claude: run the staging backend workflow with `prepare_only` and fix what an empty account
-   shows. Then the same for the production lanes.
+5. Done: the `seamsadmin` API token is in the six values files under `~/.seams` (the old
+   pair stays as `COMPANY_CLOUDFLARE_*` in the two Wallet files that deploy the company site).
+6. Done for staging: the eight staging GitHub environments hold the `seamsadmin` values and
+   the new private D1 IDs, and the staging targets name the new hosts and storage (`7a378cf5`).
+7. Done for staging: the staging backend workflow with `prepare_only` passed in `seamsadmin`
+   ([run 44688679257](https://github.com/purin-labs/monorepo/actions/runs/44688679257)). All
+   14 staging Workers run real code there. The first run showed one problem: Cloudflare
+   answered "This Worker does not exist" right after a new script upload; the reservation now
+   retries (`437e94ec`). Until the zone moves, deploy staging only with `prepare_only`.
+   Next: the production lanes. They deploy from `main`, so `main` needs the deploy changes
+   and the production target switch first.
 8. Owner: add `seams.sh` to `seamsadmin` as a site with a plan (it stays pending). Claude:
    load its DNS records from the inventory into the pending zone. Owner: start the Registrar
    move in the source account (Manage Domain → Configuration → Start) and accept it in
