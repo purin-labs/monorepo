@@ -21,7 +21,7 @@ Remaining:
 | ------------------------------------ | ------------------------- | ---------------------------------------------- |
 | 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                    |
 | 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                        |
-| 3. Pantry's own accounts             | Pantry Plan 95            | The owner's five decisions in Plan 95          |
+| 3. Pantry's own accounts             | Pantry Plan 95            | Plan 95 steps 1 to 4 (decisions taken)         |
 | 4. Cut the couplings                 | This plan                 | Step 1                                         |
 | 5. Remove the Pantry service         | This plan                 | Step 3                                         |
 | 6. Move the deploys                  | This plan                 | Steps 1 and 4, six secrets, a new release root |
@@ -174,10 +174,16 @@ Pantry signs users in itself already (Google OIDC in `control/oidc.ts`). Existin
 are test data (Refactor 200), so no account data moves.
 
 Pantry Plan 95 (`docs/plan-95-pantry-own-accounts.md` in the Pantry repository, written
-on 2026-11-20 on the Pantry branch `plan-95-pantry-own-accounts`) is that work. It has six steps and five owner decisions, and it needs no Console change
-before its step 5. It recommends that its steps 1 to 5 ship to the current `satyr-edge`,
-before the Pantry brand cutover of Pantry Plan 93, so that this plan's step 5 does not wait
-for that cutover.
+on 2026-11-20 on the Pantry branch `plan-95-pantry-own-accounts`) is that work. It has six
+steps, and it needs no Console change before its step 5. On 2026-11-20 the owner took its
+five recommendations:
+
+- Its steps 1 to 5 ship to the current `satyr-edge`, before the Pantry brand cutover of
+  Pantry Plan 93. So this plan's step 5 does not wait for that cutover.
+- Billing is postpaid metered use on Stripe only, in one Purin Stripe account. Pantry
+  builds it in test mode, and paid use stays off in production until the live account
+  exists.
+- Turns stay unpriced, and invitations stay a link that the inviter copies.
 
 ## Order
 
