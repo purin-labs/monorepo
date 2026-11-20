@@ -152,17 +152,34 @@ Lessons:
   came 30 to 60 minutes after the zone turned active.
 - Mainnet uses the `:dev` environment, because a fresh project has Production disabled.
 
+Done after the cutover (2026-11-20):
+
+- Email Routing for `seams.sh`: `confirm@`, `peita@` and `admin@` forward to the owner's
+  address. A test message from `confirm@seams.sh` through Resend shows "Forwarded".
+- The `seamsadmin` API token is rolled. The new value is in the six `~/.seams` values files
+  and in the 24 GitHub environments.
+- `purin.io` has Email Routing in the source account. `info@purin.io` forwards to the
+  owner's address. Keep its MX and TXT records when the zone moves.
+- The contact address in the company site and the Wallet Console is `info@purin.io`.
+- `site:deploy:env-update` writes to the environment named after the site.
+- The obsolete `regional-deployment-config` test is deleted.
+- Pantry CI names `purin-labs/monorepo` (Pantry commit, local on its `main`).
+
 Open:
 
-- Verify the Email Routing destination address, then add the rules for `confirm@`, `peita@`
-  and `admin@`.
-- `info@purin.io` and the Resend sender change.
-- Phase 7: retire the source Seams resources after the owner confirms the list. Keep
-  `seams-sdk-d1-console` and its database for Pantry.
-- Roll the `seamsadmin` API token, because its value was pasted into a chat.
-- `site:deploy:env-update --site production` targets a GitHub environment that does not
-  exist (`production-testnet`).
-- `tests/relayer/regional-deployment-config.e2e.test.ts` has three stale assertions.
+- Resend sender: add and verify `purin.io` in the Resend dashboard, then change
+  `fromAddress` from `confirm@seams.sh` to `info@purin.io` in both target files. The lane
+  keys can only send, so the domain needs a dashboard sign-in.
+- Phase 7: the retirement list is in the private file
+  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. Delete nothing
+  before the owner confirms it. Wave 2 (`seams-sdk-d1-console`, its database and the
+  Workers it binds) waits for Pantry.
+- The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
+  `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
+  the owner decides.
+- Mainnet environment: keep `:dev`, or enable Production.
+- Purin account move: `purin.io` can move from 2026-11-27. The Purin account needs the
+  Workers Paid plan and an API token first.
 
 ## Resource inventory
 
