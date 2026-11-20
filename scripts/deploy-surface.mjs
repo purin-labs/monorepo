@@ -666,9 +666,19 @@ async function waitForActivePagesDomain(domainPath, hostname, projectName, apiTo
     if (status === 'active') return;
     await new Promise((resolve) => setTimeout(resolve, 10_000));
   }
+  // A pages.dev subdomain is unique across accounts, so a project in a new account
+  // can have a suffix after its name. Name the target that the project really has.
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const project = await requestCloudflareApi(
+    `/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(projectName)}`,
+    apiToken,
+    'GET',
+    [200],
+  );
+  const target = (await project.json()).result?.subdomain || `${projectName}.pages.dev`;
   throw new Error(
     `Pages custom domain ${hostname} is ${status || 'not active'}. ` +
-      `Make its DNS record a proxied CNAME to ${projectName}.pages.dev, then deploy again.`,
+      `Make its DNS record a proxied CNAME to ${target}, then deploy again.`,
   );
 }
 
