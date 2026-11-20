@@ -209,12 +209,14 @@ account data moves.
 
 ## Open questions
 
-1. **Visibility of `seams-console`.** Both organisations are on GitHub Free. The separation
-   session reports that GitHub Free allows deployment environments only in public
-   repositories, and that private Actions minutes are limited there. The deploys need 26
-   environments. So the owner must choose: make `seams-console` public, like this
-   repository, or move `seams-tech` to GitHub Team. Check the GitHub plan page before you
-   decide.
+1. **Visibility of `seams-console`.** Both organisations are on GitHub Free (`plan.name`
+   from `gh api orgs/<org>`, read on 2026-11-20). The
+   [environments page](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+   says: "Users with GitHub Free plans can only configure environments for public
+   repositories." GitHub Team gives them to private repositories. Private Actions on Free
+   has a $12 monthly allowance (about 2,000 Linux minutes); public repositories run free.
+   The deploys need 26 environments, so the owner must choose: make `seams-console` public,
+   like this repository, or move `seams-tech` to GitHub Team.
 2. Decided: the Wallet site moves with the Console (`apps/wallet-console` builds both).
 3. **Console API host.** Recommendation: `console.seams.sh/console/*`, with the RP ID kept
    at `seams.sh`.
