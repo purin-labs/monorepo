@@ -49,6 +49,7 @@ function main() {
           deployment,
           lane.console,
           lane.site.walletSiteOrigin,
+          lane.site.formerWalletSiteOrigins,
           lane.walletOrigin,
           lane.gatewayOrigin,
           lane.emailOtpDelivery,
@@ -166,6 +167,7 @@ function buildConsoleConfig(
   deployment,
   consoleTarget,
   walletSiteOrigin,
+  formerWalletSiteOrigins,
   walletOrigin,
   gatewayOrigin,
   emailOtpDelivery,
@@ -181,6 +183,11 @@ function buildConsoleConfig(
     deployment.lane === 'production-testnet' || customerReplica
       ? []
       : [consoleSite.platformOrigin, consoleSite.walletConsoleOrigin];
+  // Former hosts keep the Console API routes; their pages redirect to the new hosts.
+  const formerFrontendOrigins =
+    frontendOrigins.length === 0
+      ? []
+      : [...consoleSite.formerPlatformOrigins, ...consoleSite.formerWalletConsoleOrigins];
   const production = deployment.lane !== 'staging-testnet';
   const consoleBaseUrl = new URL(consoleSite.platformOrigin);
   consoleBaseUrl.searchParams.set(
@@ -261,7 +268,12 @@ function buildConsoleConfig(
     compatibility_date: GATEWAY_WORKER_COMPATIBILITY_DATE,
     compatibility_flags: [...GATEWAY_WORKER_COMPATIBILITY_FLAGS, 'global_fetch_strictly_public'],
     workers_dev: false,
-    routes: buildConsoleRoutes(consoleOrigin, walletSiteOrigin, frontendOrigins),
+    routes: buildConsoleRoutes(
+      consoleOrigin,
+      walletSiteOrigin,
+      [...frontendOrigins, ...formerFrontendOrigins],
+      formerWalletSiteOrigins,
+    ),
     d1_databases: [
       {
         binding: 'CONSOLE_DB',
@@ -292,30 +304,42 @@ function buildConsoleConfig(
   };
 }
 
-function buildConsoleRoutes(consoleOrigin, walletSiteOrigin, frontendOrigins) {
-  const frontendRoutes = [];
-  for (const origin of frontendOrigins) {
+export function buildConsoleRoutes(
+  consoleOrigin,
+  walletSiteOrigin,
+  frontendOrigins,
+  formerWalletSiteOrigins = [],
+) {
+  const frontendRoutes = frontendOrigins.flatMap((origin) => {
     const host = new URL(origin).hostname;
-    const zone = host.split('.').slice(-2).join('.');
-    frontendRoutes.push(
+    const zone = zoneNameFor(host);
+    return [
       { pattern: `${host}/console`, zone_name: zone },
       { pattern: `${host}/console/*`, zone_name: zone },
-    );
-  }
+    ];
+  });
   const hostname = new URL(consoleOrigin).hostname;
   if (consoleOrigin !== walletSiteOrigin) {
     return [{ pattern: hostname, custom_domain: true }, ...frontendRoutes];
   }
-  const labels = hostname.split('.');
-  const zoneName = labels.slice(-2).join('.');
-  return [
-    ...frontendRoutes,
-    { pattern: `${hostname}/console`, zone_name: zoneName },
-    { pattern: `${hostname}/console/*`, zone_name: zoneName },
-    { pattern: `${hostname}/account-platform/v1/*`, zone_name: zoneName },
-    { pattern: `${hostname}/internal/tenant-deployment/v1/verify-resource`, zone_name: zoneName },
-    { pattern: `${hostname}/internal/tenant-deployment/v1/cutover`, zone_name: zoneName },
-  ];
+  // The Console API shares the Wallet site host. A former Wallet site host keeps the
+  // same API routes, so the Wallet CLI and account services that name it keep working.
+  const siteRoutes = [consoleOrigin, ...formerWalletSiteOrigins].flatMap((origin) => {
+    const host = new URL(origin).hostname;
+    const zone = zoneNameFor(host);
+    return [
+      { pattern: `${host}/console`, zone_name: zone },
+      { pattern: `${host}/console/*`, zone_name: zone },
+      { pattern: `${host}/account-platform/v1/*`, zone_name: zone },
+      { pattern: `${host}/internal/tenant-deployment/v1/verify-resource`, zone_name: zone },
+      { pattern: `${host}/internal/tenant-deployment/v1/cutover`, zone_name: zone },
+    ];
+  });
+  return [...frontendRoutes, ...siteRoutes];
+}
+
+function zoneNameFor(hostname) {
+  return hostname.split('.').slice(-2).join('.');
 }
 
 function buildWalletRuntimeConfig(
@@ -396,12 +420,9 @@ function buildConfig(
     workers_dev: false,
     routes:
       region === deployment.resources.ingressRegion
-        ? [
-            {
-              pattern: new URL(deployment.origins.gateway).hostname,
-              custom_domain: true,
-            },
-          ]
+        ? [deployment.origins.gateway, ...(deployment.origins.formerGateways ?? [])].map(
+            (origin) => ({ pattern: new URL(origin).hostname, custom_domain: true }),
+          )
         : [],
     d1_databases: [
       {

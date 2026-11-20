@@ -7,7 +7,12 @@ import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { readFrontendSite, readConsoleFrontendSite } from './deployment-targets.mjs';
+import {
+  PUBLIC_WALLET_DOCS_ORIGIN,
+  readConsoleFrontendSite,
+  readFrontendSite,
+  readHostRedirects,
+} from './deployment-targets.mjs';
 import { formatFailedCheck, isFailedCheck, runReadinessChecks } from './deployment-smoke.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +24,13 @@ const WALLET_SITE_OUTPUT = path.join(WALLET_SITE_ROOT, 'dist');
 const WALLET_HOST_OUTPUT = path.join(REPOSITORY_ROOT, '.release-artifacts', 'wallet-host');
 const WALLET_DOCS_OUTPUT = path.join(REPOSITORY_ROOT, '.release-artifacts', 'wallet-docs');
 const PUBLIC_DOCS_ARTIFACT_ROOT = path.join(REPOSITORY_ROOT, '.artifacts', 'wallet-docs');
-const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.wallet.seams.sh';
+const HOST_REDIRECTS_WORKER = path.join(
+  REPOSITORY_ROOT,
+  'deployment',
+  'host-redirects',
+  'worker.mjs',
+);
+const HOST_REDIRECTS_COMPATIBILITY_DATE = '2026-11-01';
 const SURFACES = Object.freeze([
   'platform-console',
   'wallet-console',
@@ -524,6 +535,7 @@ async function deployFrontend(site, component, walletLanes) {
     requireEnvironmentValues([site.pagesProjectEnv], process.env);
     assertDirectory(COMPANY_OUTPUT, 'Company Pages output');
     deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
+    await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
   } else if (component === 'wallet-docs') {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
@@ -538,7 +550,11 @@ async function deployFrontend(site, component, walletLanes) {
     assertDirectory(WALLET_SITE_OUTPUT, 'Wallet site Pages output');
     const project = process.env[site.walletSitePagesProjectEnv];
     deployPagesProject(WALLET_SITE_OUTPUT, site, project);
-    await ensurePagesCustomDomain(site.walletSiteOrigin, project);
+    // The Wallet site can take a host that the company site served before.
+    await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
+      process.env[site.pagesProjectEnv],
+    ]);
+    deployHostRedirects(site);
   } else {
     const projectEnvironments = [...new Set(walletLanes.map((lane) => lane.walletPagesProjectEnv))];
     requireEnvironmentValues(projectEnvironments, process.env);
@@ -569,16 +585,93 @@ function deployPagesProject(outputDirectory, site, projectName) {
   runCommand('pnpm', args);
 }
 
-async function ensurePagesCustomDomain(origin, projectName) {
+/* Binds the host to the Pages project. A new binding also points the DNS record at
+   the project. `releaseFrom` names the other projects that may hold the host. */
+async function ensurePagesCustomDomain(origin, projectName, releaseFrom = []) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
   const hostname = new URL(origin).hostname;
-  const projectPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(projectName)}`;
-  const domainPath = `${projectPath}/domains/${encodeURIComponent(hostname)}`;
-  const existing = await requestCloudflareApi(domainPath, apiToken, 'GET', [200, 404]);
+  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
+  const domainPath = (project) =>
+    `${projectsPath}/${encodeURIComponent(project)}/domains/${encodeURIComponent(hostname)}`;
+  const existing = await requestCloudflareApi(domainPath(projectName), apiToken, 'GET', [200, 404]);
   if (existing.status === 200) return;
-  await requestCloudflareApi(`${projectPath}/domains`, apiToken, 'POST', [200], { name: hostname });
+  for (const previous of releaseFrom.filter((name) => name && name !== projectName)) {
+    const held = await requestCloudflareApi(domainPath(previous), apiToken, 'GET', [200, 404]);
+    if (held.status !== 200) continue;
+    await requestCloudflareApi(domainPath(previous), apiToken, 'DELETE', [200]);
+    process.stdout.write(`Released Pages custom domain ${hostname} from ${previous}\n`);
+  }
+  await requestCloudflareApi(
+    `${projectsPath}/${encodeURIComponent(projectName)}/domains`,
+    apiToken,
+    'POST',
+    [200],
+    { name: hostname },
+  );
   process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
+  await ensurePagesDnsRecord(hostname, `${projectName}.pages.dev`, apiToken);
+}
+
+/* A Pages host is a proxied CNAME to its project. Only a CNAME to another Pages
+   project is changed; any other record stops the deploy. */
+async function ensurePagesDnsRecord(hostname, target, apiToken) {
+  const zoneName = hostname.split('.').slice(-2).join('.');
+  const zones = await readCloudflareJson(`/zones?name=${encodeURIComponent(zoneName)}`, apiToken);
+  const zone = zones.result?.[0];
+  if (!zone) throw new Error(`Cloudflare zone ${zoneName} is not visible to the deploy token`);
+  const recordsPath = `/zones/${zone.id}/dns_records`;
+  const records = await readCloudflareJson(
+    `${recordsPath}?name=${encodeURIComponent(hostname)}`,
+    apiToken,
+  );
+  const [record, ...others] = records.result ?? [];
+  if (others.length > 0) throw new Error(`${hostname} has more than one DNS record`);
+  const desired = { type: 'CNAME', name: hostname, content: target, proxied: true, ttl: 1 };
+  if (!record) {
+    await requestCloudflareApi(recordsPath, apiToken, 'POST', [200], desired);
+    process.stdout.write(`Created DNS record ${hostname} -> ${target}\n`);
+    return;
+  }
+  if (record.type === 'CNAME' && record.content === target && record.proxied) return;
+  if (record.type !== 'CNAME' || !record.content.endsWith('.pages.dev')) {
+    throw new Error(
+      `${hostname} has a ${record.type} record to ${record.content}; change it by hand`,
+    );
+  }
+  await requestCloudflareApi(`${recordsPath}/${record.id}`, apiToken, 'PATCH', [200], desired);
+  process.stdout.write(`Pointed DNS record ${hostname} -> ${target}\n`);
+}
+
+async function readCloudflareJson(apiPath, apiToken) {
+  const response = await requestCloudflareApi(apiPath, apiToken, 'GET', [200]);
+  return response.json();
+}
+
+/* One Worker per site sends every former host to its successor. */
+function deployHostRedirects(site) {
+  const redirects = readHostRedirects(site.id);
+  if (redirects.length === 0) return;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'seams-host-redirects-'));
+  const configPath = path.join(directory, 'wrangler.json');
+  const hosts = redirects.map(({ from, to }) => [new URL(from).hostname, to]);
+  const config = {
+    name: `seams-host-redirects-${site.id}`,
+    main: HOST_REDIRECTS_WORKER,
+    compatibility_date: HOST_REDIRECTS_COMPATIBILITY_DATE,
+    workers_dev: false,
+    routes: hosts.map(([host]) => ({
+      pattern: `${host}/*`,
+      zone_name: host.split('.').slice(-2).join('.'),
+    })),
+    vars: { HOST_REDIRECTS_JSON: JSON.stringify(Object.fromEntries(hosts)) },
+  };
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  try {
+    runCommand('pnpm', ['exec', 'wrangler', 'deploy', '--config', configPath]);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 }
 
 async function requestCloudflareApi(apiPath, apiToken, method, expectedStatuses, body) {
@@ -631,6 +724,7 @@ function buildSmokeChecks(site, component, walletLanes) {
         '/sdk/workers/near-signer.worker.js',
       ]),
       docsRedirectCheck('wallet-site', site.walletSiteOrigin, '/docs/guides/transaction-review'),
+      ...readHostRedirects(site.id).map(hostRedirectCheck),
     ];
   }
   if (component === 'wallet-docs') {
@@ -697,6 +791,21 @@ function docsRedirectCheck(surface, sourceOrigin, sourcePath) {
     url: source.href,
     request: { redirect: 'manual' },
     isReady: isPermanentRedirectToWalletDocs,
+  };
+}
+
+function hostRedirectCheck({ from, to }) {
+  const source = new URL('/pricing/?from=smoke', from);
+  return {
+    name: `${source.hostname} redirects to ${new URL(to).hostname}`,
+    url: source.href,
+    request: { redirect: 'manual' },
+    isReady(response) {
+      const location = response.headers.get('location');
+      return (
+        response.status === 301 && location === new URL(source.pathname + source.search, to).href
+      );
+    },
   };
 }
 

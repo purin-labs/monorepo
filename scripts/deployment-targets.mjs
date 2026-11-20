@@ -36,7 +36,7 @@ const CONSOLE_LANE_IDS = Object.freeze([
 ]);
 const FRONTEND_SITE_IDS = Object.freeze(['staging', 'production']);
 const CONSOLE_FRONTEND_SITE_IDS = Object.freeze(['staging', 'production']);
-const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.wallet.seams.sh';
+export const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.wallet.seams.sh';
 
 export const BACKEND_COMPONENTS = Object.freeze([
   'signing-worker',
@@ -147,17 +147,17 @@ export function readConsoleFrontendSite(siteId) {
   const frontends = requireObject(document.frontends, 'Console frontends');
   requireExactKeys(frontends, CONSOLE_FRONTEND_SITE_IDS, 'Console frontends');
   const site = requireObject(frontends[siteId], `Console frontends.${siteId}`);
-  requireExactKeys(
-    site,
-    [
-      'branch',
-      'platformOrigin',
-      'walletConsoleOrigin',
-      'platformPagesProjectEnv',
-      'walletConsolePagesProjectEnv',
-    ],
-    'Console frontend',
-  );
+  const keys = [
+    'branch',
+    'platformOrigin',
+    'walletConsoleOrigin',
+    'platformPagesProjectEnv',
+    'walletConsolePagesProjectEnv',
+  ];
+  for (const optional of ['formerPlatformOrigins', 'formerWalletConsoleOrigins']) {
+    if (Object.hasOwn(site, optional)) keys.push(optional);
+  }
+  requireExactKeys(site, keys, 'Console frontend');
   return Object.freeze({
     id: siteId,
     accountOrigins:
@@ -170,6 +170,14 @@ export function readConsoleFrontendSite(siteId) {
     branch: requireString(site.branch, 'Console frontend branch'),
     platformOrigin: requireHttpsOrigin(site.platformOrigin, 'Platform Console origin'),
     walletConsoleOrigin: requireHttpsOrigin(site.walletConsoleOrigin, 'Wallet Console origin'),
+    formerPlatformOrigins: parseFormerOrigins(
+      site.formerPlatformOrigins,
+      'Console frontend formerPlatformOrigins',
+    ),
+    formerWalletConsoleOrigins: parseFormerOrigins(
+      site.formerWalletConsoleOrigins,
+      'Console frontend formerWalletConsoleOrigins',
+    ),
     platformPagesProjectEnv: requireEnvironmentName(
       site.platformPagesProjectEnv,
       'Platform Pages project',
@@ -179,6 +187,50 @@ export function readConsoleFrontendSite(siteId) {
       'Wallet Pages project',
     ),
   });
+}
+
+/* A former host keeps its API routes. Every other request on it redirects to the
+   same path on its successor. */
+export function readHostRedirects(siteId) {
+  const site = readFrontendSite(siteId);
+  const consoles = readConsoleFrontendSite(siteId);
+  const redirects = [
+    ...site.formerWalletSiteOrigins.map((from) => ({ from, to: site.walletSiteOrigin })),
+    ...consoles.formerPlatformOrigins.map((from) => ({ from, to: consoles.platformOrigin })),
+    ...consoles.formerWalletConsoleOrigins.map((from) => ({
+      from,
+      to: consoles.walletConsoleOrigin,
+    })),
+  ];
+  const current = new Set([
+    site.origin,
+    site.walletSiteOrigin,
+    site.docsOrigin,
+    consoles.platformOrigin,
+    consoles.walletConsoleOrigin,
+    ...site.lanes.flatMap((lane) => [lane.gatewayOrigin, lane.walletOrigin, lane.console?.origin]),
+  ]);
+  for (const { from } of redirects) {
+    if (current.has(from)) throw new Error(`former origin ${from} is still a current origin`);
+  }
+  assertUnique(
+    redirects.map(({ from }) => from),
+    `${siteId} former origins`,
+  );
+  return Object.freeze(redirects.map((redirect) => Object.freeze(redirect)));
+}
+
+function parseFormerOrigins(value, pathName) {
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(pathName + ' must be a non-empty array when present');
+  }
+  return Object.freeze(
+    unique(
+      value.map((origin, index) => requireHttpsOrigin(origin, pathName + '[' + index + ']')),
+      pathName,
+    ),
+  );
 }
 
 function readJsonDocument(documentPath) {
@@ -556,6 +608,7 @@ function parseSite(value, releaseId, branch) {
       'pagesProjectEnv',
       'walletSitePagesProjectEnv',
       'docsPagesProjectEnv',
+      ...(Object.hasOwn(site, 'formerWalletSiteOrigins') ? ['formerWalletSiteOrigins'] : []),
     ],
     sitePath,
   );
@@ -579,6 +632,10 @@ function parseSite(value, releaseId, branch) {
     branch,
     origin: requireHttpsOrigin(site.origin, sitePath + '.origin'),
     walletSiteOrigin,
+    formerWalletSiteOrigins: parseFormerOrigins(
+      site.formerWalletSiteOrigins,
+      sitePath + '.formerWalletSiteOrigins',
+    ),
     docsOrigin: PUBLIC_WALLET_DOCS_ORIGIN,
     googleOidcClientId: requirePattern(
       site.googleOidcClientId,
@@ -623,7 +680,14 @@ function parseBackendLane(value, laneId, releaseId, network, branch, site, conso
     branch,
     site,
     applicationOrigin: site.walletSiteOrigin,
-    allowedOrigins: Object.freeze([site.origin, site.walletSiteOrigin, walletOrigin]),
+    // A former Wallet site host only redirects, but a page loaded before the move can
+    // still call the Gateway, so it stays allowed.
+    allowedOrigins: Object.freeze([
+      site.origin,
+      site.walletSiteOrigin,
+      ...site.formerWalletSiteOrigins,
+      walletOrigin,
+    ]),
     console: consoleTarget,
     gatewayOrigin: requireHttpsOrigin(lane.gatewayOrigin, lanePath + '.gatewayOrigin'),
     walletOrigin,

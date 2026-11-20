@@ -38,7 +38,7 @@ other names are a proposal.
 | `console.seams.sh`                | Platform Console (`seams-platform-console`) | `console.purin.io`          |
 | `staging.console.seams.sh`        | Platform Console, staging                   | `staging.console.purin.io`  |
 | `console.wallet.seams.sh`         | Wallet Console (`seams-console-wallet`)     | `console.seams.sh` (chosen) |
-| `console.staging.wallet.seams.sh` | Wallet Console, staging                     | `staging.console.seams.sh`  |
+| `console.staging.wallet.seams.sh` | Wallet Console, staging                     | `console.staging.seams.sh`  |
 | `api.wallet.seams.sh`             | Gateway, production mainnet                 | `api.seams.sh` (chosen)     |
 | `test.api.wallet.seams.sh`        | Gateway, production testnet                 | `test.api.seams.sh`         |
 | `staging.api.wallet.seams.sh`     | Gateway, staging                            | `staging.api.seams.sh`      |
@@ -52,14 +52,36 @@ other names are a proposal.
 through it. The owner asked to remove it. Removal is safe only after the testnet lane uses
 another Console, so it stays until the owner decides how.
 
+The staging Wallet Console is `console.staging.seams.sh`, not `staging.console.seams.sh`.
+Console step-up passkeys use the Wallet site host as the RP ID (`CONSOLE_STEP_UP_RP_ID`), and
+the Wallet Console must be a subdomain of that host: `console.seams.sh` is under `seams.sh`,
+and `console.staging.seams.sh` is under `staging.seams.sh`.
+
 Rules for these hosts:
 
-- `console.seams.sh` and `staging.console.seams.sh` change owner. The Platform Console must
-  leave each host before the Wallet Console takes it.
+- `console.seams.sh` changes owner in production. The Platform Console must leave it before
+  the Wallet Console takes it. On staging, `staging.console.seams.sh` redirects to
+  `staging.console.purin.io`.
+- In production the step-up RP ID changes from `wallet.seams.sh` to `seams.sh`. Console
+  step-up passkeys made for `wallet.seams.sh` then stop working, unless `wallet.seams.sh`
+  publishes `/.well-known/webauthn` for the new origins. Decide this before production.
 - An API host never redirects. A browser does not follow a redirect for a CORS preflight.
   Each Gateway Worker gets the new host as a second custom domain, and the old host stays
   until the customers that call it move. Tenant records and published SDK configurations
   name the old Gateway hosts.
+
+## How the code does it
+
+- `formerWalletSiteOrigins` (Wallet targets), `formerPlatformOrigins` and
+  `formerWalletConsoleOrigins` (Console targets) name the old hosts. `readHostRedirects`
+  in `scripts/deployment-targets.mjs` maps each one to its successor.
+- The Console Worker keeps its API routes on each old host (`buildConsoleRoutes`).
+- `origins.formerGateways` keeps an old Gateway host as a second custom domain.
+- The `wallet-site` deploy moves the host from the company project when needed, deploys
+  the Worker `seams-host-redirects-<site>` (`deployment/host-redirects/worker.mjs`), and its
+  smoke checks each redirect.
+- A Pages host that a deploy binds for the first time also gets its DNS record, a proxied
+  CNAME to the project.
 
 ## What does not break
 
