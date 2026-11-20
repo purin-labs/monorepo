@@ -388,7 +388,7 @@ function buildSiteConfig(source: ImportMetaEnv): FrontendConfigCandidate {
   const baseUrl = stripTrailingSlash(toTrimmedString(source.BASE_URL || '/')) || '/';
   const siteOrigin =
     toTrimmedString(source.VITE_SITE_ORIGIN) ||
-    (siteKind === 'production' ? 'https://seams.sh' : 'https://staging.seams.sh');
+    (siteKind === 'production' ? 'https://seams.sh' : 'https://staging.purin.io');
   const testnetOrigin =
     siteKind === 'production'
       ? 'https://test.api.wallet.seams.sh'

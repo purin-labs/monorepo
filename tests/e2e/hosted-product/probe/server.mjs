@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
-const gatewayOrigin = 'https://staging.api.wallet.seams.sh';
+const gatewayOrigin = 'https://staging.api.seams.sh';
 const bootId = randomUUID();
 const maximumBodyBytes = 4 * 1024 * 1024;
 

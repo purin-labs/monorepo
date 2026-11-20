@@ -3,8 +3,9 @@
   "staging": {
     "branch": "dev",
     "site": {
-      "origin": "https://staging.seams.sh",
-      "walletSiteOrigin": "https://staging.wallet.seams.sh",
+      "origin": "https://staging.purin.io",
+      "walletSiteOrigin": "https://staging.seams.sh",
+      "formerWalletSiteOrigins": ["https://staging.wallet.seams.sh"],
       "googleOidcClientId": "971053349716-p52bppo1gmlei9i88naa8eta5f3ebu2l.apps.googleusercontent.com",
       "defaultNetwork": "testnet",
       "availableNetworks": ["testnet"],
@@ -14,7 +15,7 @@
     },
     "lanes": {
       "testnet": {
-        "gatewayOrigin": "https://staging.api.wallet.seams.sh",
+        "gatewayOrigin": "https://staging.api.seams.sh",
         "walletOrigin": "https://staging.sign.seams.sh",
         "walletPagesProjectEnv": "CF_PAGES_PROJECT_WALLET",
         "emailOtpDelivery": {
@@ -22,7 +23,8 @@
         },
         "resources": {
           "gateway": {
-            "workerName": "seams-sdk-d1-gateway-staging"
+            "workerName": "seams-sdk-d1-gateway-staging",
+            "consoleD1Name": "seams-console-staging-sin"
           },
           "router": {
             "workerName": "router-ab-mpc-router-staging",
@@ -102,8 +104,8 @@
               "workerName": "seams-sdk-d1-gateway-staging",
               "ingressRegion": "APAC",
               "consoleD1": {
-                "name": "seams-console-sin-candidate-20261014",
-                "id": "6b2e86ec-2295-4475-b405-40f5f774ca1a"
+                "name": "seams-console-staging-sin",
+                "id": "fbd3cfdc-125b-423d-b3c9-07aa2ff43688"
               },
               "regions": {
                 "US": {
@@ -112,7 +114,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-staging-us",
-                    "id": "fac338cd-4fd9-4c88-8b24-4e675cd3736c"
+                    "id": "c70aa60a-beda-4cb5-b4ea-02de8b120039"
                   }
                 },
                 "WEUR": {
@@ -121,7 +123,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-staging-weur",
-                    "id": "0e8bde9f-eda3-4fee-a3c7-d5cdb0a99ed9"
+                    "id": "89064aa2-7d05-4fe5-987f-06b2a21c877a"
                   }
                 },
                 "APAC": {
@@ -130,7 +132,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-staging-sin",
-                    "id": "0b77e7a5-4668-4df9-8c2d-c8846804f542"
+                    "id": "38b8e122-8ac1-4ee2-9a2f-095018545787"
                   }
                 },
                 "OC": {
@@ -139,7 +141,7 @@
                   "signerD1": {
                     "kind": "allocated",
                     "name": "seams-signer-staging-oc",
-                    "id": "ffa1a07d-ccd4-40c7-a6c4-3efe3cf6735f"
+                    "id": "4b833fc3-402a-418c-a05a-f945d092a3a4"
                   }
                 }
               }
@@ -151,8 +153,10 @@
               "environmentId": "proj_mv5fzezy_4ztf60:dev"
             },
             "origins": {
-              "gateway": "https://staging.api.wallet.seams.sh",
+              "gateway": "https://staging.api.seams.sh",
+              "formerGateways": ["https://staging.api.wallet.seams.sh"],
               "allowedCors": [
+                "https://staging.purin.io",
                 "https://staging.seams.sh",
                 "https://staging.wallet.seams.sh",
                 "https://staging.sign.seams.sh"

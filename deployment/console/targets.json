@@ -3,14 +3,14 @@
   "lanes": {
     "staging-testnet": {
       "environment": "staging-console",
-      "origin": "https://staging.wallet.seams.sh",
-      "siteOrigin": "https://staging.wallet.seams.sh",
+      "origin": "https://staging.seams.sh",
+      "siteOrigin": "https://staging.seams.sh",
       "workerName": "seams-sdk-d1-console-staging",
       "platformSupportEmails": ["n6378056@gmail.com"],
       "placementRegion": "aws:ap-southeast-1",
       "database": {
-        "name": "seams-console-sin-candidate-20261014",
-        "id": "6b2e86ec-2295-4475-b405-40f5f774ca1a"
+        "name": "seams-console-staging-sin",
+        "id": "fbd3cfdc-125b-423d-b3c9-07aa2ff43688"
       },
       "emailDelivery": {
         "kind": "capture"
@@ -64,8 +64,10 @@
   "frontends": {
     "staging": {
       "branch": "dev",
-      "platformOrigin": "https://staging.console.seams.sh",
-      "walletConsoleOrigin": "https://console.staging.wallet.seams.sh",
+      "platformOrigin": "https://account.staging.seams.sh",
+      "formerPlatformOrigins": ["https://staging.console.seams.sh"],
+      "walletConsoleOrigin": "https://console.staging.seams.sh",
+      "formerWalletConsoleOrigins": ["https://console.staging.wallet.seams.sh"],
       "platformPagesProjectEnv": "CF_PAGES_PROJECT_PLATFORM_CONSOLE",
       "walletConsolePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_CONSOLE"
     },

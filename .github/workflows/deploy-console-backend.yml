@@ -181,6 +181,8 @@ jobs:
       - name: Deploy Console
         run: pnpm deploy:backend deploy --lane "$DEPLOY_LANE" --component console
       - name: Smoke Console
+        # A prepare-only deploy has no public route, so the Console origin does not serve it.
+        if: ${{ !inputs.prepare_only }}
         run: pnpm deploy:backend smoke --lane "$DEPLOY_LANE" --component console
 
   cleanup_build_artifact:

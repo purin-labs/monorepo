@@ -18,7 +18,7 @@ export SEAMS_TEST_ARTIFACT_DIR="$PWD/.artifacts/r152/hosted-product"
 export SEAMS_HOSTED_PROJECTION="$SEAMS_TEST_ARTIFACT_DIR/projection.json"
 export SEAMS_HOSTED_CANDIDATE_SITE="$SEAMS_TEST_ARTIFACT_DIR/site"
 mkdir -p "$SEAMS_TEST_ARTIFACT_DIR"
-curl --fail --silent --show-error https://staging.api.wallet.seams.sh/.well-known/seams-tenant-deployment.json --output "$SEAMS_HOSTED_PROJECTION"
+curl --fail --silent --show-error https://staging.api.seams.sh/.well-known/seams-tenant-deployment.json --output "$SEAMS_HOSTED_PROJECTION"
 node tests/scripts/build-hosted-candidate.mjs
 node "$SEAMS_WALLET_SERVER_CANDIDATE/../../node_modules/@playwright/test/cli.js" test -c tests/playwright.hosted-product.config.mjs
 ```

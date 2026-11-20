@@ -30,6 +30,11 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
   authority over HTTPS. Pantry plans its own move in its repository.
 - `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
 - No host is renamed in the source account first.
+- Decided later on 2026-11-20: the Seams Wallet and its Console become one separate product
+  on `console.seams.sh`, and the Console code moves out of this repository to the
+  `seams-tech` GitHub organisation. Pantry and the Wallet stop sharing organisation accounts.
+  That split is its own project. Until it lands, this migration keeps the Platform Console
+  and the `/account-platform/v1/*` routes, and the `account.*` hosts are temporary.
 - The current deployment keys stay. Only the Cloudflare account values, the storage IDs and
   the host names change.
 - The r150 benchmarks and the ML-DSA disposable fleet retire: they are not recreated. Their
