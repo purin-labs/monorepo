@@ -14,7 +14,10 @@ if (args.slice(0, 4).join(' ') === 'exec wrangler pages deploy') {
   mkdirSync(destination, { recursive: true });
   cpSync(output, destination, { recursive: true });
   appendFileSync(process.env.FRONTEND_DEPLOY_LOG, JSON.stringify({ project, output }) + '\n');
-} else if (args.slice(0, 6).join(' ') === '-C apps/wallet-console exec vite build --config') {
+} else if (
+  args.slice(0, 6).join(' ') === '-C apps/wallet-console exec vite build --config' ||
+  (args[0] === '-C' && args.slice(2, 4).join(' ') === 'exec seams-voiceid-host')
+) {
   const result = spawnSync(process.env.FRONTEND_REAL_PNPM, args, {
     env: process.env,
     stdio: 'inherit',

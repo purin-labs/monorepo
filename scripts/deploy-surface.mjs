@@ -41,10 +41,6 @@ const SURFACES = Object.freeze([
 ]);
 const COMPONENTS = Object.freeze(['all', ...SURFACES]);
 
-if (isDirectInvocation()) {
-  main(process.argv.slice(2)).catch(handleFailure);
-}
-
 function isDirectInvocation() {
   return (
     process.argv[1] &&
@@ -945,4 +941,9 @@ function isRecord(value) {
 function handleFailure(error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
+}
+
+// Last, so every module constant exists before a synchronous build reads it.
+if (isDirectInvocation()) {
+  main(process.argv.slice(2)).catch(handleFailure);
 }

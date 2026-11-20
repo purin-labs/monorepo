@@ -165,7 +165,7 @@ test('a testnet frontend build, deploy and smoke preserves the mainnet deploymen
         output: path.join(checkout, '.release-artifacts/wallet-host/production-testnet'),
       },
     ]);
-    expect(provider.reads).toHaveLength(5);
+    expect(provider.reads).toHaveLength(6);
     for (const request of provider.reads) expect(request).toMatch(/^\/fixture-testnet\//);
     const smokeRequests = [...provider.reads];
     const mainnetResponse = await request.get(`http://127.0.0.1:${address.port}/fixture-mainnet/`);
