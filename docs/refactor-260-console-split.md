@@ -280,9 +280,10 @@ account data moves.
    the `seams` binary compiles in one release root
    (`seams-wallet/crates/seams-cli/trust/release-root.json`, format
    `seams_release_root_v1`, one key). So `seams-console` cannot sign with the current root.
-   - Outside use is possible: `@seams/wallet-cli` had 1,843 npm downloads from 2026-10-20 to
-     2026-11-18, and the GitHub release assets 14 to 33 each.
-   - A new root is still safe for those users. Each launcher version pins its own root and
+   - The owner confirmed on 2026-11-20 that `@seams/wallet-cli` has no users yet. Its 1,843
+     npm downloads from 2026-10-20 to 2026-11-18, and the 14 to 33 downloads of each GitHub
+     release, are not outside users.
+   - A new root would be safe for later users too. Each launcher version pins its own root and
      downloads only the binary of its own version
      (`seams-wallet/packages/seams-cli/bin/seams-wallet.mjs`, lines 47 to 65). An old
      launcher keeps working with its old release; a new launcher ships the new root.
