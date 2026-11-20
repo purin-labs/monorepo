@@ -57,7 +57,31 @@ Record both IDs before execution and require the destination ID for every destin
 Changing a login email or inviting another administrator does not accomplish this resource migration.
 The source login is `n6378056@gmail.com` (checked with `wrangler whoami` on 2026-11-20).
 
-## Resource inventory
+## Execution checklist
+
+Owner steps need the owner's accounts, money or credentials. Claude does the other steps.
+
+1. Done (`d4562c0b`): the backend workflows run `account-bootstrap` before the role
+   Workers, accept `prepare_only`, and a Pages deploy creates a missing project.
+2. Owner: buy Workers Paid on `seamsadmin@gmail.com` and enable multi-factor
+   authentication.
+3. Owner: invite `n6378056@gmail.com` as an Administrator of the `seamsadmin` account. The
+   `wrangler` login on the deployment Mac then reaches both accounts.
+4. Claude: create the destination D1 databases and R2 buckets with their location hints,
+   check the private D1 primaries in `SIN`, and record the IDs in both target files.
+5. Owner: create a `seamsadmin` API token with Workers Scripts, Workers Routes, D1, R2,
+   Pages, Zone Read and DNS Edit permissions. Put it with the `seamsadmin` account ID in the
+   protected values files under `~/.seams` for each lane.
+6. Claude: apply the values to the lane's GitHub environments with the existing
+   `wallet-system:deploy:env-update` and `console:deploy:env-update` commands, then generate
+   fresh keys with `wallet-system:deploy:env-prepare --rotate` and `console:deploy:env-prepare`.
+7. Claude: run each backend workflow with `prepare_only` and fix what an empty account shows.
+8. Owner: move `seams.sh` to `seamsadmin` through the Cloudflare Registrar inter-account
+   transfer. This starts the maintenance window for all lanes.
+9. Claude: deploy each lane with public routes and the new host names, create the fresh
+   Console organisation, project and environment, record their IDs, activate, deploy the
+   frontends and verify.
+10. Owner: confirm the retire list. Claude: remove the source Seams resources.
 
 ### Backend resources
 
