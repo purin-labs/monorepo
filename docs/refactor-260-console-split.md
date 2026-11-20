@@ -8,7 +8,7 @@ repository. "Progress" lists what is done and what each remaining step waits for
 
 Done on 2026-11-20:
 
-- The owner decisions under "Decision", and open questions 1 and 2.
+- The owner decisions under "Decision", and open questions 1 to 6.
 - `seams-tech/seams-console` holds `dev` at `83023b1e` and `main` at `079aebc1`, with the
   same commit IDs as this repository. It is behind, because this repository moved on after
   the push. Step 6 brings it level.
@@ -17,18 +17,17 @@ Done on 2026-11-20:
 
 Remaining:
 
-| Step (see "Order")                   | Owner                     | Waits for                                     |
-| ------------------------------------ | ------------------------- | --------------------------------------------- |
-| 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                   |
-| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                       |
-| 3. Pantry's own accounts             | A Pantry plan             | A plan in the Pantry repository               |
-| 4. Cut the couplings                 | This plan                 | Step 1                                        |
-| 5. Remove the Pantry service         | This plan                 | Step 3                                        |
-| 6. Move the deploys                  | This plan                 | Steps 1 and 4, seven secrets, open question 6 |
-| 7. New OIDC identity                 | This plan                 | Part of step 6                                |
-| 8. Delete the moved paths            | This plan                 | Production runs from `seams-console`          |
-| 9. Rename this repository            | This plan                 | Step 8                                        |
-| Open questions 3 to 6                | Owner                     | —                                             |
+| Step (see "Order")                   | Owner                     | Waits for                                      |
+| ------------------------------------ | ------------------------- | ---------------------------------------------- |
+| 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                    |
+| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                        |
+| 3. Pantry's own accounts             | A Pantry plan             | A plan in the Pantry repository                |
+| 4. Cut the couplings                 | This plan                 | Step 1                                         |
+| 5. Remove the Pantry service         | This plan                 | Step 3                                         |
+| 6. Move the deploys                  | This plan                 | Steps 1 and 4, six secrets, a new release root |
+| 7. New OIDC identity                 | This plan                 | Part of step 6                                 |
+| 8. Delete the moved paths            | This plan                 | Production runs from `seams-console`           |
+| 9. Rename this repository            | This plan                 | Step 8                                         |
 
 ## Decision
 
@@ -111,14 +110,14 @@ Each fact below was read from the code on `dev` at `66e51b4c`, and from Pantry `
 
 ### Hosts
 
-| Surface                  | Now, after Refactor 200          | End state                               |
-| ------------------------ | -------------------------------- | --------------------------------------- |
-| Wallet site              | `seams.sh`                       | `seams.sh`                              |
-| Console frontend         | `console.seams.sh`               | `console.seams.sh`                      |
-| Console API              | `seams.sh/console/*`             | `console.seams.sh/console/*` (proposal) |
-| Platform Console         | `account.seams.sh` (temporary)   | none                                    |
-| `/account-platform/v1/*` | route on `seams.sh`, answers 404 | none                                    |
-| Testnet Console backend  | `test.console.seams.sh`          | open question 4                         |
+| Surface                  | Now, after Refactor 200          | End state                                 |
+| ------------------------ | -------------------------------- | ----------------------------------------- |
+| Wallet site              | `seams.sh`                       | `seams.sh`                                |
+| Console frontend         | `console.seams.sh`               | `console.seams.sh`                        |
+| Console API              | `seams.sh/console/*`             | `console.seams.sh/console/*` (question 3) |
+| Platform Console         | `account.seams.sh` (temporary)   | none                                      |
+| `/account-platform/v1/*` | route on `seams.sh`, answers 404 | none                                      |
+| Testnet Console backend  | `test.console.seams.sh`          | kept until the split ends (question 4)    |
 
 Moving the Console API to `console.seams.sh` changes these values, all rendered in
 `packages/wallet-console-server-ts/scripts/render-d1-gateway-config.mjs`:
@@ -199,7 +198,11 @@ account data moves.
       mirror stops with this commit.
    4. Create its GitHub environments (see "Repository mechanics"). Deploy staging from it,
       then production.
-   5. Make the new checkout beside `seams-wallet`, and copy the Seams agent memory to the
+   5. Issue a new CLI release root (open question 6). Put its private key into the
+      `release-signing` environment of `seams-console`, commit its public key to
+      `seams-wallet/crates/seams-cli/trust/release-root.json`, and sign the next CLI release
+      from `seams-console`.
+   6. Make the new checkout beside `seams-wallet`, and copy the Seams agent memory to the
       memory folder of that checkout path.
 7. **Change the GitHub OIDC identity.** `automationRoute.ts` accepts tokens only from
    `purin-labs/monorepo` (`DEPLOYMENT_REPOSITORY`, `DEPLOYMENT_SUBJECT_PREFIX`, and three
@@ -233,7 +236,8 @@ account data moves.
   (three production `ROUTER_AB_*_AUTH_SECRET` values, `SEAMS_GITHUB_OAUTH_CLIENT_SECRET`,
   two `SPEAK_TO_SIGN_*` keys): recover or reissue them first. A seventh,
   `SEAMS_RELEASE_SIGNING_KEY`, also exists only in GitHub
-  (`docs/recovery-trust-operations.md`); see open question 6. The recovery signing key has
+  (`docs/recovery-trust-operations.md`). It is not recovered: step 6 issues a new release
+  root (open question 6). The recovery signing key has
   a local copy (`~/.seams/recovery-signing-2026-10.env`).
 - **Workflows.** `release-seams-cli.yml` and `sign-recovery-trust.yml` use the protected
   `release-signing` and `recovery-signing` environments. `seams-wallet` names the
@@ -251,7 +255,7 @@ account data moves.
 - No more work on the Platform Console or the `account.*` hosts than the migration needs.
 - No rename of the `PANTRY_*` values, and no new Pantry meters.
 
-## Open questions
+## Open questions (all decided)
 
 1. Decided (owner, 2026-11-20): `seams-console` is public, like this repository. Both
    organisations are on GitHub Free, and the
@@ -263,23 +267,26 @@ account data moves.
    started. Do not make `seams-console` private again without GitHub Team and working
    `seams-tech` Actions billing.
 2. Decided: the Wallet site moves with the Console (`apps/wallet-console` builds both).
-3. **Console API host.** Recommendation: `console.seams.sh/console/*`, with the RP ID kept
-   at `seams.sh`.
-4. **Testnet Console.** `test.console.seams.sh` is a separate Console Worker and database
-   for the production testnet lane. Recommendation: keep it until the split is done, then
-   decide whether one Console serves both networks.
-5. **Pantry's interim authority.** Recommendation: Pantry keeps the old Console Workers in
-   the old Cloudflare account until its own accounts exist (order step 2). The alternative
-   is to build Pantry's accounts before the Refactor 200 cutover, which delays the cutover.
-6. **CLI release signing key.** `SEAMS_RELEASE_SIGNING_KEY` exists only in the
-   `release-signing` environment here. The `seams` binary compiles in one release root
+3. Decided (owner, 2026-11-20): the Console API moves to `console.seams.sh/console/*` in
+   step 5. The step-up RP ID stays `seams.sh`, so the step-up passkeys stay valid.
+4. Decided (owner, 2026-11-20): keep `test.console.seams.sh`, the separate Console Worker
+   and database of the production testnet lane, until the split ends. Then decide whether
+   one Console serves both networks.
+5. Decided (owner, 2026-11-20): Pantry keeps the old Console Workers in the old Cloudflare
+   account until its own accounts exist (order step 2). The Refactor 200 cutover does not
+   wait for Pantry.
+6. Decided (owner, 2026-11-20): a new CLI release root with no bridge, issued in step 6.
+   `SEAMS_RELEASE_SIGNING_KEY` exists only in the `release-signing` environment here, and
+   the `seams` binary compiles in one release root
    (`seams-wallet/crates/seams-cli/trust/release-root.json`, format
-   `seams_release_root_v1`, one key). So `seams-console` cannot sign a release that the
-   installed binaries trust. The choices:
-   - (a) A new release root in a new `seams` binary, with no bridge. The recovery root
-     changed this way on 2026-10-23. Installed binaries must be installed again.
-   - (b) A `seams-wallet` change that trusts two release roots, released once with the old
-     key before the move.
-   - (c) Keep `release-seams-cli.yml` and `release-signing` in this repository.
-
-   Recommendation: (a) if no outside user runs the CLI yet, else (b).
+   `seams_release_root_v1`, one key). So `seams-console` cannot sign with the current root.
+   - Outside use is possible: `@seams/wallet-cli` had 1,843 npm downloads from 2026-10-20 to
+     2026-11-18, and the GitHub release assets 14 to 33 each.
+   - A new root is still safe for those users. Each launcher version pins its own root and
+     downloads only the binary of its own version
+     (`seams-wallet/packages/seams-cli/bin/seams-wallet.mjs`, lines 47 to 65). An old
+     launcher keeps working with its old release; a new launcher ships the new root.
+   - Only `seams release-verify` in an old binary rejects a release that the new root
+     signs.
+   - Rejected: a `seams-wallet` change that trusts two roots, and keeping
+     `release-seams-cli.yml` in this repository.
