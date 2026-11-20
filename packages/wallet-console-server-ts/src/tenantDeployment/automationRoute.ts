@@ -15,9 +15,10 @@ const GITHUB_OIDC_ISSUER = 'https://token.actions.githubusercontent.com';
 const GITHUB_OIDC_JWKS = `${GITHUB_OIDC_ISSUER}/.well-known/jwks`;
 const EXPECTED_AUDIENCE = 'seams-tenant-cutover';
 /* The deployment workflows run in this repository. Its OIDC subject uses
-   immutable ids: owner purin-labs (358632792) and repository 1366871528. */
-const DEPLOYMENT_REPOSITORY = 'purin-labs/monorepo';
-const DEPLOYMENT_SUBJECT_PREFIX = 'repo:purin-labs@358632792/monorepo@1366871528';
+   immutable ids: owner seams-tech (282445520) and repository 1366871528. The
+   repository moved from purin-labs/monorepo on 2026-11-21 and kept its id. */
+const DEPLOYMENT_REPOSITORY = 'seams-tech/seams-console';
+const DEPLOYMENT_SUBJECT_PREFIX = 'repo:seams-tech@282445520/seams-console@1366871528';
 
 function deploymentAutomationScope(deploymentLane: string) {
   switch (deploymentLane) {
