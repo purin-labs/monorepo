@@ -2,7 +2,8 @@
 
 Create fresh Seams Wallet infrastructure in the Cloudflare account owned by
 `seamsadmin@gmail.com`. Create the Purin infrastructure in the account owned by
-`purinindustries@gmail.com`. Move traffic from the account identified as `n63878056@gmail.com`.
+`purinindustries@gmail.com`. Move traffic from the source account `N6378056@gmail.com's Account`
+(`ba924da36f2ffc3839e8d323000b66b4`).
 Remove the source resources after verification to isolate future Cloudflare billing.
 
 Existing wallets, organisations, projects, sessions, signing material, and application records
@@ -49,7 +50,7 @@ Record residual charges from earlier usage separately from new usage.
 Cloudflare account ownership uses account IDs.
 Record both IDs before execution and require the destination ID for every destination command.
 Changing a login email or inviting another administrator does not accomplish this resource migration.
-Check the source email against the account ID because Console support addresses use a different spelling, `n6378056@gmail.com`.
+The source login is `n6378056@gmail.com` (checked with `wrangler whoami` on 2026-11-20).
 
 ## Resource inventory
 
