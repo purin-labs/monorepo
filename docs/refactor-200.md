@@ -164,6 +164,7 @@ Done after the cutover (2026-11-20):
 - `site:deploy:env-update` writes to the environment named after the site.
 - The obsolete `regional-deployment-config` test is deleted.
 - Pantry CI names `purin-labs/monorepo` (Pantry commit, local on its `main`).
+- Mainnet keeps the `:dev` environment (owner decision, 2026-11-20).
 
 Open:
 
@@ -183,7 +184,6 @@ Open:
 - The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
   `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
   the owner decides.
-- Mainnet environment: keep `:dev`, or enable Production.
 - Purin account move: `purin.io` can move from 2026-11-27. The Purin account needs the
   Workers Paid plan and an API token first.
 
