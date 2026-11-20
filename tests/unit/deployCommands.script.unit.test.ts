@@ -996,9 +996,13 @@ test('Wallet-system and Console workflows use separate deployment authority', ()
     }
     expect(needsOf('build')).toEqual([]);
     expect(needsOf('migrate')).toEqual(['build']);
-    expect(needsOf('deploy_signing_worker')).toEqual(['migrate']);
-    expect(needsOf('deploy_deriver_a')).toEqual(['migrate']);
-    expect(needsOf('deploy_deriver_b')).toEqual(['migrate']);
+    expect(needsOf('bootstrap_account')).toEqual(['migrate']);
+    expect(workflowSource).toContain(
+      'deploy:backend deploy --lane "$DEPLOY_LANE" --component account-bootstrap',
+    );
+    expect(needsOf('deploy_signing_worker')).toEqual(['migrate', 'bootstrap_account']);
+    expect(needsOf('deploy_deriver_a')).toEqual(['migrate', 'bootstrap_account']);
+    expect(needsOf('deploy_deriver_b')).toEqual(['migrate', 'bootstrap_account']);
     expect(needsOf('deploy_tenant_root_control_plane')).toEqual([
       'deploy_signing_worker',
       'deploy_deriver_a',

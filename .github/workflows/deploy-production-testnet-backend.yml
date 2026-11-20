@@ -2,6 +2,12 @@ name: Deploy / production-testnet / backend
 
 on:
   workflow_call:
+    inputs:
+      prepare_only:
+        description: Deploy every Worker without public routes, cron triggers, activation or frontends (a new Cloudflare account before its zone moves)
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -15,6 +21,7 @@ env:
   BACKEND_BUILD_ARTIFACT_NAME: backend-build-production-testnet-${{ github.run_id }}-${{ github.run_attempt }}
   DEPLOY_LANE: production-testnet
   DEPLOY_SHA: ${{ github.sha }}
+  SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC: ${{ inputs.prepare_only && 'true' || 'false' }}
 
 jobs:
   build:
@@ -95,9 +102,55 @@ jobs:
       - name: Apply D1 migrations
         run: pnpm deploy:backend migrate --lane "$DEPLOY_LANE" --component wallet-system
 
+  bootstrap_account:
+    name: Deploy / production-testnet / account bootstrap
+    needs: migrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: production-testnet-mpc-router
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ROUTER_AB_INTERNAL_SERVICE_AUTH_SECRET: ${{ secrets.ROUTER_AB_INTERNAL_SERVICE_AUTH_SECRET }}
+      ROUTER_AB_ROUTER_TO_SIGNING_WORKER_ECDSA_AUTH_SECRET: ${{ secrets.ROUTER_AB_ROUTER_TO_SIGNING_WORKER_ECDSA_AUTH_SECRET }}
+      ROUTER_AB_GATEWAY_TO_ROUTER_AUTH_SECRET: ${{ secrets.ROUTER_AB_GATEWAY_TO_ROUTER_AUTH_SECRET }}
+      ROUTER_AB_JWT_ISSUER: ${{ vars.ROUTER_AB_JWT_ISSUER }}
+      ROUTER_AB_JWT_AUDIENCE: ${{ vars.ROUTER_AB_JWT_AUDIENCE }}
+      ROUTER_AB_JWT_JWKS_JSON: ${{ vars.ROUTER_AB_JWT_JWKS_JSON }}
+      DERIVER_A_ENVELOPE_HPKE_PUBLIC_KEY: ${{ vars.ROUTER_AB_DERIVER_A_ENVELOPE_HPKE_PUBLIC_KEY }}
+      DERIVER_B_ENVELOPE_HPKE_PUBLIC_KEY: ${{ vars.ROUTER_AB_DERIVER_B_ENVELOPE_HPKE_PUBLIC_KEY }}
+      SIGNING_WORKER_SERVER_OUTPUT_HPKE_PUBLIC_KEY: ${{ vars.ROUTER_AB_SIGNING_WORKER_SERVER_OUTPUT_HPKE_PUBLIC_KEY }}
+      TENANT_ROOT_CONTROL_PLANE_ISSUER_VERIFYING_KEYS_JSON: ${{ vars.ROUTER_AB_TENANT_ROOT_CONTROL_PLANE_ISSUER_VERIFYING_KEYS_JSON }}
+      TENANT_ROOT_CONTROL_PLANE_GRANT_AUTHORITY_VERIFYING_KEYS_JSON: ${{ vars.ROUTER_AB_TENANT_ROOT_CONTROL_PLANE_GRANT_AUTHORITY_VERIFYING_KEYS_JSON }}
+      ROUTER_TENANT_ROOT_CREATION_ROLE_VERIFYING_KEYS_JSON: ${{ vars.ROUTER_AB_TENANT_ROOT_CREATION_ROLE_VERIFYING_KEYS_JSON }}
+    steps:
+      - name: Checkout workflow revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Install deployment dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download backend build
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.BACKEND_BUILD_ARTIFACT_NAME }}
+          path: .release-artifacts
+      - name: Check Router build entry
+        run: test -s .release-artifacts/router-ab-runtime/build/router/worker/shim.mjs
+      - name: Reserve absent Workers and deploy the first Router
+        run: pnpm deploy:backend deploy --lane "$DEPLOY_LANE" --component account-bootstrap
+
   deploy_signing_worker:
     name: Deploy / production-testnet / signing-worker
-    needs: migrate
+    needs: [migrate, bootstrap_account]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
@@ -142,7 +195,7 @@ jobs:
 
   deploy_deriver_a:
     name: Deploy / production-testnet / deriver-a
-    needs: migrate
+    needs: [migrate, bootstrap_account]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
@@ -196,7 +249,7 @@ jobs:
 
   deploy_deriver_b:
     name: Deploy / production-testnet / deriver-b
-    needs: migrate
+    needs: [migrate, bootstrap_account]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
@@ -435,6 +488,7 @@ jobs:
     needs:
       - build
       - migrate
+      - bootstrap_account
       - deploy_signing_worker
       - deploy_deriver_a
       - deploy_deriver_b

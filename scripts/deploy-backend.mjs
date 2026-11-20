@@ -27,6 +27,14 @@ import {
   GATEWAY_WORKER_COMPATIBILITY_DATE,
   GATEWAY_WORKER_COMPATIBILITY_FLAGS,
 } from '../packages/wallet-console-server-ts/scripts/gateway-deployment-config.mjs';
+import {
+  consoleWorkerNameFor,
+  walletRuntimeWorkerNameFor,
+} from '../packages/wallet-console-server-ts/scripts/render-d1-gateway-config.mjs';
+
+// A deploy step that is not a component: it prepares an empty Cloudflare account.
+const ACCOUNT_BOOTSTRAP = 'account-bootstrap';
+const ROUTER_CREATION_DO_CLASS = 'RouterAbTenantRootCreationDurableObject';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..');
@@ -221,7 +229,8 @@ function parseArguments(args) {
     throw new Error('--lane is required (usage: deploy-backend.mjs <operation> --lane <lane>)');
   if (['preflight', 'deploy'].includes(operation)) {
     if (!options.component) throw new Error('--component is required');
-    if (!BACKEND_COMPONENTS.includes(options.component)) {
+    const deployStep = operation === 'deploy' && options.component === ACCOUNT_BOOTSTRAP;
+    if (!deployStep && !BACKEND_COMPONENTS.includes(options.component)) {
       throw new Error(`unknown component: ${options.component}`);
     }
   } else if (['plan', 'build', 'migrate', 'smoke'].includes(operation)) {
@@ -980,9 +989,14 @@ async function deployBackend(lane, component) {
   if (component !== 'console') {
     assertWalletServerSecurityPolicy();
   }
-  preflightBackend(lane, component);
-  validateDeploymentKeyPairs(lane, component);
+  // The account bootstrap deploys the Router, so it passes the Router's checks.
+  const checkedComponent = component === ACCOUNT_BOOTSTRAP ? 'router' : component;
+  preflightBackend(lane, checkedComponent);
+  validateDeploymentKeyPairs(lane, checkedComponent);
   switch (component) {
+    case ACCOUNT_BOOTSTRAP:
+      await bootstrapAccount(lane);
+      return;
     case 'signing-worker':
       deploySigningWorker(lane);
       return;
@@ -1551,25 +1565,56 @@ function deployRegionalWalletRuntime(lane, region) {
 
 async function deployGateway(lane) {
   const resources = requireAllocatedWalletRegions(requireProvisionedLane(lane));
-  await bootstrapRegionalGateways(resources);
+  // Every regional Gateway binds all four regional Gateways.
+  await reserveWorkerNames(WALLET_REGIONS.map((region) => resources[region].workerName));
   for (const region of WALLET_REGIONS) deployRegionalGateway(lane, region);
 }
 
-// Every regional Gateway binds all four regional Gateways, and Cloudflare
-// requires a service binding's target to exist before the caller deploys. A
-// lane's first regional deployment therefore installs an inert Worker under
-// each missing regional name; the deployment loop replaces each of them.
-async function bootstrapRegionalGateways(resources) {
-  const accountId = requireEnvironmentValue('CLOUDFLARE_ACCOUNT_ID');
-  const apiToken = requireEnvironmentValue('CLOUDFLARE_API_TOKEN');
-  for (const region of WALLET_REGIONS) {
-    const workerName = resources[region].workerName;
-    if (await workerScriptExists(accountId, apiToken, workerName)) continue;
+/* An empty Cloudflare account has none of the lane's Workers. Cloudflare requires
+   the target of a service binding to exist before its caller deploys, and the
+   service graph has cycles (Router and the roles, Deriver A and Deriver B, Console
+   and the regional Gateways and Runtimes). Deriver A, Deriver B and the control
+   plane also bind the Router's Durable Object class. This step reserves each
+   absent name with an inert Worker, then deploys the real Router when it does not
+   own its classes yet. In an account that already runs the lane it changes
+   nothing, so the usual deploy order stays the same. */
+async function bootstrapAccount(lane) {
+  const deployment = requireAllocatedWalletRegions(requireProvisionedLane(lane));
+  const gateways = WALLET_REGIONS.map((region) => deployment[region].workerName);
+  await reserveWorkerNames([
+    lane.resources.signingWorker.workerName,
+    lane.resources.deriverA.workerName,
+    lane.resources.deriverB.workerName,
+    lane.resources.tenantRootControlPlane.workerName,
+    consoleWorkerNameFor(lane.resources.gateway.workerName),
+    ...gateways.map(walletRuntimeWorkerNameFor),
+    ...gateways,
+  ]);
+  const routerName = lane.resources.router.workerName;
+  const router = await readWorkerSettings(routerName);
+  const ownsClasses = router?.bindings?.some(
+    (binding) =>
+      binding.type === 'durable_object_namespace' &&
+      binding.class_name === ROUTER_CREATION_DO_CLASS &&
+      (!binding.script_name || binding.script_name === routerName),
+  );
+  if (ownsClasses) {
+    process.stdout.write(`Account bootstrap: ${lane.id} already has its Router\n`);
+    return;
+  }
+  deployMpcRouter(lane);
+}
+
+async function reserveWorkerNames(workerNames) {
+  for (const workerName of workerNames) {
+    if (await readWorkerSettings(workerName)) continue;
     deployInertWorker(workerName);
   }
 }
 
-async function workerScriptExists(accountId, apiToken, workerName) {
+async function readWorkerSettings(workerName) {
+  const accountId = requireEnvironmentValue('CLOUDFLARE_ACCOUNT_ID');
+  const apiToken = requireEnvironmentValue('CLOUDFLARE_API_TOKEN');
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${encodeURIComponent(workerName)}/settings`,
     {
@@ -1578,11 +1623,11 @@ async function workerScriptExists(accountId, apiToken, workerName) {
       signal: AbortSignal.timeout(30_000),
     },
   );
-  if (response.status === 404) return false;
+  if (response.status === 404) return null;
   if (!response.ok) {
     throw new Error(`Cloudflare read of ${workerName} failed with HTTP ${response.status}`);
   }
-  return true;
+  return (await response.json()).result ?? {};
 }
 
 function deployInertWorker(workerName) {
@@ -1606,7 +1651,7 @@ function deployInertWorker(workerName) {
     process.stdout.write(`Installing an inert bootstrap Worker as ${workerName}\n`);
     runCommand(
       'pnpm',
-      ['exec', 'wrangler', 'deploy', '--config', config, '--message', 'regional bootstrap'],
+      ['exec', 'wrangler', 'deploy', '--config', config, '--message', 'account bootstrap'],
       { cwd: GATEWAY_ROOT },
     );
   } finally {

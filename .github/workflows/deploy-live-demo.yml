@@ -3,6 +3,12 @@ run-name: deploy / production-testnet / full stack / ${{ github.sha }}
 
 on:
   workflow_dispatch:
+    inputs:
+      prepare_only:
+        description: Deploy every Worker without public routes, cron triggers, activation or frontends (a new Cloudflare account before its zone moves)
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -66,17 +72,21 @@ jobs:
     uses: ./.github/workflows/deploy-console-backend.yml
     with:
       lane: production-testnet
+      prepare_only: ${{ inputs.prepare_only }}
     secrets: inherit
 
   deploy_wallet_system:
     name: Deploy live-demo runtime surfaces
     needs: authorize
     uses: ./.github/workflows/deploy-production-testnet-backend.yml
+    with:
+      prepare_only: ${{ inputs.prepare_only }}
     secrets: inherit
 
   cutover:
     name: Activate live-demo tenant binding
     needs: [validate, deploy_console, deploy_wallet_system]
+    if: ${{ !inputs.prepare_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -112,6 +122,7 @@ jobs:
   deploy_frontend:
     name: Deploy / production-testnet / frontend
     needs: cutover
+    if: ${{ !inputs.prepare_only }}
     uses: ./.github/workflows/deploy-production-frontend.yml
     with:
       lane: production-testnet

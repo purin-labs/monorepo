@@ -148,7 +148,7 @@ async function runConsoleOperation(operation, site, component) {
       process.env,
     );
     assertDirectory(output, 'Console output');
-    deployPagesProject(output, site, process.env[projectEnv]);
+    await deployPagesProject(output, site, process.env[projectEnv]);
     await ensurePagesCustomDomain(origin, process.env[projectEnv]);
     return;
   }
@@ -530,13 +530,13 @@ async function deployFrontend(site, component, walletLanes) {
   if (component === 'company') {
     requireEnvironmentValues([site.pagesProjectEnv], process.env);
     assertDirectory(COMPANY_OUTPUT, 'Company Pages output');
-    deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
+    await deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
     await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
   } else if (component === 'wallet-docs') {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
     const project = process.env[site.docsPagesProjectEnv];
-    deployPagesProject(WALLET_DOCS_OUTPUT, site, project);
+    await deployPagesProject(WALLET_DOCS_OUTPUT, site, project);
     if (site.id === 'production') await ensurePagesCustomDomain(site.docsOrigin, project);
   } else if (component === 'wallet-site') {
     const consoles = readConsoleFrontendSite(site.id);
@@ -545,7 +545,7 @@ async function deployFrontend(site, component, walletLanes) {
     requireEnvironmentValues([site.walletSitePagesProjectEnv], process.env);
     assertDirectory(WALLET_SITE_OUTPUT, 'Wallet site Pages output');
     const project = process.env[site.walletSitePagesProjectEnv];
-    deployPagesProject(WALLET_SITE_OUTPUT, site, project);
+    await deployPagesProject(WALLET_SITE_OUTPUT, site, project);
     // The Wallet site can take a host that the company site served before.
     await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
       process.env[site.pagesProjectEnv],
@@ -557,13 +557,14 @@ async function deployFrontend(site, component, walletLanes) {
     for (const lane of walletLanes) {
       const output = walletHostOutput(lane);
       assertDirectory(output, 'Hosted wallet Pages output');
-      deployPagesProject(output, site, process.env[lane.walletPagesProjectEnv]);
+      await deployPagesProject(output, site, process.env[lane.walletPagesProjectEnv]);
     }
   }
   process.stdout.write(`Frontend deploy completed: ${site.id}/${component}\n`);
 }
 
-function deployPagesProject(outputDirectory, site, projectName) {
+async function deployPagesProject(outputDirectory, site, projectName) {
+  await ensurePagesProject(projectName, site.branch);
   const args = [
     'exec',
     'wrangler',
@@ -579,6 +580,28 @@ function deployPagesProject(outputDirectory, site, projectName) {
   const sourceSha = String(process.env.DEPLOY_SHA || '').trim();
   if (sourceSha) args.push('--commit-hash', sourceSha);
   runCommand('pnpm', args);
+}
+
+/* A new Cloudflare account has no Pages projects. The site's branch is the
+   production branch, so a deploy from it serves the custom domains. */
+async function ensurePagesProject(projectName, productionBranch) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
+  const existing = await requestCloudflareApi(
+    `${projectsPath}/${encodeURIComponent(projectName)}`,
+    apiToken,
+    'GET',
+    [200, 404],
+  );
+  if (existing.status === 200) return;
+  await requestCloudflareApi(projectsPath, apiToken, 'POST', [200], {
+    name: projectName,
+    production_branch: productionBranch,
+  });
+  process.stdout.write(
+    `Created Pages project ${projectName} (production branch ${productionBranch})\n`,
+  );
 }
 
 /* Binds the host to the Pages project. `releaseFrom` names the other projects that may

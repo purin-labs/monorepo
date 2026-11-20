@@ -146,6 +146,13 @@ function writePrivateJson(relativePath, value) {
   fs.writeFileSync(outputPath, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
 }
 
+/* Before the seams.sh zone moves to a new Cloudflare account, a deploy there must
+   not attach public routes, custom domains or cron triggers (Refactor 200,
+   Phase 4). The workflows set this for a prepare-only run. */
+function withoutPublicTraffic() {
+  return process.env.SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC === 'true';
+}
+
 export function consoleWorkerNameFor(gatewayWorkerName) {
   if (!gatewayWorkerName.includes('gateway')) {
     throw new Error(`cannot derive console worker name from ${gatewayWorkerName}`);
@@ -268,12 +275,14 @@ function buildConsoleConfig(
     compatibility_date: GATEWAY_WORKER_COMPATIBILITY_DATE,
     compatibility_flags: [...GATEWAY_WORKER_COMPATIBILITY_FLAGS, 'global_fetch_strictly_public'],
     workers_dev: false,
-    routes: buildConsoleRoutes(
-      consoleOrigin,
-      walletSiteOrigin,
-      [...frontendOrigins, ...formerFrontendOrigins],
-      formerWalletSiteOrigins,
-    ),
+    routes: withoutPublicTraffic()
+      ? []
+      : buildConsoleRoutes(
+          consoleOrigin,
+          walletSiteOrigin,
+          [...frontendOrigins, ...formerFrontendOrigins],
+          formerWalletSiteOrigins,
+        ),
     d1_databases: [
       {
         binding: 'CONSOLE_DB',
@@ -292,7 +301,7 @@ function buildConsoleConfig(
     ],
     triggers: {
       // Account-wide jobs stay with the original account authority.
-      crons: customerReplica ? [] : ['* * * * *', '0 3 * * *'],
+      crons: customerReplica || withoutPublicTraffic() ? [] : ['* * * * *', '0 3 * * *'],
     },
     observability: {
       enabled: true,
@@ -419,7 +428,7 @@ function buildConfig(
     placement: { region: resources.placementRegion },
     workers_dev: false,
     routes:
-      region === deployment.resources.ingressRegion
+      region === deployment.resources.ingressRegion && !withoutPublicTraffic()
         ? [deployment.origins.gateway, ...(deployment.origins.formerGateways ?? [])].map(
             (origin) => ({ pattern: new URL(origin).hostname, custom_domain: true }),
           )
@@ -439,7 +448,7 @@ function buildConfig(
       { binding: 'WALLET_CONSOLE', service: consoleWorkerNameFor(deployment.resources.workerName) },
     ],
     triggers: {
-      crons: ['* * * * *'],
+      crons: withoutPublicTraffic() ? [] : ['* * * * *'],
     },
     observability: {
       enabled: true,
