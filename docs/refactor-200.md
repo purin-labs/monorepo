@@ -110,6 +110,11 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    from the source account. Deploy every lane only with `prepare_only` until the zone moves.
    Do not run the D1 migrations by hand while a deploy runs: the first mainnet run failed
    because a local migration run was in the same database.
+   The frontends are uploaded too: the frontend workflows with `prepare_only` put the Wallet
+   site, both Consoles, the docs and the wallet hosts into the `seamsadmin` Pages projects
+   ([staging](https://github.com/purin-labs/monorepo/actions/runs/44693012202),
+   [production](https://github.com/purin-labs/monorepo/actions/runs/44693372436)). Each
+   answers 200 on its `pages.dev` address. The company site is not part of these runs.
 8. Owner: add `seams.sh` to `seamsadmin` as a site with a plan (it stays pending). Claude:
    load its DNS records from the inventory into the pending zone. Owner: start the Registrar
    move in the source account (Manage Domain → Configuration → Start) and accept it in

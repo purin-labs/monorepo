@@ -719,10 +719,10 @@ function deployHostRedirects(site) {
     main: HOST_REDIRECTS_WORKER,
     compatibility_date: HOST_REDIRECTS_COMPATIBILITY_DATE,
     workers_dev: false,
-    routes: hosts.map(([host]) => ({
-      pattern: `${host}/*`,
-      zone_name: host.split('.').slice(-2).join('.'),
-    })),
+    // A custom domain brings its own certificate. A plain route on a host with two
+    // or more labels under the zone has none, because the zone certificate covers
+    // one label only. The Console API routes on these hosts stay more specific.
+    routes: hosts.map(([host]) => ({ pattern: host, custom_domain: true })),
     vars: { HOST_REDIRECTS_JSON: JSON.stringify(Object.fromEntries(hosts)) },
   };
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);

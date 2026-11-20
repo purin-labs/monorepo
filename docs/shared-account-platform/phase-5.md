@@ -75,7 +75,8 @@ The native two-service journeys remain separate evidence from the live staging c
 
 Evidence is retained in `.artifacts/shared-account-platform/phase-5-staging-*.json` and matching logs.
 The deployed services screenshot is `output/playwright/shared-account-services/staging-services.png`.
-Private snapshots, recovery metadata, and the original Worker modules remain in the protected backup directory.
+Private snapshots, recovery metadata, and the original Worker modules were kept in the protected backup directory.
+The owner removed that directory on 2026-11-20, because the captured wallets and Console records are discarded test data.
 
 The post-cutover performance investigation found 16 serial schema-initialisation calls during request handler construction.
 Commit `32e8bc47` makes billing respect the existing `ensureSchema: false` setting.
@@ -161,7 +162,7 @@ Use Wrangler's existing `d1_migrations` boundary.
 A matching retry reads the receipt and verifies the resulting schema.
 Do not replay raw `ALTER TABLE` statements after an uncertain acknowledgement.
 
-Private SQL captures and local database files remain outside the repository under the existing backup directory.
+Private SQL captures and local database files stayed outside the repository, and were removed on 2026-11-20.
 The public evidence contains counts and digests, with no credentials or private source content.
 
 ## Validation
@@ -171,13 +172,11 @@ pnpm check
 pnpm -C tests type-check:console
 pnpm -C apps/wallet-console build
 pnpm -C tests exec playwright test -c playwright.config.ts 'e2e/console/shared-account-.*\.e2e\.test\.ts' e2e/console/shared-wallet-settlement.e2e.test.ts --reporter=line
-SHARED_ACCOUNT_MIGRATION_SNAPSHOTS=/absolute/private/snapshot-directory pnpm -C tests exec playwright test -c playwright.config.ts e2e/console/shared-account-live-restore.migration.test.ts --reporter=line
 ```
 
-The snapshot directory supplies `seams-staging.sqlite`, `seams-production.sqlite`,
-`seams-testnet.sqlite`, `satyr-control.sqlite`, and `satyr-apac.sqlite` from the reviewed capture.
-The test creates isolated migrated and restored copies beside those protected files.
-It never opens a remote database for writes.
+The live snapshot rehearsal ran `e2e/console/shared-account-live-restore.migration.test.ts` against the five captured database files.
+It made isolated migrated and restored copies and never opened a remote database for writes.
+That test and the captured files were removed on 2026-11-20; the evidence files below keep its result.
 
 The browser journey uses the production Console UI, real account router, D1 services, and Wallet provisioner.
 Its fixture supplies an owner session and a deliberate lost reply after durable acceptance.
@@ -250,6 +249,6 @@ Current production cutover evidence remains absent until these steps run against
 The read-only production preflight authenticated the existing native owner and administration credential.
 All six registered sessions report sleeping state, no pending work, and ready quiescence.
 This observation does not freeze admission. Repeat it within the actual cohort pause.
-Separate signing key pairs and service bearers are prepared in the protected backup directory.
+Separate signing key pairs and service bearers were prepared in the protected backup directory, which was removed on 2026-11-20.
 Their public fingerprints and origin checks are in `phase-5-connection-preflight.json`.
 No production secret changed during this preparation.
