@@ -178,8 +178,8 @@ Open:
 - Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
   projects and 3 containers are deleted in the source account. The record is the private file
   `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. The idle watchbook
-  tunnel is deleted too. Left: the `watchbook-analytics` bucket; an expiry rule empties it,
-  then delete the bucket. The old `seams.sh` zone (status Moved) stays: it holds a route and
+  tunnel is deleted too. The `watchbook-analytics` bucket is deleted too (2026-11-21, after its
+  expiry rule emptied it), so 12 R2 buckets are gone and 7 stay. The old `seams.sh` zone (status Moved) stays: it holds a route and
   a custom domain of the kept Console and Gateway, and Cloudflare removes a moved zone itself.
 - Phase 7, Wave 2 waits for Pantry: `seams-sdk-d1-console`, its database, the mainnet
   Gateways and Wallet Runtimes it binds, and the mainnet Router roles, private databases and
