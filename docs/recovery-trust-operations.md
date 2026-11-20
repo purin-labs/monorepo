@@ -55,8 +55,8 @@ and lane-specific certificates:
 | Production mainnet | `~/.seams/production-deployment.env` | `~/.seams/console/production-mainnet-deployment.env` | `production-tenant-root-control-plane`, `production-console` |
 
 The four deployment files also contain unrelated secrets. Parse only the needed
-values; do not execute or print an entire file. Their pre-rotation copies are in
-`~/.seams/backups/recovery-root-prelaunch-20261023/`.
+values; do not execute or print an entire file. The pre-rotation copies of these
+files were removed on 2026-11-20, because the prelaunch root is discarded.
 
 On 2026-10-23, two AES-256 ZIP backups were verified in `~/Documents`:
 
