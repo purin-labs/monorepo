@@ -173,8 +173,8 @@ Pantry must own what the Console gave it:
 Pantry signs users in itself already (Google OIDC in `control/oidc.ts`). Existing records
 are test data (Refactor 200), so no account data moves.
 
-Pantry Plan 95 (`docs/plan-95-pantry-own-accounts.md` in the Pantry repository, written
-on 2026-11-20 on the Pantry branch `plan-95-pantry-own-accounts`) is that work. It has six
+Pantry Plan 95 (`docs/plan-95-pantry-own-accounts.md` on Pantry `dev`, `ab69e3f`, written
+on 2026-11-20) is that work. It has six
 steps, and it needs no Console change before its step 5. On 2026-11-20 the owner took its
 five recommendations:
 
