@@ -18,19 +18,22 @@ Done on 2026-11-20:
 - Step 4, the code part (`480f7209`): the company site carries no Seams Wallet code. Its
   bundle has no `@seams/wallet`, `@seams/voice*`, `apps/wallet-console` or Console module.
   Each page has the same height, sections and text as `purin.io`.
+- Step 4, the deploy part: the company site deploys through its own workflow
+  `Deploy / company site`, script `scripts/deploy-company-site.mjs` and targets
+  `deployment/company-site/targets.json`. The Wallet frontend deploy has no company surface.
+  Not yet run in GitHub Actions.
 
 Remaining:
 
-| Step (see "Order")                   | Owner                 | Waits for                                      |
-| ------------------------------------ | --------------------- | ---------------------------------------------- |
-| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7 | Holds until step 3 ends                        |
-| 3. Pantry's own accounts             | Pantry Plan 95        | Plan 95 steps 1 to 4 (decisions taken)         |
-| 4. The company site deploy path      | This plan             | The owner's go-ahead; nothing else blocks it   |
-| 5. Remove the Pantry service         | This plan             | Step 3                                         |
-| 6. Move the deploys                  | This plan             | Steps 1 and 4, six secrets, a new release root |
-| 7. New OIDC identity                 | This plan             | Part of step 6                                 |
-| 8. Delete the moved paths            | This plan             | Production runs from `seams-console`           |
-| 9. Rename this repository            | This plan             | Step 8                                         |
+| Step (see "Order")                   | Owner                 | Waits for                              |
+| ------------------------------------ | --------------------- | -------------------------------------- |
+| 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7 | Holds until step 3 ends                |
+| 3. Pantry's own accounts             | Pantry Plan 95        | Plan 95 steps 1 to 4 (decisions taken) |
+| 5. Remove the Pantry service         | This plan             | Step 3                                 |
+| 6. Move the deploys                  | This plan             | Six secrets, a new release root        |
+| 7. New OIDC identity                 | This plan             | Part of step 6                         |
+| 8. Delete the moved paths            | This plan             | Production runs from `seams-console`   |
+| 9. Rename this repository            | This plan             | Step 8                                 |
 
 ## Decision
 
@@ -211,14 +214,19 @@ five recommendations:
 4. **Cut the couplings in this repository** (small changes on `dev`):
    - Done (`480f7209`): the company site imports no Wallet app file and no Seams Wallet
      package. The unused Wallet figures were deleted instead of copied.
-   - Give the company site its own target file and deploy script. Its build no longer needs
-     Wallet lane values; it reads only `VITE_SITE_ORIGIN`, `VITE_WALLET_SITE_ORIGIN` and
-     `VITE_DOCS_ORIGIN`. Build it on the existing company path: `withCompanyCloudflareAccount`
-     in `scripts/deploy-surface.mjs` deploys with the `COMPANY_CLOUDFLARE_ACCOUNT_ID` and
-     `COMPANY_CLOUDFLARE_API_TOKEN` secrets. Keep the new script free of account and zone
-     ids: only those two secrets and the Pages project name. Tell the Refactor 200 session
-     before a push that changes `scripts/deploy-surface.mjs`, because the Wallet lanes use it.
-   - This does not wait for the company site's move to the Purin Cloudflare account. The
+   - Done: the company site has its own targets (`deployment/company-site/targets.json`),
+     script (`scripts/deploy-company-site.mjs`, `pnpm deploy:company-site`) and workflow
+     (`deploy-company-site.yml`). The workflow passes the `COMPANY_CLOUDFLARE_*` secrets of
+     the `staging` and `production` environments as `CLOUDFLARE_API_TOKEN` and
+     `CLOUDFLARE_ACCOUNT_ID`; the script names no account or zone. Its build reads only
+     `VITE_SITE_ORIGIN`, `VITE_WALLET_SITE_ORIGIN` and `VITE_DOCS_ORIGIN`. The shared Pages
+     helpers moved to `scripts/pages-deploy.mjs`; at the split, each repository takes a
+     copy. `deploy-surface.mjs` lost its `company` surface, and the Wallet targets lost
+     `site.pagesProjectEnv`. The Wallet targets keep `site.origin`: the Wallet site links
+     and redirects `/company` to it.
+   - Step 8 keeps the `staging` and `production` environments here, with only the company
+     values: `COMPANY_CLOUDFLARE_*` and `CF_PAGES_PROJECT_VITE`.
+   - This did not wait for the company site's move to the Purin Cloudflare account. The
      owner ordered the Seams Wallet move first, then Purin; the Purin move has no owner yet.
      `purin.io` can change accounts from 2026-11-27, and the Purin account has no API token
      or Workers Paid plan yet. With the script in place, that move is: create the Pages
