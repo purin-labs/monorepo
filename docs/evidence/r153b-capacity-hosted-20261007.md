@@ -26,7 +26,7 @@ and completed that cleanup.
 Signer migration `0076` is applied to APAC, US, WEUR, and OC. Console migrations
 `0089` and `0090` are applied. Gateway and Console retain existing service bindings,
 regional placement, settings, and credential bindings. No environment variables were
-added. [Activation and readiness passed](https://github.com/seams-tech/seams-monorepo/actions/runs/37626903530).
+added. [Activation and readiness passed](https://github.com/purin-labs/monorepo/actions/runs/37626903530).
 All 13 recorded runtime versions stayed unchanged during the hosted test.
 
 Hosted D1 rejected one migration trigger's `CASE` expression. Equivalent conditional

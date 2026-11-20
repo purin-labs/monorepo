@@ -21,12 +21,12 @@ The Wallet iframe protocol remains `22.0.0`. The wallet-management protocol rema
 | --- | --- | --- |
 | Wallet clean build, types, billing admission, browser and lifecycle acceptance | Passed | [Wallet validation](https://github.com/seams-tech/seams-wallet/actions/runs/41213492500) |
 | Signed npm publication | Passed | [Package release](https://github.com/seams-tech/seams-wallet/actions/runs/41213492804) |
-| Private repository checks and billing acceptance | Passed | [Dev validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41218999990), [main validation](https://github.com/seams-tech/seams-monorepo/actions/runs/41219732547) |
-| Corrected staging backend, migrations, activation, readiness | Passed | [Backend jobs](https://github.com/seams-tech/seams-monorepo/actions/runs/41218770530) |
-| Final staging frontend | Passed | [Frontend deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41219458087) |
-| Production testnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41219732499) |
-| Production mainnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41219735235) |
-| GetSignal runtime and activation | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41219738023) |
+| Private repository checks and billing acceptance | Passed | [Dev validation](https://github.com/purin-labs/monorepo/actions/runs/41218999990), [main validation](https://github.com/purin-labs/monorepo/actions/runs/41219732547) |
+| Corrected staging backend, migrations, activation, readiness | Passed | [Backend jobs](https://github.com/purin-labs/monorepo/actions/runs/41218770530) |
+| Final staging frontend | Passed | [Frontend deployment](https://github.com/purin-labs/monorepo/actions/runs/41219458087) |
+| Production testnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41219732499) |
+| Production mainnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41219735235) |
+| GetSignal runtime and activation | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41219738023) |
 
 The corrected staging backend used `d6fc442a`. The final revision adds only the
 prepaid-warning UI correction. All backend jobs passed before the superseded

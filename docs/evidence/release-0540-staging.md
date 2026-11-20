@@ -14,9 +14,9 @@ Private `main` is still `5e4bb7c6` with the 0.53.0 pins.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Private validation on dev (`efebc003`) | Passed | [Validation](https://github.com/seams-tech/seams-monorepo/actions/runs/42463546782) |
-| Staging full stack (`efebc003`) | Backend, Console and activation passed; frontend failed 3 times | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/42464150380) |
-| Staging frontend, `component=all` (`de647fd0`) | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/42465925429) |
+| Private validation on dev (`efebc003`) | Passed | [Validation](https://github.com/purin-labs/monorepo/actions/runs/42463546782) |
+| Staging full stack (`efebc003`) | Backend, Console and activation passed; frontend failed 3 times | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/42464150380) |
+| Staging frontend, `component=all` (`de647fd0`) | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/42465925429) |
 
 ## The Bun download failure
 

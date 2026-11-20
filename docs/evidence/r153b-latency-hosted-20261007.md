@@ -33,7 +33,7 @@ freeze fell from 26.860 to 14.252 seconds. Return copy fell from 27.373 to
 
 Native custody wire formats, schemas, credentials, regional placement, and routine
 signing/refill routes remain unchanged. The matching Runtime and Console candidates
-are deployed in staging. [Activation and readiness passed](https://github.com/seams-tech/seams-monorepo/actions/runs/37631869120).
+are deployed in staging. [Activation and readiness passed](https://github.com/purin-labs/monorepo/actions/runs/37631869120).
 All 13 recorded runtime versions stayed unchanged during the hosted test.
 
 The composed relocation E2E passed with a lost reply after a partial ECDSA batch

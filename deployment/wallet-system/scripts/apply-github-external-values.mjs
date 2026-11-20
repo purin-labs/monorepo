@@ -702,8 +702,8 @@ function printUsage() {
     .write(`Apply operator-owned deployment values without rotating generated identities.
 
 Usage:
-  pnpm wallet-system:deploy:env-update -- --lane staging-testnet --repo seams-tech/seams-monorepo
-  pnpm site:deploy:env-update -- --site staging --repo seams-tech/seams-monorepo
+  pnpm wallet-system:deploy:env-update -- --lane staging-testnet --repo purin-labs/monorepo
+  pnpm site:deploy:env-update -- --site staging --repo purin-labs/monorepo
 
 Options:
   --lane <id>           Required for wallet-system.

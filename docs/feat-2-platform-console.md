@@ -67,4 +67,4 @@ did not introduce a new account hierarchy, Worker, database, or universal UI fra
 
 ## Full record
 
-[Original plan, decisions, and deployment evidence](https://github.com/seams-tech/seams-monorepo/blob/5a449fbcb90fe015b63102819626adf070ff0c29/docs/feat-2-platform-console.md).
+[Original plan, decisions, and deployment evidence](https://github.com/purin-labs/monorepo/blob/5a449fbcb90fe015b63102819626adf070ff0c29/docs/feat-2-platform-console.md).

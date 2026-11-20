@@ -58,19 +58,19 @@ Complete or cancel unfinished wallet relocations before the signer migrations.
 
 ### Verified 0.29 deployments
 
-- Staging: [40974419849](https://github.com/seams-tech/seams-monorepo/actions/runs/40974419849).
-- Production testnet: [40975972876](https://github.com/seams-tech/seams-monorepo/actions/runs/40975972876), attempt 2.
-- Production mainnet: [40975976106](https://github.com/seams-tech/seams-monorepo/actions/runs/40975976106).
-- GetSignal Wallet runtime: [40978202828](https://github.com/seams-tech/seams-monorepo/actions/runs/40978202828).
-- Console installer update: [staging](https://github.com/seams-tech/seams-monorepo/actions/runs/40991512032)
-  and [production](https://github.com/seams-tech/seams-monorepo/actions/runs/40991997307) passed on `4404f4eb8a9dc1f8aae76c8b8effe1233fc00831`.
+- Staging: [40974419849](https://github.com/purin-labs/monorepo/actions/runs/40974419849).
+- Production testnet: [40975972876](https://github.com/purin-labs/monorepo/actions/runs/40975972876), attempt 2.
+- Production mainnet: [40975976106](https://github.com/purin-labs/monorepo/actions/runs/40975976106).
+- GetSignal Wallet runtime: [40978202828](https://github.com/purin-labs/monorepo/actions/runs/40978202828).
+- Console installer update: [staging](https://github.com/purin-labs/monorepo/actions/runs/40991512032)
+  and [production](https://github.com/purin-labs/monorepo/actions/runs/40991997307) passed on `4404f4eb8a9dc1f8aae76c8b8effe1233fc00831`.
   Both live Console bundles name `@seams/wallet-cli@0.29.0`.
 - All four npm archives match the verified release artifacts byte for byte.
   A fresh registry install reports `seams-wallet 0.29.0`.
 - Staging and production backends use private runtime revision `27f09fe2a79f1bcbbe5d70ea13fabca27c089613`.
   GetSignal uses `ec78bded36dba8ebe428a8206e0b1a0e67014746`; its additional change updates only a test fixture.
-- Private validation passes on `ec78bded`: [main](https://github.com/seams-tech/seams-monorepo/actions/runs/40978202908)
-  and [dev](https://github.com/seams-tech/seams-monorepo/actions/runs/40978199174).
+- Private validation passes on `ec78bded`: [main](https://github.com/purin-labs/monorepo/actions/runs/40978202908)
+  and [dev](https://github.com/purin-labs/monorepo/actions/runs/40978199174).
 - Independent checks verify four ready Gateways, all three Wallet hosts on package `0.29.0` and protocol `19.0.0`,
   and signer migrations `0086` and `0087` across all 16 databases.
 - Console migration `0112` preserves all 12 issuer settings. Recovery trust bindings remain byte-identical to the verified baseline.
@@ -126,7 +126,7 @@ Release record:
 - All four public packages are published at `0.28.0`: Wallet, Wallet Server, VoiceID, and Wallet CLI.
 - Public source revision: `1de29b2aba77011193384b30f1f57542d11972d6`. The iframe protocol is `18.0.0`.
 - [Public validation](https://github.com/seams-tech/seams-wallet/actions/runs/40881143738) and [package publication](https://github.com/seams-tech/seams-wallet/actions/runs/40881193152) passed.
-- [CLI signing](https://github.com/seams-tech/seams-monorepo/actions/runs/40882183844) passed. A fresh registry install reports `seams-wallet 0.28.0`.
+- [CLI signing](https://github.com/purin-labs/monorepo/actions/runs/40882183844) passed. A fresh registry install reports `seams-wallet 0.28.0`.
 - Registry checksums match the verified release artifacts. Private consumers use exact `0.28.0` pins.
 - The BYO auth E2E also passed against the production assets from the release workflow.
 
@@ -134,7 +134,7 @@ Deployment record (October 30, 2026, Japan time):
 
 - Private release revision: `454ba04a050c7ea5b7f16eb62c77767b614a09de` on `dev`.
 - `pnpm check` passed with registry packages, including all 53 existing script checks. Frozen installation passed.
-- [Staging rollout](https://github.com/seams-tech/seams-monorepo/actions/runs/40897735808) completed backend builds, migrations, service deployments, and Console deployment.
+- [Staging rollout](https://github.com/purin-labs/monorepo/actions/runs/40897735808) completed backend builds, migrations, service deployments, and Console deployment.
 - Activation failed in four attempts. Three attempts reached final cutover and reported `GitHub OIDC keys are unavailable`.
   The other attempt returned HTTP 401 during regional verification and did not preserve its error body.
 - Earlier resource checks succeeded through the same key-fetch function. A permanent inability to fetch keys is therefore unproven.
@@ -153,7 +153,7 @@ Retry record (October 30, 2026, Japan time):
 - A fifth attempt of the original staging run failed during regional authentication.
 - Diagnostic revision `f69b4d21f0efb1392fce1e0c79fffda35ed5182e` adds the upstream HTTP status to key-fetch errors and preserves the bounded server message.
   Router-server type checks and all 53 existing script checks passed.
-- [Staging diagnostic rollout](https://github.com/seams-tech/seams-monorepo/actions/runs/40902052216) completed backend and Console deployment again.
+- [Staging diagnostic rollout](https://github.com/purin-labs/monorepo/actions/runs/40902052216) completed backend and Console deployment again.
 - Activation failed with `Runtime resource verification failed with HTTP 401: GitHub OIDC keys are unavailable (HTTP 522)`.
   HTTP 522 identifies an upstream connection timeout. The timeout's provider-side cause remains unknown.
 - No suitable shared GitHub key cache exists. A new cache would still require an initial successful upstream request.
@@ -184,7 +184,7 @@ Diagnosis and recovery (October 30, 2026, Japan time):
 
 Completed deployment record:
 
-- [Staging](https://github.com/seams-tech/seams-monorepo/actions/runs/40902052216), [production testnet](https://github.com/seams-tech/seams-monorepo/actions/runs/40907962515), [production mainnet](https://github.com/seams-tech/seams-monorepo/actions/runs/40907968058), and [GetSignal](https://github.com/seams-tech/seams-monorepo/actions/runs/40907974932) passed.
+- [Staging](https://github.com/purin-labs/monorepo/actions/runs/40902052216), [production testnet](https://github.com/purin-labs/monorepo/actions/runs/40907962515), [production mainnet](https://github.com/purin-labs/monorepo/actions/runs/40907968058), and [GetSignal](https://github.com/purin-labs/monorepo/actions/runs/40907974932) passed.
 - All deployments used private revision `f69b4d21f0efb1392fce1e0c79fffda35ed5182e` and exact public packages `0.28.0`.
   Later unrelated development commits were excluded from this production promotion.
 - Each lane passed protected tenant activation and backend health checks. Both full frontend rollouts passed their deployment checks.
@@ -198,7 +198,7 @@ Completed deployment record:
 - Test-only commit `a75884dc394ada8bb27d5b57a9de61b38fabe242` seeds historical environment rows through a shared fixture.
   Both affected E2E tests passed. Their money, hold, migration-inventory, and restart assertions remain intact.
   Production parsing remains strict. The fixture update is committed on `dev` and does not require a runtime redeployment.
-- [Updated private validation](https://github.com/seams-tech/seams-monorepo/actions/runs/40909495746) passed, including lint, types, application builds, all 18 account acceptance scenarios, and the native acceptance artifact build.
+- [Updated private validation](https://github.com/purin-labs/monorepo/actions/runs/40909495746) passed, including lint, types, application builds, all 18 account acceptance scenarios, and the native acceptance artifact build.
 
 Integration conditions:
 

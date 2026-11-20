@@ -24,10 +24,10 @@ Their SHA-512 integrity values match the archives retained by the publication wo
 | --- | --- | --- |
 | Public Wallet release validation | Passed | [Validation](https://github.com/seams-tech/seams-wallet/actions/runs/41227632085) |
 | npm publication | Passed | [Release](https://github.com/seams-tech/seams-wallet/actions/runs/41227674066) |
-| Private repository validation | Passed on dev and main | [Dev](https://github.com/seams-tech/seams-monorepo/actions/runs/41234290100), [main](https://github.com/seams-tech/seams-monorepo/actions/runs/41235314358) |
-| Staging full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41234318541) |
-| Production testnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41235342912) |
-| Production mainnet full stack | Passed | [Deployment](https://github.com/seams-tech/seams-monorepo/actions/runs/41235345360) |
+| Private repository validation | Passed on dev and main | [Dev](https://github.com/purin-labs/monorepo/actions/runs/41234290100), [main](https://github.com/purin-labs/monorepo/actions/runs/41235314358) |
+| Staging full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41234318541) |
+| Production testnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41235342912) |
+| Production mainnet full stack | Passed | [Deployment](https://github.com/purin-labs/monorepo/actions/runs/41235345360) |
 
 The private frozen installation, lint, type checks, boundary checks, and 53 script checks passed against the published packages.
 The local SDK package checks, 32 representative browser tests, and 149 existing tests also passed before publication.
