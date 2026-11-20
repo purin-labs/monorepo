@@ -21,7 +21,7 @@ Remaining:
 | ------------------------------------ | ------------------------- | ---------------------------------------------- |
 | 1. Refactor 200 cutover              | Cloudflare migration work | In progress                                    |
 | 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7     | Holds until step 3 ends                        |
-| 3. Pantry's own accounts             | A Pantry plan             | A plan in the Pantry repository                |
+| 3. Pantry's own accounts             | Pantry Plan 95            | Plan 95 steps 1 to 4 (decisions taken)         |
 | 4. Cut the couplings                 | This plan                 | Step 1                                         |
 | 5. Remove the Pantry service         | This plan                 | Step 3                                         |
 | 6. Move the deploys                  | This plan                 | Steps 1 and 4, six secrets, a new release root |
@@ -145,7 +145,12 @@ It drops the Pantry service:
   (`satyr.completed_turn.test`, `satyr.jev_input_tokens`), the route
   `POST /console/billing/satyr-paid-use/postpaid`, `satyrProvisioning*`, `satyrRelease`,
   the `SatyrAccountPlatform` entrypoint, and the `PANTRY_*`, `SATYR_*` and
-  `ACCOUNT_PROVISION_*` values.
+  `ACCOUNT_PROVISION_*` values (14 of them in `scripts/deployment-targets.mjs`).
+- The price rows of the two Satyr meters (Console migrations 0020 and 0021) and the Pantry
+  rows of `billing_isolated_test_accounts`.
+- The provisioning retry `resumeSatyrProvisioning` (every 60 seconds). After Pantry Plan 95
+  step 4, Pantry answers it with 404, and an open Pantry provision fails. This is harmless
+  until this removal.
 - The Pantry labels in the dashboard (`serviceProjects.ts`, `ServiceProjectsSection.tsx`,
   `consoleBillingApi.ts`).
 - The shared-account tests that test Pantry (`satyr-*.e2e.test.ts`, the published
@@ -156,16 +161,29 @@ connection as optional, and the ingress answers 503 without it.
 
 Pantry must own what the Console gave it:
 
-- Organisation creation and onboarding, memberships and invitations (Pantry has
-  `organisation`, `person`, `service_role_grant` and `project_member`, but no invitation
-  table).
+- Organisation creation and onboarding, memberships and invitations. Pantry has
+  `organisation`, `person`, `service_role_grant` and `project_member`. Its invitation
+  table `account_service_invitation_role` keeps only the Pantry role; the Console keeps the
+  invitation, its token and its expiry.
 - Eligibility for each protected request.
-- Plans, the Stripe customer, credit, reservations and usage (Pantry has no plan or
-  subscription tables).
+- Plans, the Stripe customer, credit, reservations and usage. Pantry has
+  `organisation.plan` (only the value `beta`), but no plan catalog, subscription or billing
+  account.
 
-Pantry signs users in itself already (Google OIDC in `control/oidc.ts`). That work is a
-Pantry plan in the Pantry repository. Existing records are test data (Refactor 200), so no
-account data moves.
+Pantry signs users in itself already (Google OIDC in `control/oidc.ts`). Existing records
+are test data (Refactor 200), so no account data moves.
+
+Pantry Plan 95 (`docs/plan-95-pantry-own-accounts.md` in the Pantry repository, written
+on 2026-11-20 on the Pantry branch `plan-95-pantry-own-accounts`) is that work. It has six
+steps, and it needs no Console change before its step 5. On 2026-11-20 the owner took its
+five recommendations:
+
+- Its steps 1 to 5 ship to the current `satyr-edge`, before the Pantry brand cutover of
+  Pantry Plan 93. So this plan's step 5 does not wait for that cutover.
+- Billing is postpaid metered use on Stripe only, in one Purin Stripe account. Pantry
+  builds it in test mode, and paid use stays off in production until the live account
+  exists.
+- Turns stay unpriced, and invitations stay a link that the inviter copies.
 
 ## Order
 
@@ -173,12 +191,13 @@ account data moves.
    split the repository during the cutover: the deploy workflows and the GitHub
    environments must stay in one place until every lane runs in `seamsadmin`.
 2. **Keep Pantry's authority alive in the old account.** After the cutover, Pantry's
-   binding still reaches the old Console Worker (`seams-sdk-d1-console`,
-   `seams-sdk-d1-console-staging`) and its old D1 database. Do not retire those two Workers
-   and their databases in Refactor 200, Phase 7, until Pantry has its own accounts. The two
-   products then already have separate account data.
-3. **Pantry builds its own accounts** (Pantry plan). Then it removes the `ACCOUNT_PLATFORM`
-   binding, and the old Console Workers and databases retire.
+   binding still reaches the old Console Worker `seams-sdk-d1-console` and its old D1
+   database. Do not retire that Worker and its database in Refactor 200, Phase 7, until
+   Pantry has its own accounts. The two products then already have separate account data.
+   Pantry removed its staging environment on 2026-11-19 (Pantry `b343df1`), so
+   `seams-sdk-d1-console-staging` and its database do not wait for Pantry.
+3. **Pantry builds its own accounts** (Pantry Plan 95). Then it removes the
+   `ACCOUNT_PLATFORM` binding, and `seams-sdk-d1-console` and its database retire.
 4. **Cut the couplings in this repository** (small changes on `dev`):
    - Copy the seven files that `WalletFigure.tsx` imports into `apps/seams-site`.
    - Delete the dead Wallet demo from the company site.
@@ -272,9 +291,9 @@ account data moves.
 4. Decided (owner, 2026-11-20): keep `test.console.seams.sh`, the separate Console Worker
    and database of the production testnet lane, until the split ends. Then decide whether
    one Console serves both networks.
-5. Decided (owner, 2026-11-20): Pantry keeps the old Console Workers in the old Cloudflare
-   account until its own accounts exist (order step 2). The Refactor 200 cutover does not
-   wait for Pantry.
+5. Decided (owner, 2026-11-20): Pantry keeps the old Console Worker `seams-sdk-d1-console`
+   in the old Cloudflare account until its own accounts exist (order step 2). The
+   Refactor 200 cutover does not wait for Pantry.
 6. Decided (owner, 2026-11-20): a new CLI release root with no bridge, issued in step 6.
    `SEAMS_RELEASE_SIGNING_KEY` exists only in the `release-signing` environment here, and
    the `seams` binary compiles in one release root

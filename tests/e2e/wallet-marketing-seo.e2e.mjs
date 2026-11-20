@@ -235,7 +235,7 @@ try {
   assert.equal(docsGuide.status(), 200);
   assert.match(
     await docsGuide.text(),
-    new RegExp(`https://docs\\.wallet\\.seams\\.sh/guides/transaction-review`),
+    new RegExp(`https://docs\\.seams\\.sh/guides/transaction-review`),
   );
   const docsRedirect = await context.request.get(`${origin}/docs/guides/transaction-review`, {
     maxRedirects: 0,
