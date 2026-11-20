@@ -1,7 +1,8 @@
 # Refactor 260 — Split the Seams Console into its own repository
 
-Status: plan, written on 2026-11-20. No code has moved. The repository
-`seams-tech/seams-console` exists (private, empty, created on 2026-11-20).
+Status: plan, written on 2026-11-20. No path has been cut. `seams-tech/seams-console`
+(private) holds an unchanged copy of this repository: `dev` at `83023b1e` and `main` at
+`079aebc1`, pushed on 2026-11-20 with the same commit IDs.
 
 ## Decision
 
@@ -14,6 +15,12 @@ The owner decided on 2026-11-20:
 - Pantry and the Seams Wallet stop sharing organisation accounts. Before, one "shared
   account platform" in the Console held the organisations, teams and billing of both
   products (`docs/shared-account-platform/`).
+- Two repositories (owner, 2026-11-20, in the separation session):
+  `seams-tech/seams-console` holds the Wallet Console and the Wallet site.
+  `purin-labs/purin-monorepo` holds the company site and, later, other Purin consoles and
+  deployments. It is this repository after a rename.
+- The split copies the whole repository into `seams-tech/seams-console`. It does not start
+  from an empty repository.
 
 Each fact below was read from the code on `dev` at `66e51b4c`, and from Pantry `main`.
 
@@ -154,20 +161,29 @@ account data moves.
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
-6. **Move the code.** Import the paths of the inventory into `seams-tech/seams-console`,
-   set up its GitHub environments, and deploy staging from the new repository.
+6. **Move the deploys.** `seams-tech/seams-console` already mirrors this repository;
+   until this step, a fast-forward push keeps it equal. Set up its GitHub environments, and
+   deploy staging from it. Then stop the mirror: each repository deletes the paths that
+   belong to the other one, in an ordinary commit.
 7. **Change the GitHub OIDC identity.** `automationRoute.ts` accepts tokens only from
    `purin-labs/monorepo` (`DEPLOYMENT_REPOSITORY`, `DEPLOYMENT_SUBJECT_PREFIX`, and three
    workflow file names). The first deploy from the new repository must carry the new
    values, and it deploys the Console before it activates, as today.
 8. **Delete the moved paths from `purin-labs/monorepo`** after production runs from the new
    repository.
+9. **Rename `purin-labs/monorepo` to `purin-labs/purin-monorepo`** last. A rename changes
+   the OIDC `repository` claim and subject that `automationRoute.ts` pins, so it must come
+   after the Seams deploys run from `seams-tech/seams-console`.
 
 ## Repository mechanics
 
-- **History.** Use `git filter-repo` with the path list of the inventory, so file history
-  stays. A fresh import is simpler but loses `git blame`. `docs/evidence` links name
-  `purin-labs/monorepo` run URLs; they stay valid while that repository exists.
+- **History.** The mirror keeps every commit ID that the docs, the evidence files and the
+  agent memory cite. `git filter-repo` would rewrite all of them. So each side cuts by
+  deleting paths in a commit, not by rewriting history.
+- **OIDC identity of the new repository.** Owner `seams-tech` has ID 282445520, and
+  `seams-console` has ID 1465065004. With immutable subjects on, the prefix is
+  `repo:seams-tech@282445520/seams-console@1465065004`; read it from the GitHub API before
+  you write it into `automationRoute.ts`.
 - **Package names.** Keep the `@seams-internal/*` scope (six names, about 740 uses).
 - **Dependencies.** The Console consumes `@seams/wallet-server`, `@seams/wallet` and
   `@seams/voiceid` from npm by exact version, as today. Three relayer tests read
@@ -193,10 +209,13 @@ account data moves.
 
 ## Open questions
 
-1. **Repository name and visibility.** `seams-tech/seams-console` exists and is private.
-   `purin-labs/monorepo` is public. Recommendation: keep `seams-console` private.
-2. **Does the Wallet site move with the Console?** `apps/wallet-console` builds both.
-   Recommendation: yes, one app and one repository; split the app later only if needed.
+1. **Visibility of `seams-console`.** Both organisations are on GitHub Free. The separation
+   session reports that GitHub Free allows deployment environments only in public
+   repositories, and that private Actions minutes are limited there. The deploys need 26
+   environments. So the owner must choose: make `seams-console` public, like this
+   repository, or move `seams-tech` to GitHub Team. Check the GitHub plan page before you
+   decide.
+2. Decided: the Wallet site moves with the Console (`apps/wallet-console` builds both).
 3. **Console API host.** Recommendation: `console.seams.sh/console/*`, with the RP ID kept
    at `seams.sh`.
 4. **Testnet Console.** `test.console.seams.sh` is a separate Console Worker and database
@@ -205,4 +224,3 @@ account data moves.
 5. **Pantry's interim authority.** Recommendation: Pantry keeps the old Console Workers in
    the old Cloudflare account until its own accounts exist (order step 2). The alternative
    is to build Pantry's accounts before the Refactor 200 cutover, which delays the cutover.
-6. **History.** Recommendation: `git filter-repo`.
