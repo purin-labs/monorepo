@@ -196,6 +196,7 @@ export function readHostRedirects(siteId) {
   const consoles = readConsoleFrontendSite(siteId);
   const redirects = [
     ...site.formerWalletSiteOrigins.map((from) => ({ from, to: site.walletSiteOrigin })),
+    ...site.formerDocsOrigins.map((from) => ({ from, to: site.docsOrigin })),
     ...consoles.formerPlatformOrigins.map((from) => ({ from, to: consoles.platformOrigin })),
     ...consoles.formerWalletConsoleOrigins.map((from) => ({
       from,
@@ -608,7 +609,7 @@ function parseSite(value, releaseId, branch) {
       'pagesProjectEnv',
       'walletSitePagesProjectEnv',
       'docsPagesProjectEnv',
-      ...(Object.hasOwn(site, 'formerWalletSiteOrigins') ? ['formerWalletSiteOrigins'] : []),
+      ...['formerWalletSiteOrigins', 'formerDocsOrigins'].filter((key) => Object.hasOwn(site, key)),
     ],
     sitePath,
   );
@@ -637,6 +638,7 @@ function parseSite(value, releaseId, branch) {
       sitePath + '.formerWalletSiteOrigins',
     ),
     docsOrigin: PUBLIC_WALLET_DOCS_ORIGIN,
+    formerDocsOrigins: parseFormerOrigins(site.formerDocsOrigins, sitePath + '.formerDocsOrigins'),
     googleOidcClientId: requirePattern(
       site.googleOidcClientId,
       /^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/u,
