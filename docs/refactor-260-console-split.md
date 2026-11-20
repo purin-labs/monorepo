@@ -217,6 +217,10 @@ account data moves.
    has a $12 monthly allowance (about 2,000 Linux minutes); public repositories run free.
    The deploys need 26 environments, so the owner must choose: make `seams-console` public,
    like this repository, or move `seams-tech` to GitHub Team.
+   On 2026-11-20 the first push to the private `seams-console` started run `44690621569`,
+   and GitHub did not start its job: "recent account payments have failed or your spending
+   limit needs to be increased". The public `seams-wallet` CI in the same organisation
+   runs. So a private `seams-console` also needs the `seams-tech` Actions billing fixed.
 2. Decided: the Wallet site moves with the Console (`apps/wallet-console` builds both).
 3. **Console API host.** Recommendation: `console.seams.sh/console/*`, with the RP ID kept
    at `seams.sh`.
