@@ -24,6 +24,11 @@ on:
           - wallet-docs
           - wallet-host
           - all
+      prepare_only:
+        description: Upload the Wallet Pages builds only, with no custom domains and no smoke (a new Cloudflare account before its zone moves)
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       lane:
@@ -36,6 +41,11 @@ on:
         type: string
         default: all
 
+      prepare_only:
+        description: Upload the Wallet Pages builds only, with no custom domains and no smoke (a new Cloudflare account before its zone moves)
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: read
 
@@ -49,6 +59,7 @@ env:
   DEPLOY_BACKEND_LANE: ${{ inputs.lane }}
   DEPLOY_SHA: ${{ github.sha }}
   RUST_TOOLCHAIN: 1.96.0
+  SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC: ${{ inputs.prepare_only && 'true' || 'false' }}
 
 jobs:
   deploy:
@@ -160,14 +171,15 @@ jobs:
             pnpm deploy:frontend "$operation" --site "$DEPLOY_SITE" --component "$DEPLOY_COMPONENT"
           done
       - name: Verify deployed backend and Console
+        if: ${{ !inputs.prepare_only }}
         run: |
           pnpm deploy:backend smoke --lane "$DEPLOY_BACKEND_LANE" --component wallet-system
           pnpm deploy:backend smoke --lane "$DEPLOY_BACKEND_LANE" --component console
       - name: Install browser for Wallet marketing acceptance
-        if: env.DEPLOY_COMPONENT == 'wallet-site' || env.DEPLOY_COMPONENT == 'all'
+        if: ${{ !inputs.prepare_only && (env.DEPLOY_COMPONENT == 'wallet-site' || env.DEPLOY_COMPONENT == 'all') }}
         run: pnpm -C tests exec playwright install --with-deps chromium
       - name: Verify deployed Wallet marketing
-        if: env.DEPLOY_COMPONENT == 'wallet-site' || env.DEPLOY_COMPONENT == 'all'
+        if: ${{ !inputs.prepare_only && (env.DEPLOY_COMPONENT == 'wallet-site' || env.DEPLOY_COMPONENT == 'all') }}
         env:
           SEAMS_SEO_TARGET: ${{ env.DEPLOY_SITE }}
           SEAMS_WALLET_DOCS_REVISION: ${{ env.SEAMS_WALLET_REVISION }}

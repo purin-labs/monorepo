@@ -79,6 +79,7 @@ async function main(args) {
       );
     }
     for (const surface of SURFACES) {
+      if (surface === 'company' && withoutPublicTraffic()) continue;
       if (surface === 'platform-console' || surface === 'wallet-console') {
         await runConsoleOperation(
           options.operation,
@@ -91,7 +92,17 @@ async function main(args) {
     }
     return;
   }
+  if (options.component === 'company' && withoutPublicTraffic()) {
+    throw new Error('the company site is not part of a deploy without public traffic');
+  }
   await runOperation(options.operation, site, options.component, walletLanes);
+}
+
+/* Before the seams.sh zone moves to a new Cloudflare account, a deploy there uploads
+   the Pages builds only: no custom domain, no redirect Worker, no smoke on the public
+   hosts. The company site stays out, because its project still serves live traffic. */
+function withoutPublicTraffic() {
+  return process.env.SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC === 'true';
 }
 
 function walletPagesProjectEnvironment(lane) {
@@ -149,10 +160,11 @@ async function runConsoleOperation(operation, site, component) {
     );
     assertDirectory(output, 'Console output');
     await deployPagesProject(output, site, process.env[projectEnv]);
-    await ensurePagesCustomDomain(origin, process.env[projectEnv]);
+    if (!withoutPublicTraffic()) await ensurePagesCustomDomain(origin, process.env[projectEnv]);
     return;
   }
   if (operation === 'smoke') {
+    if (withoutPublicTraffic()) return;
     const checks = smokeChecks(component, origin, [
       { path: '/dashboard/login', isReady: consoleApplicationIsReady },
       { path: '/console/auth/session', isReady: consoleSessionEndpointIsReady },
@@ -541,20 +553,27 @@ async function deployFrontend(site, component, walletLanes) {
     const project = process.env[site.docsPagesProjectEnv];
     // One docs project serves both sites: production from main, staging as the dev preview.
     await deployPagesProject(WALLET_DOCS_OUTPUT, site, project, 'main');
-    if (site.id === 'production') await ensurePagesCustomDomain(site.docsOrigin, project);
+    if (site.id === 'production' && !withoutPublicTraffic()) {
+      await ensurePagesCustomDomain(site.docsOrigin, project);
+    }
   } else if (component === 'wallet-site') {
-    const consoles = readConsoleFrontendSite(site.id);
-    await runConsoleOperation('smoke', consoles, 'platform-console');
-    await runConsoleOperation('smoke', consoles, 'wallet-console');
+    const prepareOnly = withoutPublicTraffic();
+    if (!prepareOnly) {
+      const consoles = readConsoleFrontendSite(site.id);
+      await runConsoleOperation('smoke', consoles, 'platform-console');
+      await runConsoleOperation('smoke', consoles, 'wallet-console');
+    }
     requireEnvironmentValues([site.walletSitePagesProjectEnv], process.env);
     assertDirectory(WALLET_SITE_OUTPUT, 'Wallet site Pages output');
     const project = process.env[site.walletSitePagesProjectEnv];
     await deployPagesProject(WALLET_SITE_OUTPUT, site, project);
-    // The Wallet site can take a host that the company site served before.
-    await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
-      process.env[site.pagesProjectEnv],
-    ]);
-    deployHostRedirects(site);
+    if (!prepareOnly) {
+      // The Wallet site can take a host that the company site served before.
+      await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
+        process.env[site.pagesProjectEnv],
+      ]);
+      deployHostRedirects(site);
+    }
   } else {
     const projectEnvironments = [...new Set(walletLanes.map((lane) => lane.walletPagesProjectEnv))];
     requireEnvironmentValues(projectEnvironments, process.env);
@@ -730,7 +749,13 @@ async function requestCloudflareApi(apiPath, apiToken, method, expectedStatuses,
 }
 
 async function smokeFrontend(site, component, walletLanes) {
-  const checks = buildSmokeChecks(site, component, walletLanes);
+  if (withoutPublicTraffic()) {
+    process.stdout.write(
+      `Frontend smoke skipped without public traffic: ${site.id}/${component}\n`,
+    );
+    return;
+  }
+  const checks = await buildSmokeChecks(site, component, walletLanes);
   const results = await runReadinessChecks(checks);
   const failed = results.filter(isFailedCheck);
   process.stdout.write(`${JSON.stringify({ results })}\n`);
@@ -739,7 +764,7 @@ async function smokeFrontend(site, component, walletLanes) {
   }
 }
 
-function buildSmokeChecks(site, component, walletLanes) {
+async function buildSmokeChecks(site, component, walletLanes) {
   if (component === 'company')
     return smokeChecks('company', site.origin, [
       '/',
@@ -768,7 +793,7 @@ function buildSmokeChecks(site, component, walletLanes) {
     ];
   }
   if (component === 'wallet-docs') {
-    const origin = walletDocsSmokeOrigin(site);
+    const origin = await walletDocsSmokeOrigin(site);
     const isReady = site.id === 'staging' ? stagingWalletDocsIsReady : walletDocsIsReady;
     return smokeChecks('wallet-docs', origin, [
       { path: '/', isReady },
@@ -817,11 +842,19 @@ async function stagingWalletDocsIsReady(response) {
   return /\bnoindex\b/i.test(response.headers.get('x-robots-tag') || '');
 }
 
-function walletDocsSmokeOrigin(site) {
+async function walletDocsSmokeOrigin(site) {
   if (site.id === 'production') return site.docsOrigin;
   const project = String(process.env[site.docsPagesProjectEnv] || '').trim();
   if (!project) throw new Error(`${site.docsPagesProjectEnv} is required for staging docs smoke`);
-  return `https://${site.branch}.${project}.pages.dev`;
+  // A pages.dev subdomain can differ from the project name, so read it.
+  const response = await requestCloudflareApi(
+    `/accounts/${encodeURIComponent(process.env.CLOUDFLARE_ACCOUNT_ID)}/pages/projects/${encodeURIComponent(project)}`,
+    process.env.CLOUDFLARE_API_TOKEN,
+    'GET',
+    [200],
+  );
+  const subdomain = (await response.json()).result?.subdomain || `${project}.pages.dev`;
+  return `https://${site.branch}.${subdomain}`;
 }
 
 function docsRedirectCheck(surface, sourceOrigin, sourcePath) {

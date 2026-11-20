@@ -101,8 +101,15 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    14 staging Workers run real code there. The first run showed one problem: Cloudflare
    answered "This Worker does not exist" right after a new script upload; the reservation now
    retries (`437e94ec`). Until the zone moves, deploy staging only with `prepare_only`.
-   Next: the production lanes. They deploy from `main`, so `main` needs the deploy changes
-   and the production target switch first.
+   Done for production on 2026-11-20: the production targets name the new hosts and storage
+   (`83023b1e`), `main` has the changes (merge `3b52c7ad`), every production GitHub
+   environment holds the `seamsadmin` values, and both prepare-only deploys passed:
+   [production testnet](https://github.com/purin-labs/monorepo/actions/runs/44690697195) and
+   [production mainnet](https://github.com/purin-labs/monorepo/actions/runs/44691432575).
+   All three lanes now run in `seamsadmin` without public routes. Live traffic still runs
+   from the source account. Deploy every lane only with `prepare_only` until the zone moves.
+   Do not run the D1 migrations by hand while a deploy runs: the first mainnet run failed
+   because a local migration run was in the same database.
 8. Owner: add `seams.sh` to `seamsadmin` as a site with a plan (it stays pending). Claude:
    load its DNS records from the inventory into the pending zone. Owner: start the Registrar
    move in the source account (Manage Domain → Configuration → Start) and accept it in
