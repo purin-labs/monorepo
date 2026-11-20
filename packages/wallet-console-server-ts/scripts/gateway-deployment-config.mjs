@@ -368,11 +368,33 @@ function parseTenant(value) {
 
 function parseOrigins(value) {
   const origins = requireObject(value, 'origins');
-  requireExactKeys(origins, ['gateway', 'allowedCors'], 'origins');
+  const former = Object.hasOwn(origins, 'formerGateways');
+  requireExactKeys(
+    origins,
+    ['gateway', 'allowedCors', ...(former ? ['formerGateways'] : [])],
+    'origins',
+  );
+  const gateway = requireHttpsUrl(origins.gateway, 'origins.gateway');
   return {
-    gateway: requireHttpsUrl(origins.gateway, 'origins.gateway'),
+    gateway,
+    // A former Gateway host stays a custom domain of the Gateway, so callers that
+    // still name it keep working. An API host never redirects.
+    ...(former ? { formerGateways: parseFormerGateways(origins.formerGateways, gateway) } : {}),
     allowedCors: parseBrowserOrigins(origins.allowedCors, 'origins.allowedCors'),
   };
+}
+
+function parseFormerGateways(value, gateway) {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error('origins.formerGateways must be a non-empty array when present');
+  }
+  const origins = value.map((origin, index) =>
+    requireHttpsUrl(origin, `origins.formerGateways[${index}]`),
+  );
+  if (new Set(origins).size !== origins.length || origins.includes(gateway)) {
+    throw new Error('origins.formerGateways must be unique and must not repeat origins.gateway');
+  }
+  return Object.freeze(origins);
 }
 
 function parseSession(value) {
@@ -390,7 +412,11 @@ function parseSigningSessionSeal(value) {
     ['algorithm', 'currentKeyVersion', 'acceptedWarmKeyVersions'],
     'signingSessionSeal',
   );
-  requireExactString(seal.algorithm, 'ristretto255-sha512-poprf-v1', 'signingSessionSeal.algorithm');
+  requireExactString(
+    seal.algorithm,
+    'ristretto255-sha512-poprf-v1',
+    'signingSessionSeal.algorithm',
+  );
   const currentKeyVersion = requireString(
     seal.currentKeyVersion,
     'signingSessionSeal.currentKeyVersion',
@@ -695,7 +721,13 @@ function parseSpeakToSignVerifier(value) {
   if (value === undefined || value === null) return null;
   const path = 'optional.speakToSignVerifier';
   const verifier = requireObject(value, path);
-  const required = ['outlayerBaseUrl', 'project', 'versionKey', 'secretsProfile', 'secretsAccountId'];
+  const required = [
+    'outlayerBaseUrl',
+    'project',
+    'versionKey',
+    'secretsProfile',
+    'secretsAccountId',
+  ];
   requireAllowedAndRequiredKeys(verifier, [...required, 'veniceVersionKey'], required, path);
   const veniceVersionKey =
     verifier.veniceVersionKey === undefined

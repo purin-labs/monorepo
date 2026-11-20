@@ -152,10 +152,10 @@ test('deployment topology preserves staging operational identities', async () =>
   if (lane.provisioning.kind !== 'provisioned') throw new Error('staging must be provisioned');
 
   expect(lane.provisioning.gatewayDeploymentConfig.resources.consoleD1.id).toBe(
-    '6b2e86ec-2295-4475-b405-40f5f774ca1a',
+    'fbd3cfdc-125b-423d-b3c9-07aa2ff43688',
   );
   expect(lane.provisioning.gatewayDeploymentConfig.resources.regions.APAC.signerD1.id).toBe(
-    '0b77e7a5-4668-4df9-8c2d-c8846804f542',
+    '38b8e122-8ac1-4ee2-9a2f-095018545787',
   );
   expect(lane.provisioning.gatewayDeploymentConfig.tenant.namespace).toBe('seams-staging');
   expect(lane.provisioning.gatewayDeploymentConfig.session.issuer).toBe('seams-gateway-staging');
@@ -247,7 +247,7 @@ test('deployment target parsing rejects cross-lane origin reuse', async () => {
   expect(() =>
     module.parseDeploymentTargets(
       withProduction(targets, {
-        testnet: { ...testnet, gatewayOrigin: 'https://staging.api.wallet.seams.sh' },
+        testnet: { ...testnet, gatewayOrigin: 'https://staging.api.seams.sh' },
       }),
     ),
   ).toThrow(/origin/u);

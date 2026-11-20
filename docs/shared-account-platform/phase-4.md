@@ -385,10 +385,10 @@ pnpm -C tests exec playwright test -c playwright.config.ts 'e2e/console/shared-a
 pnpm check
 
 # In Satyr, set this path to the artifact built above:
-SATYR_ACCOUNT_WORKER_ARTIFACT=/Users/pta/Dev/rust/seams-monorepo/.artifacts/shared-account-platform/account-worker/index.mjs pnpm --filter satyr-edge exec vitest run --config vitest.e2e.config.ts tests/e2e/shared-account-platform.test.ts tests/e2e/shared-account-automation.test.ts --reporter=default --reporter=json --outputFile=../../output/shared-account-platform.json
-node services/platform/tests/e2e/shared-account-platform-report.mjs output/shared-account-platform.json /Users/pta/Dev/rust/seams-monorepo/.artifacts/shared-account-platform/satyr /Users/pta/Dev/rust/seams-monorepo/.artifacts/shared-account-platform/account-worker/index.mjs
+SATYR_ACCOUNT_WORKER_ARTIFACT=/Users/pta/Dev/purin-labs/monorepo/.artifacts/shared-account-platform/account-worker/index.mjs pnpm --filter satyr-edge exec vitest run --config vitest.e2e.config.ts tests/e2e/shared-account-platform.test.ts tests/e2e/shared-account-automation.test.ts --reporter=default --reporter=json --outputFile=../../output/shared-account-platform.json
+node services/platform/tests/e2e/shared-account-platform-report.mjs output/shared-account-platform.json /Users/pta/Dev/purin-labs/monorepo/.artifacts/shared-account-platform/satyr /Users/pta/Dev/purin-labs/monorepo/.artifacts/shared-account-platform/account-worker/index.mjs
 pnpm --filter satyr-edge check:test-types
-SATYR_ACCOUNT_WORKER_ARTIFACT=/Users/pta/Dev/rust/seams-monorepo/.artifacts/shared-account-platform/account-worker/index.mjs pnpm --filter satyr-edge test
+SATYR_ACCOUNT_WORKER_ARTIFACT=/Users/pta/Dev/purin-labs/monorepo/.artifacts/shared-account-platform/account-worker/index.mjs pnpm --filter satyr-edge test
 pnpm --filter satyr-edge test:onboarding-closure
 pnpm lint:ifc-boundaries
 pnpm --filter satyr-portal build

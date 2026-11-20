@@ -7,6 +7,11 @@ on:
         description: Console deployment lane
         required: true
         type: string
+      prepare_only:
+        description: Deploy without public routes or cron triggers
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -20,6 +25,7 @@ env:
   CONSOLE_BUILD_ARTIFACT_NAME: console-build-${{ inputs.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
   DEPLOY_LANE: ${{ inputs.lane }}
   DEPLOY_SHA: ${{ github.sha }}
+  SEAMS_DEPLOY_WITHOUT_PUBLIC_TRAFFIC: ${{ inputs.prepare_only && 'true' || 'false' }}
 
 jobs:
   configure:
@@ -175,6 +181,8 @@ jobs:
       - name: Deploy Console
         run: pnpm deploy:backend deploy --lane "$DEPLOY_LANE" --component console
       - name: Smoke Console
+        # A prepare-only deploy has no public route, so the Console origin does not serve it.
+        if: ${{ !inputs.prepare_only }}
         run: pnpm deploy:backend smoke --lane "$DEPLOY_LANE" --component console
 
   cleanup_build_artifact:

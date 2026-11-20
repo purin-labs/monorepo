@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 
-const gatewayOrigin = 'https://staging.api.wallet.seams.sh';
+const gatewayOrigin = 'https://staging.api.seams.sh';
 const bootId = randomUUID();
 const maximumBodyBytes = 4 * 1024 * 1024;
 
@@ -38,7 +38,14 @@ function forwardHeaders(input) {
   for (const name of [...headers.keys()]) {
     if (
       name.startsWith('cf-') ||
-      ['host', 'content-length', 'connection', 'accept-encoding', 'x-forwarded-for', 'x-real-ip'].includes(name)
+      [
+        'host',
+        'content-length',
+        'connection',
+        'accept-encoding',
+        'x-forwarded-for',
+        'x-real-ip',
+      ].includes(name)
     ) {
       headers.delete(name);
     }
@@ -86,7 +93,9 @@ async function handle(request, response) {
       completedMs: performance.now() - start,
     });
   } catch (error) {
-    send(response, 502, { error: error instanceof Error ? error.message : 'Regional forwarding failed' });
+    send(response, 502, {
+      error: error instanceof Error ? error.message : 'Regional forwarding failed',
+    });
   }
 }
 

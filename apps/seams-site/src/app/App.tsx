@@ -99,7 +99,7 @@ export const App: React.FC = () => {
       : pathname;
 
   React.useEffect(() => {
-    updateDocumentMetadata(sitePage, import.meta.env.VITE_SITE_ORIGIN || 'https://seams.sh/');
+    updateDocumentMetadata(sitePage, import.meta.env.VITE_SITE_ORIGIN || 'https://purin.io/');
   }, [sitePage]);
 
   const page = React.useMemo(() => {

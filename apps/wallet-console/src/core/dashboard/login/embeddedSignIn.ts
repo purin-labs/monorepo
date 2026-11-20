@@ -21,7 +21,7 @@ export type EmbeddedSignInMessage =
 function walletSiteOrigin(): string {
   const configured = String(import.meta.env.VITE_WALLET_SITE_ORIGIN ?? '').trim();
   if (configured) return new URL(configured).origin;
-  return import.meta.env.DEV ? 'http://localhost:4001' : 'https://wallet.seams.sh';
+  return import.meta.env.DEV ? 'http://localhost:4001' : 'https://seams.sh';
 }
 
 /** True in the pricing page's dialog: a frame whose parent is the Wallet site. Firefox

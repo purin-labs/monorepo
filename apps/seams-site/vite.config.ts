@@ -126,7 +126,7 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
-    plugins: [react(), siteLanguagePages(env.VITE_SITE_ORIGIN || 'https://seams.sh/')],
+    plugins: [react(), siteLanguagePages(env.VITE_SITE_ORIGIN || 'https://purin.io/')],
     optimizeDeps: walletDistRoot
       ? {
           noDiscovery: true,

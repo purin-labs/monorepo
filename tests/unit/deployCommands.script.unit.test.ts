@@ -265,7 +265,7 @@ test('backend plan runs without deployment secrets and prints the complete lane 
   expect(result.stdout).toContain('Release: staging');
   expect(result.stdout).toContain('Network: testnet');
   expect(result.stdout).toContain('Runtime profile: testnet_live_demo');
-  expect(result.stdout).toContain('Gateway origin: https://staging.api.wallet.seams.sh');
+  expect(result.stdout).toContain('Gateway origin: https://staging.api.seams.sh');
   expect(result.stdout).toContain('Wallet origin: https://staging.sign.seams.sh');
   expect(result.stdout).not.toContain('plan-secret-value');
   expect(result.stdout).not.toContain('bootstrap Gateway tenant');
@@ -307,7 +307,7 @@ test('frontend plan runs without deployment secrets', () => {
   );
 
   expect(result.status).toBe(0);
-  expect(result.stdout).toContain('Origin: https://docs.wallet.seams.sh');
+  expect(result.stdout).toContain('Origin: https://docs.seams.sh');
   expect(result.stdout).toContain('Pages project environment: CF_PAGES_PROJECT_WALLET_DOCS');
 });
 
@@ -353,8 +353,8 @@ test('frontend build uses canonical Console origins for every production lane', 
   const resolved = buildFrontendEnvironment(site, site.walletSiteOrigin, environment);
 
   expect(resolved.VITE_TESTNET_CONSOLE_BASE_URL).toBe('https://test.console.seams.sh');
-  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://wallet.seams.sh');
-  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://console.seams.sh');
+  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://seams.sh');
+  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://account.seams.sh');
 });
 
 test('frontend Pages headers align with hosted wallet asset policies', () => {
@@ -996,9 +996,13 @@ test('Wallet-system and Console workflows use separate deployment authority', ()
     }
     expect(needsOf('build')).toEqual([]);
     expect(needsOf('migrate')).toEqual(['build']);
-    expect(needsOf('deploy_signing_worker')).toEqual(['migrate']);
-    expect(needsOf('deploy_deriver_a')).toEqual(['migrate']);
-    expect(needsOf('deploy_deriver_b')).toEqual(['migrate']);
+    expect(needsOf('bootstrap_account')).toEqual(['migrate']);
+    expect(workflowSource).toContain(
+      'deploy:backend deploy --lane "$DEPLOY_LANE" --component account-bootstrap',
+    );
+    expect(needsOf('deploy_signing_worker')).toEqual(['migrate', 'bootstrap_account']);
+    expect(needsOf('deploy_deriver_a')).toEqual(['migrate', 'bootstrap_account']);
+    expect(needsOf('deploy_deriver_b')).toEqual(['migrate', 'bootstrap_account']);
     expect(needsOf('deploy_tenant_root_control_plane')).toEqual([
       'deploy_signing_worker',
       'deploy_deriver_a',

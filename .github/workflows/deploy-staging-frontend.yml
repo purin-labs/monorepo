@@ -59,6 +59,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      COMPANY_CLOUDFLARE_API_TOKEN: ${{ secrets.COMPANY_CLOUDFLARE_API_TOKEN }}
+      COMPANY_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.COMPANY_CLOUDFLARE_ACCOUNT_ID }}
       CF_PAGES_PROJECT_VITE: ${{ secrets.CF_PAGES_PROJECT_VITE }}
       CF_PAGES_PROJECT_PLATFORM_CONSOLE: ${{ secrets.CF_PAGES_PROJECT_PLATFORM_CONSOLE }}
       CF_PAGES_PROJECT_WALLET_CONSOLE: ${{ secrets.CF_PAGES_PROJECT_WALLET_CONSOLE }}
@@ -143,7 +145,7 @@ jobs:
       - name: Build committed public Wallet docs
         run: |
           pnpm --dir .wallet-source install --frozen-lockfile
-          VITE_DOCS_ORIGIN=https://docs.wallet.seams.sh pnpm --dir .wallet-source run build:docs
+          VITE_DOCS_ORIGIN=https://docs.seams.sh pnpm --dir .wallet-source run build:docs
       - name: Stage committed public Wallet docs
         run: node scripts/prepare-wallet-docs-source.mjs --checkout .wallet-source --revision "$SEAMS_WALLET_REVISION" --output .artifacts/wallet-docs
       - name: Build, deploy and smoke selected frontend surfaces

@@ -7,7 +7,12 @@ import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { readFrontendSite, readConsoleFrontendSite } from './deployment-targets.mjs';
+import {
+  PUBLIC_WALLET_DOCS_ORIGIN,
+  readConsoleFrontendSite,
+  readFrontendSite,
+  readHostRedirects,
+} from './deployment-targets.mjs';
 import { formatFailedCheck, isFailedCheck, runReadinessChecks } from './deployment-smoke.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +24,13 @@ const WALLET_SITE_OUTPUT = path.join(WALLET_SITE_ROOT, 'dist');
 const WALLET_HOST_OUTPUT = path.join(REPOSITORY_ROOT, '.release-artifacts', 'wallet-host');
 const WALLET_DOCS_OUTPUT = path.join(REPOSITORY_ROOT, '.release-artifacts', 'wallet-docs');
 const PUBLIC_DOCS_ARTIFACT_ROOT = path.join(REPOSITORY_ROOT, '.artifacts', 'wallet-docs');
-const PUBLIC_WALLET_DOCS_ORIGIN = 'https://docs.wallet.seams.sh';
+const HOST_REDIRECTS_WORKER = path.join(
+  REPOSITORY_ROOT,
+  'deployment',
+  'host-redirects',
+  'worker.mjs',
+);
+const HOST_REDIRECTS_COMPATIBILITY_DATE = '2026-11-01';
 const SURFACES = Object.freeze([
   'platform-console',
   'wallet-console',
@@ -29,10 +40,6 @@ const SURFACES = Object.freeze([
   'wallet-host',
 ]);
 const COMPONENTS = Object.freeze(['all', ...SURFACES]);
-
-if (isDirectInvocation()) {
-  main(process.argv.slice(2)).catch(handleFailure);
-}
 
 function isDirectInvocation() {
   return (
@@ -141,7 +148,7 @@ async function runConsoleOperation(operation, site, component) {
       process.env,
     );
     assertDirectory(output, 'Console output');
-    deployPagesProject(output, site, process.env[projectEnv]);
+    await deployPagesProject(output, site, process.env[projectEnv]);
     await ensurePagesCustomDomain(origin, process.env[projectEnv]);
     return;
   }
@@ -523,12 +530,17 @@ async function deployFrontend(site, component, walletLanes) {
   if (component === 'company') {
     requireEnvironmentValues([site.pagesProjectEnv], process.env);
     assertDirectory(COMPANY_OUTPUT, 'Company Pages output');
-    deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
+    // Refactor 200: the company site may live in another Cloudflare account.
+    await withCompanyCloudflareAccount(async () => {
+      await deployPagesProject(COMPANY_OUTPUT, site, process.env[site.pagesProjectEnv]);
+      await ensurePagesCustomDomain(site.origin, process.env[site.pagesProjectEnv]);
+    });
   } else if (component === 'wallet-docs') {
     requireEnvironmentValues([site.docsPagesProjectEnv], process.env);
     assertDirectory(WALLET_DOCS_OUTPUT, 'Wallet docs Pages output');
     const project = process.env[site.docsPagesProjectEnv];
-    deployPagesProject(WALLET_DOCS_OUTPUT, site, project);
+    // One docs project serves both sites: production from main, staging as the dev preview.
+    await deployPagesProject(WALLET_DOCS_OUTPUT, site, project, 'main');
     if (site.id === 'production') await ensurePagesCustomDomain(site.docsOrigin, project);
   } else if (component === 'wallet-site') {
     const consoles = readConsoleFrontendSite(site.id);
@@ -537,21 +549,51 @@ async function deployFrontend(site, component, walletLanes) {
     requireEnvironmentValues([site.walletSitePagesProjectEnv], process.env);
     assertDirectory(WALLET_SITE_OUTPUT, 'Wallet site Pages output');
     const project = process.env[site.walletSitePagesProjectEnv];
-    deployPagesProject(WALLET_SITE_OUTPUT, site, project);
-    await ensurePagesCustomDomain(site.walletSiteOrigin, project);
+    await deployPagesProject(WALLET_SITE_OUTPUT, site, project);
+    // The Wallet site can take a host that the company site served before.
+    await ensurePagesCustomDomain(site.walletSiteOrigin, project, [
+      process.env[site.pagesProjectEnv],
+    ]);
+    deployHostRedirects(site);
   } else {
     const projectEnvironments = [...new Set(walletLanes.map((lane) => lane.walletPagesProjectEnv))];
     requireEnvironmentValues(projectEnvironments, process.env);
     for (const lane of walletLanes) {
       const output = walletHostOutput(lane);
       assertDirectory(output, 'Hosted wallet Pages output');
-      deployPagesProject(output, site, process.env[lane.walletPagesProjectEnv]);
+      await deployPagesProject(output, site, process.env[lane.walletPagesProjectEnv]);
     }
   }
   process.stdout.write(`Frontend deploy completed: ${site.id}/${component}\n`);
 }
 
-function deployPagesProject(outputDirectory, site, projectName) {
+async function withCompanyCloudflareAccount(operation) {
+  const token = String(process.env.COMPANY_CLOUDFLARE_API_TOKEN || '').trim();
+  const accountId = String(process.env.COMPANY_CLOUDFLARE_ACCOUNT_ID || '').trim();
+  if (Boolean(token) !== Boolean(accountId)) {
+    throw new Error('COMPANY_CLOUDFLARE_API_TOKEN and COMPANY_CLOUDFLARE_ACCOUNT_ID go together');
+  }
+  if (!token) return operation();
+  const previous = {
+    CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN,
+    CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID,
+  };
+  process.env.CLOUDFLARE_API_TOKEN = token;
+  process.env.CLOUDFLARE_ACCOUNT_ID = accountId;
+  try {
+    return await operation();
+  } finally {
+    Object.assign(process.env, previous);
+  }
+}
+
+async function deployPagesProject(
+  outputDirectory,
+  site,
+  projectName,
+  productionBranch = site.branch,
+) {
+  await ensurePagesProject(projectName, productionBranch);
   const args = [
     'exec',
     'wrangler',
@@ -569,16 +611,107 @@ function deployPagesProject(outputDirectory, site, projectName) {
   runCommand('pnpm', args);
 }
 
-async function ensurePagesCustomDomain(origin, projectName) {
+/* A new Cloudflare account has no Pages projects. The production branch serves the
+   custom domains: the site's branch, or main for the shared docs project. */
+async function ensurePagesProject(projectName, productionBranch) {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
+  const existing = await requestCloudflareApi(
+    `${projectsPath}/${encodeURIComponent(projectName)}`,
+    apiToken,
+    'GET',
+    [200, 404],
+  );
+  if (existing.status === 200) return;
+  await requestCloudflareApi(projectsPath, apiToken, 'POST', [200], {
+    name: projectName,
+    production_branch: productionBranch,
+  });
+  process.stdout.write(
+    `Created Pages project ${projectName} (production branch ${productionBranch})\n`,
+  );
+}
+
+/* Binds the host to the Pages project. `releaseFrom` names the other projects that may
+   hold the host before a move. The deploy token cannot change DNS, so a new binding
+   stops the deploy until the host's DNS record is a proxied CNAME to the project. */
+async function ensurePagesCustomDomain(origin, projectName, releaseFrom = []) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
   const hostname = new URL(origin).hostname;
-  const projectPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(projectName)}`;
-  const domainPath = `${projectPath}/domains/${encodeURIComponent(hostname)}`;
-  const existing = await requestCloudflareApi(domainPath, apiToken, 'GET', [200, 404]);
-  if (existing.status === 200) return;
-  await requestCloudflareApi(`${projectPath}/domains`, apiToken, 'POST', [200], { name: hostname });
-  process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
+  const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
+  const domainPath = (project) =>
+    `${projectsPath}/${encodeURIComponent(project)}/domains/${encodeURIComponent(hostname)}`;
+  const existing = await requestCloudflareApi(domainPath(projectName), apiToken, 'GET', [200, 404]);
+  if (existing.status !== 200) {
+    for (const previous of releaseFrom.filter((name) => name && name !== projectName)) {
+      const held = await requestCloudflareApi(domainPath(previous), apiToken, 'GET', [200, 404]);
+      if (held.status !== 200) continue;
+      await requestCloudflareApi(domainPath(previous), apiToken, 'DELETE', [200]);
+      process.stdout.write(`Released Pages custom domain ${hostname} from ${previous}\n`);
+    }
+    await requestCloudflareApi(
+      `${projectsPath}/${encodeURIComponent(projectName)}/domains`,
+      apiToken,
+      'POST',
+      [200],
+      { name: hostname },
+    );
+    process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
+  }
+  await waitForActivePagesDomain(domainPath(projectName), hostname, projectName, apiToken);
+}
+
+async function waitForActivePagesDomain(domainPath, hostname, projectName, apiToken) {
+  const deadline = Date.now() + 120_000;
+  let status = '';
+  while (Date.now() < deadline) {
+    const response = await requestCloudflareApi(domainPath, apiToken, 'GET', [200]);
+    status = String((await response.json()).result?.status || '');
+    if (status === 'active') return;
+    await new Promise((resolve) => setTimeout(resolve, 10_000));
+  }
+  // A pages.dev subdomain is unique across accounts, so a project in a new account
+  // can have a suffix after its name. Name the target that the project really has.
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const project = await requestCloudflareApi(
+    `/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(projectName)}`,
+    apiToken,
+    'GET',
+    [200],
+  );
+  const target = (await project.json()).result?.subdomain || `${projectName}.pages.dev`;
+  throw new Error(
+    `Pages custom domain ${hostname} is ${status || 'not active'}. ` +
+      `Make its DNS record a proxied CNAME to ${target}, then deploy again.`,
+  );
+}
+
+/* One Worker per site sends every former host to its successor. */
+function deployHostRedirects(site) {
+  const redirects = readHostRedirects(site.id);
+  if (redirects.length === 0) return;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'seams-host-redirects-'));
+  const configPath = path.join(directory, 'wrangler.json');
+  const hosts = redirects.map(({ from, to }) => [new URL(from).hostname, to]);
+  const config = {
+    name: `seams-host-redirects-${site.id}`,
+    main: HOST_REDIRECTS_WORKER,
+    compatibility_date: HOST_REDIRECTS_COMPATIBILITY_DATE,
+    workers_dev: false,
+    routes: hosts.map(([host]) => ({
+      pattern: `${host}/*`,
+      zone_name: host.split('.').slice(-2).join('.'),
+    })),
+    vars: { HOST_REDIRECTS_JSON: JSON.stringify(Object.fromEntries(hosts)) },
+  };
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  try {
+    runCommand('pnpm', ['exec', 'wrangler', 'deploy', '--config', configPath]);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 }
 
 async function requestCloudflareApi(apiPath, apiToken, method, expectedStatuses, body) {
@@ -631,6 +764,7 @@ function buildSmokeChecks(site, component, walletLanes) {
         '/sdk/workers/near-signer.worker.js',
       ]),
       docsRedirectCheck('wallet-site', site.walletSiteOrigin, '/docs/guides/transaction-review'),
+      ...readHostRedirects(site.id).map(hostRedirectCheck),
     ];
   }
   if (component === 'wallet-docs') {
@@ -697,6 +831,21 @@ function docsRedirectCheck(surface, sourceOrigin, sourcePath) {
     url: source.href,
     request: { redirect: 'manual' },
     isReady: isPermanentRedirectToWalletDocs,
+  };
+}
+
+function hostRedirectCheck({ from, to }) {
+  const source = new URL('/pricing/?from=smoke', from);
+  return {
+    name: `${source.hostname} redirects to ${new URL(to).hostname}`,
+    url: source.href,
+    request: { redirect: 'manual' },
+    isReady(response) {
+      const location = response.headers.get('location');
+      return (
+        response.status === 301 && location === new URL(source.pathname + source.search, to).href
+      );
+    },
   };
 }
 
@@ -854,4 +1003,9 @@ function isRecord(value) {
 function handleFailure(error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
+}
+
+// Last, so every module constant exists before a synchronous build reads it.
+if (isDirectInvocation()) {
+  main(process.argv.slice(2)).catch(handleFailure);
 }

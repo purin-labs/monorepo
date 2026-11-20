@@ -1,17 +1,52 @@
-# Refactor 200 — Seams Wallet Cloudflare account migration plan
+# Refactor 200 — Cloudflare account split and host move
 
-Create fresh Seams infrastructure in the Cloudflare account owned by `seamsadmin@gmail.com`.
-Move traffic from the account identified as `n63878056@gmail.com`.
-Remove the source Seams resources after verification to isolate future Cloudflare billing.
+Create fresh Seams Wallet infrastructure in the Cloudflare account owned by
+`seamsadmin@gmail.com`. Create the Purin infrastructure in the account owned by
+`purinindustries@gmail.com`. Move traffic from the source account `N6378056@gmail.com's Account`
+(`ba924da36f2ffc3839e8d323000b66b4`).
+Remove the source resources after verification to isolate future Cloudflare billing.
 
-Existing wallets, organisations, projects, sessions, signing material, and application records can be discarded.
-Create empty destination storage and new deployment keys.
-Keep the public hostnames and the current application behaviour.
-Use a planned maintenance window for the account and domain cutover.
+Existing wallets, organisations, projects, sessions, signing material, and application records
+are test data and are discarded (owner, 2026-11-20). Create empty destination storage. The
+deployment keys stay (owner, 2026-11-20), so the recovery certificates stay valid. The public
+host names change during the move (see "Public hosts"), so build the
+destination resources with the new host names from the start. Use a planned maintenance window
+for the account and domain cutover.
 
-Status: proposed plan, October 21, 2026. No Cloudflare resources changed.
-The inventory below comes from repository configuration and the installed `@seams/wallet-server@0.15.6` package.
-Phase 1 must reconcile it against both live Cloudflare accounts before execution.
+Status: plan updated on 2026-11-20. No Cloudflare resource has moved. The `seamsadmin@gmail.com`
+account (`ea0d54352cf9d80e962154980504b428`) is empty and on the Workers Free plan. The private
+repository moved to `purin-labs/monorepo` on 2026-11-20.
+
+### Decisions of 2026-11-20
+
+- `seamsadmin@gmail.com` holds every Seams Wallet resource: Workers, D1, Durable Objects, R2,
+  the Wallet and Platform Consoles, the Gateways, the Wallet site, the docs and the `seams.sh`
+  zone.
+- `purinindustries@gmail.com` holds the Purin resources: the company site, Pantry and the
+  `purin.io` zone.
+- The Platform Console stays with the Console Worker in the Seams account, on a `seams.sh` host.
+  Cloudflare Worker routes cannot cross accounts.
+- Pantry moves to the Purin account with `purin.io` host names. Pantry plans its own move in
+  its repository. Pantry reaches the Console through a Cloudflare service binding
+  (`ACCOUNT_PLATFORM` to `seams-sdk-d1-console*`), and a binding cannot cross accounts. So
+  Pantry keeps using the old Console Workers and their D1 databases in the source account
+  until it has its own accounts ([Refactor 260](refactor-260-console-split.md)). Do not
+  retire `seams-sdk-d1-console`, `seams-sdk-d1-console-staging` and their databases before
+  that.
+- `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
+- No host is renamed in the source account first.
+- Decided later on 2026-11-20: the Seams Wallet and its Console become one separate product
+  on `console.seams.sh`, and the Console code moves out of this repository to the
+  `seams-tech` GitHub organisation. Pantry and the Wallet stop sharing organisation accounts.
+  That split is [Refactor 260](refactor-260-console-split.md). Until it lands, this migration keeps the Platform Console
+  and the `/account-platform/v1/*` routes, and the `account.*` hosts are temporary.
+- The current deployment keys stay. Only the Cloudflare account values, the storage IDs and
+  the host names change.
+- The r150 benchmarks and the ML-DSA disposable fleet retire: they are not recreated. Their
+  evidence files stay.
+- `tatchi` (w3a) and `watchbook` retire with all their Workers and storage.
+- `hadimar`, `outlayer`, `underclerk` and `POLICY_KV` stay in the source account.
+- Delete a retired resource only after the owner confirms the list.
 
 ## Scope and completion conditions
 
@@ -19,8 +54,10 @@ Phase 1 must reconcile it against both live Cloudflare accounts before execution
 - Recreate all four wallet regions: `US`, `WEUR`, `APAC`, and `OC`.
 - Include Console, Gateways, Wallet Runtime, Router, Deriver A, Deriver B, and SigningWorker.
 - Include the tenant-root control plane, Durable Objects, D1, R2, Pages, DNS, certificates, secrets, and scheduled work.
-- Include all deployed benchmarks, diagnostic Workers, and resources absent from checked-in targets.
+- Find all deployed benchmarks, diagnostic Workers, and resources absent from checked-in targets. Retire them; do not recreate them.
 - Recreate any additional Seams service found during the live inventory.
+- Move the company site (`seams-site`) and the `purin.io` zone to the Purin account.
+- Move Pantry's Cloudflare resources to the Purin account through a Pantry plan.
 - Preserve unrelated workloads and their credentials in the source account.
 
 The migration is complete when every retained Seams resource belongs to the destination account.
@@ -31,7 +68,54 @@ Record residual charges from earlier usage separately from new usage.
 Cloudflare account ownership uses account IDs.
 Record both IDs before execution and require the destination ID for every destination command.
 Changing a login email or inviting another administrator does not accomplish this resource migration.
-Check the source email against the account ID because Console support addresses use a different spelling, `n6378056@gmail.com`.
+The source login is `n6378056@gmail.com` (checked with `wrangler whoami` on 2026-11-20).
+
+## Execution checklist
+
+Owner steps need the owner's accounts, money or credentials. Claude does the other steps.
+
+1. Done: the backend workflows run `account-bootstrap` before the role Workers and accept
+   `prepare_only`; a Pages deploy creates a missing project (`d4562c0b`). The company site can
+   use its own `COMPANY_CLOUDFLARE_*` credentials (`b65b871c`). The env-update command also
+   updates the control-plane environment (`49d834d2`).
+2. Done: `wrangler` on the deployment Mac is signed in as `seamsadmin@gmail.com`. R2 is on.
+3. Done: staging storage in `seamsadmin`: 8 D1 databases (APAC primaries in `SIN`) and all 6
+   R2 buckets. The Free plan stops at 10 D1 databases, so 14 production databases wait.
+   The complete signer (91, head `0091`) and Console (95, head `0118`) migration sets apply
+   cleanly to the empty staging databases. The ten Wallet Pages projects exist; each has a
+   suffixed `pages.dev` subdomain (for example `seams-wallet-site-staging-3vl.pages.dev`)
+   because the source account holds the plain names. The destination `seams.sh` records are
+   ready as two BIND files in the private inventory folder.
+   4a. Claude, before the production switch: add a former docs origin (`docs.wallet.seams.sh`
+   to `docs.seams.sh`) to the host redirects and change `PUBLIC_WALLET_DOCS_ORIGIN`.
+4. Done: Workers Paid on `seamsadmin`. All 24 D1 databases exist; every APAC primary is in
+   `SIN` (empty databases were recreated until placed), US in ATL or EWR, WEUR in LHR or CDG,
+   OC in SYD. The production target switch is a reviewed script in the private folder
+   (`apply-production-switch.py`), applied at the production cutover.
+5. Done: the `seamsadmin` API token is in the six values files under `~/.seams` (the old
+   pair stays as `COMPANY_CLOUDFLARE_*` in the two Wallet files that deploy the company site).
+6. Done for staging: the eight staging GitHub environments hold the `seamsadmin` values and
+   the new private D1 IDs, and the staging targets name the new hosts and storage (`7a378cf5`).
+7. Done for staging: the staging backend workflow with `prepare_only` passed in `seamsadmin`
+   ([run 44688679257](https://github.com/purin-labs/monorepo/actions/runs/44688679257)). All
+   14 staging Workers run real code there. The first run showed one problem: Cloudflare
+   answered "This Worker does not exist" right after a new script upload; the reservation now
+   retries (`437e94ec`). Until the zone moves, deploy staging only with `prepare_only`.
+   Next: the production lanes. They deploy from `main`, so `main` needs the deploy changes
+   and the production target switch first.
+8. Owner: add `seams.sh` to `seamsadmin` as a site with a plan (it stays pending). Claude:
+   load its DNS records from the inventory into the pending zone. Owner: start the Registrar
+   move in the source account (Manage Domain → Configuration → Start) and accept it in
+   `seamsadmin` within five days. The move carries only the registration ("No other
+   configuration will be moved"): DNS records, certificates, Email Routing, Worker routes and
+   Pages domains are made again in `seamsadmin`. This starts the maintenance window for all
+   lanes. The registration is then transfer-locked for 30 days. `purin.io` can move only from
+   2026-11-27 (more than 10 days after registration).
+9. Claude: deploy each lane with public routes, create the fresh Console organisation,
+   project and environment, record their IDs, activate, deploy the frontends and verify.
+   Recreate the `seams.sh` Email Routing rules and check the Resend records.
+10. Owner: confirm the retire list and sign `wrangler` in to the old account again. Claude:
+    remove the source Seams resources.
 
 ## Resource inventory
 
@@ -114,26 +198,55 @@ Use a new wallet for each regional verification flow.
 Check requested placement and observed host location separately.
 See [Durable Object data location](https://developers.cloudflare.com/durable-objects/reference/data-location/).
 
-### Frontends and public hostnames
+### Public hosts
 
-Create destination Pages projects for every configured surface.
-The baseline has five staging deployments and six production deployments, with separate testnet and mainnet wallet hosts.
-Resolve actual project names and any project sharing from GitHub environment values during inventory.
-Choose available destination project names and update the existing `CF_PAGES_PROJECT_*` values.
+Create a destination Pages project for every surface. Choose available destination project
+names and update the existing `CF_PAGES_PROJECT_*` values.
 
-| Surface                           | Staging                           | Production                                        |
-| --------------------------------- | --------------------------------- | ------------------------------------------------- |
-| Company site                      | `staging.seams.sh`                | `seams.sh`                                        |
-| Wallet site and public docs       | `staging.wallet.seams.sh`         | `wallet.seams.sh`                                 |
-| Wallet host                       | `staging.sign.seams.sh`           | `test.sign.seams.sh`, `sign.seams.sh`             |
-| Platform Console                  | `staging.console.seams.sh`        | `console.seams.sh`                                |
-| Wallet Console                    | `console.staging.wallet.seams.sh` | `console.wallet.seams.sh`                         |
-| Gateway                           | `staging.api.wallet.seams.sh`     | `test.api.wallet.seams.sh`, `api.wallet.seams.sh` |
-| Dedicated testnet Console backend | —                                 | `test.console.seams.sh`                           |
+| Surface                 | Account | Staging now                       | Staging after              | Production now                                    | Production after                    |
+| ----------------------- | ------- | --------------------------------- | -------------------------- | ------------------------------------------------- | ----------------------------------- |
+| Company site            | Purin   | `staging.seams.sh`                | `staging.purin.io`         | `seams.sh`                                        | `purin.io`                          |
+| Wallet site and Console | Seams   | `staging.wallet.seams.sh`         | `staging.seams.sh`         | `wallet.seams.sh`                                 | `seams.sh`                          |
+| Wallet docs             | Seams   | Pages preview                     | Pages preview              | `docs.wallet.seams.sh`                            | `docs.seams.sh`                     |
+| Wallet host             | Seams   | `staging.sign.seams.sh`           | no change                  | `test.sign.seams.sh`, `sign.seams.sh`             | no change                           |
+| Platform Console        | Seams   | `staging.console.seams.sh`        | `account.staging.seams.sh` | `console.seams.sh`                                | `account.seams.sh`                  |
+| Wallet Console          | Seams   | `console.staging.wallet.seams.sh` | `console.staging.seams.sh` | `console.wallet.seams.sh`                         | `console.seams.sh`                  |
+| Gateway                 | Seams   | `staging.api.wallet.seams.sh`     | `staging.api.seams.sh`     | `test.api.wallet.seams.sh`, `api.wallet.seams.sh` | `test.api.seams.sh`, `api.seams.sh` |
+| Testnet Console backend | Seams   | —                                 | —                          | `test.console.seams.sh`                           | open: the owner asked to remove it  |
 
-Preserve Console path routes on the site and Console hosts.
-DNS records alone do not recreate those routes.
-Inventory redirects, additional hostnames, and certificate coverage from the live zone.
+The owner chose `console.seams.sh` and `api.seams.sh`. The other new names are proposals.
+`account.seams.sh` and `account.staging.seams.sh` are proposed for the Platform Console.
+
+Rules for the host names:
+
+- Passkeys do not move. The Wallet RP IDs are `sign.seams.sh` and `staging.sign.seams.sh`.
+- Console step-up passkeys use the Wallet site host as the RP ID (`CONSOLE_STEP_UP_RP_ID`). The
+  Wallet Console must be a subdomain of that host: `console.seams.sh` under `seams.sh`, and
+  `console.staging.seams.sh` under `staging.seams.sh`.
+- The Console API shares the Wallet site host (`/console/*`, `/account-platform/v1/*` and
+  `/internal/tenant-deployment/v1/*`, from `buildConsoleRoutes`).
+- `test.console.seams.sh` is the Console of the production testnet lane, with its own Worker
+  and D1 database. The testnet demo calls it and `deploy-live-demo.yml` activates through it.
+  It stays until the testnet lane uses another Console.
+- An API host never redirects, because a browser does not follow a redirect for a CORS
+  preflight.
+
+Former hosts stay in the `seams.sh` zone, so they move to the Seams account with it:
+
+- `formerWalletSiteOrigins` (Wallet targets), `formerPlatformOrigins` and
+  `formerWalletConsoleOrigins` (Console targets) name them. `readHostRedirects` in
+  `scripts/deployment-targets.mjs` maps each one to its successor.
+- The `wallet-site` deploy deploys the Worker `seams-host-redirects-<site>`
+  (`deployment/host-redirects/worker.mjs`). It sends a 301 to the same path and query on the
+  successor, and the smoke checks each redirect.
+- The Console Worker keeps its API routes on a former Wallet site host, and the Gateway keeps a
+  former Gateway host as a second custom domain (`origins.formerGateways`).
+- A company page on `seams.sh` (for example `/company/`) redirects to `purin.io` through the
+  Wallet site `_redirects`.
+
+The deploy token of the source account can bind Pages hosts but cannot read or change DNS. A
+deploy waits until each Pages host is active. Give the destination deploy tokens the DNS
+permission, or make each new Pages host's proxied CNAME in the dashboard.
 
 ## Phase 1 — Record the complete source inventory
 
@@ -167,9 +280,31 @@ Store secret values only in the existing protected deployment files or secret ma
 
 **Exit condition:** every source Seams resource and shared dependency has a recorded disposition.
 
-## Phase 2 — Prepare the dedicated account and billing
+### Phase 1 result (Seams scope, 2026-11-20)
 
-1. Verify the `seamsadmin@gmail.com` account and enable multi-factor authentication.
+The private inventory is `.artifacts/cloudflare-account-migration-20261120/inventory.md`.
+
+- Workers: 43 Seams Workers to recreate, 24 to retire, 8 Purin, 3 that stay.
+- Durable Object namespaces: 18 Seams, 21 to retire, 12 Purin, 2 that stay.
+- D1: the active Seams databases plus 9 retired copies; 14 experiment databases retire.
+- Zones: `seams.sh` goes to the Seams account; `purin.io` and `seams.tokyo` (Pantry's
+  `shop.seams.tokyo`) go to the Purin account. `seams.tech`, `getsignal.pro` and `tatchi.xyz`
+  wait for an owner decision.
+- `seams.sh` has 35 records and no zone rules. Two of them belong to Pantry
+  (`*.voice.seams.sh`, `square-sandbox-webhook`).
+- Email Routing on `seams.sh` forwards `confirm@`, `peita@` and `admin@`. `sales@seams.sh` has no
+  rule, so contact mail to it does not arrive.
+- The testnet and staging Routers have public `workers.dev` addresses (`workers_dev = true` in
+  `seams-wallet`); the production Router does not.
+- Durable Object SQL writes cost $49 of $51 this period; the fresh start resets that storage.
+
+## Phase 2 — Prepare the destination accounts and billing
+
+Do these steps for `seamsadmin@gmail.com` (Seams) and for `purinindustries@gmail.com` (Purin).
+The Seams stack needs Workers Paid: the Free plan has 100,000 requests a day and short CPU
+limits.
+
+1. Verify the account and enable multi-factor authentication.
 2. Store recovery codes and administrator access through the team's existing secure process.
 3. Configure the Seams billing profile, payment method, invoice address, and budget alerts.
 4. Enable the required Workers, D1, DO, R2, Pages, and other inventoried services.
@@ -177,6 +312,8 @@ Store secret values only in the existing protected deployment files or secret ma
 6. Create destination-scoped deployment tokens using the existing Console and Wallet authority separation.
 7. Configure the destination Workers subdomain and record its new `workers.dev` suffix.
 8. Prepare the destination DNS zone and copy required zone settings.
+9. Give each deploy token Pages, Workers, Workers Routes, D1, R2 and DNS permissions for its
+   zone.
 
 Use the explicit destination account ID even when Wrangler can discover only one account.
 Keep source credentials separate for inventory and later removal.
@@ -239,6 +376,7 @@ See [Worker secrets](https://developers.cloudflare.com/workers/configuration/sec
 | Resend                            | Install Wallet and Console credentials. Preserve sender verification and all email DNS records.                                                               |
 | Stripe                            | Install the required credentials and webhook secret. Check old recurring subscriptions and pending webhook deliveries before discarding organisation records. |
 | Satyr connection, when configured | Update necessary service assertions and provisioning credentials. Preserve unrelated Satyr infrastructure.                                                    |
+| `info@purin.io`                   | Make it receive mail. Verify `purin.io` in Resend (SPF and DKIM) before it becomes the From address of Email OTP and Console mail.                            |
 
 Cloudflare migration does not transfer ownership or billing for Google Cloud, Stripe, Resend, or blockchain accounts.
 Deleting Cloudflare wallet records does not delete on-chain accounts or move their funds.
@@ -311,7 +449,10 @@ Remove the temporary verifier when verification finishes.
 
 ### Domain preparation
 
-Move the `seams.sh` Cloudflare zone into the dedicated account for complete Cloudflare isolation.
+Move `seams.sh` to the Seams account and `purin.io` to the Purin account.
+Both domains use Cloudflare Registrar, and neither has DNSSEC (checked 2026-11-20). Use the
+Registrar inter-account transfer. `purin.io` was registered on 2026-11-17, so check that it can
+move before you plan the window.
 Preserve unrelated DNS records and establish ownership for any shared zone settings before the move.
 Check all dependent hostnames because one zone change affects staging and production together.
 
@@ -474,6 +615,8 @@ Recovery means rebuilding a fresh service from the recorded artifacts and keys.
 | `scripts/deploy-backend.mjs`                                             | Extend service-name bootstrap and support preparation without public routes or scheduled work |
 | `packages/wallet-console-server-ts/scripts/render-d1-gateway-config.mjs` | Render the preparation configuration through the existing path                                |
 | `scripts/deploy-surface.mjs`                                             | Permit Pages upload before final domain attachment                                            |
+| `deployment/host-redirects/worker.mjs` and the former-host fields        | Redirect former hosts; keep their API routes                                                  |
+| `scripts/deploy-surface.mjs` and the frontend workflows                  | Deploy the company site with Purin account credentials, the Wallet surfaces with Seams ones   |
 | Existing Wallet and Console environment commands                         | Generate and apply fresh protected manifests with destination account inputs                  |
 | `.github/workflows/deploy-*.yml` and GitHub environments                 | Supply destination credentials and preserve protected activation                              |
 | `seams-wallet` benchmark configurations and deployment inputs            | Recreate deployed experiments and replace account-specific peer origins                       |
