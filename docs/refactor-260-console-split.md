@@ -21,7 +21,11 @@ Done on 2026-11-20:
 - Step 4, the deploy part: the company site deploys through its own workflow
   `Deploy / company site`, script `scripts/deploy-company-site.mjs` and targets
   `deployment/company-site/targets.json`. The Wallet frontend deploy has no company surface.
-  Not yet run in GitHub Actions.
+  `dev` was merged into `main` (`5a4e34d2`), because GitHub dispatches a workflow only from
+  the default branch. Staging run `44726726958` passed: `staging.purin.io` now serves 10
+  script chunks (420 KiB) with no Wallet code, against 23 (1,242 KiB, 3 with Wallet code)
+  on `purin.io` before. Production run `44730350445` from `main` passed too: `purin.io` now
+  serves the same 10 chunks, and its home page keeps its height, sections and text.
 
 Remaining:
 

@@ -164,17 +164,23 @@ Done after the cutover (2026-11-20):
 - `site:deploy:env-update` writes to the environment named after the site.
 - The obsolete `regional-deployment-config` test is deleted.
 - Pantry CI names `purin-labs/monorepo` (Pantry commit, local on its `main`).
+- Mainnet keeps the `:dev` environment (owner decision, 2026-11-20).
 
 Open:
 
-- Resend sender: add and verify `purin.io` in the Resend dashboard, then change
-  `fromAddress` from `confirm@seams.sh` to `info@purin.io` in both target files. The lane
-  keys can only send, so the domain needs a dashboard sign-in.
+- Resend sender, done in the dashboard and the target files (2026-11-21): Resend has the
+  verified domain `purin.io` (Tokyo). The `purin.io` zone holds its records: CNAME `send`
+  and `rsend`, TXT `resend._domainkey` and `_dmarc`. The one Resend key of all lanes had the
+  domain `seams.sh`; it now has "All domains" (owner decision). `fromAddress` is
+  `info@purin.io` in both target files. A test message from `info@purin.io` shows
+  "Delivered" for each lane key. Open: the production lanes send from the new address only
+  after their next backend deployment. Keep these four records when the zone moves.
 - Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
   projects and 3 containers are deleted in the source account. The record is the private file
-  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. Left: the
-  `watchbook-analytics` bucket (an expiry rule empties it first), one idle tunnel and the old
-  `seams.sh` zone.
+  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. The idle watchbook
+  tunnel is deleted too. The `watchbook-analytics` bucket is deleted too (2026-11-21, after its
+  expiry rule emptied it), so 12 R2 buckets are gone and 7 stay. The old `seams.sh` zone (status Moved) stays: it holds a route and
+  a custom domain of the kept Console and Gateway, and Cloudflare removes a moved zone itself.
 - Phase 7, Wave 2 waits for Pantry: `seams-sdk-d1-console`, its database, the mainnet
   Gateways and Wallet Runtimes it binds, and the mainnet Router roles, private databases and
   backup buckets that those reach.
@@ -183,7 +189,6 @@ Open:
 - The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
   `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
   the owner decides.
-- Mainnet environment: keep `:dev`, or enable Production.
 - Purin account move: `purin.io` can move from 2026-11-27. The Purin account needs the
   Workers Paid plan and an API token first.
 
