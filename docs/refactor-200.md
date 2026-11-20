@@ -78,7 +78,10 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    ready as two BIND files in the private inventory folder.
    4a. Claude, before the production switch: add a former docs origin (`docs.wallet.seams.sh`
    to `docs.seams.sh`) to the host redirects and change `PUBLIC_WALLET_DOCS_ORIGIN`.
-4. Owner: buy Workers Paid on `seamsadmin` before the production lanes.
+4. Done: Workers Paid on `seamsadmin`. All 24 D1 databases exist; every APAC primary is in
+   `SIN` (empty databases were recreated until placed), US in ATL or EWR, WEUR in LHR or CDG,
+   OC in SYD. The production target switch is a reviewed script in the private folder
+   (`apply-production-switch.py`), applied at the production cutover.
 5. Owner: create a `seamsadmin` account API token (Workers Scripts, D1, Workers R2 Storage,
    Cloudflare Pages Edit, Account Settings Read; for all zones Workers Routes Edit, Zone Read,
    DNS Edit). In `~/.seams/staging-deployment.env` rename the current Cloudflare pair to
