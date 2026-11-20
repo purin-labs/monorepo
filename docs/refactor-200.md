@@ -170,10 +170,16 @@ Open:
 - Resend sender: add and verify `purin.io` in the Resend dashboard, then change
   `fromAddress` from `confirm@seams.sh` to `info@purin.io` in both target files. The lane
   keys can only send, so the domain needs a dashboard sign-in.
-- Phase 7: the retirement list is in the private file
-  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. Delete nothing
-  before the owner confirms it. Wave 2 (`seams-sdk-d1-console`, its database and the
-  Workers it binds) waits for Pantry.
+- Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
+  projects and 3 containers are deleted in the source account. The record is the private file
+  `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. Left: the
+  `watchbook-analytics` bucket (an expiry rule empties it first), one idle tunnel and the old
+  `seams.sh` zone.
+- Phase 7, Wave 2 waits for Pantry: `seams-sdk-d1-console`, its database, the mainnet
+  Gateways and Wallet Runtimes it binds, and the mainnet Router roles, private databases and
+  backup buckets that those reach.
+- The `seams.tokyo` zone was deleted on 2026-11-20 09:12 UTC by the dashboard login, outside
+  this plan. `shop.seams.tokyo` does not resolve. The owner decides.
 - The Speak-to-Sign demo was not migrated: Pages `speak-to-sign`, Worker
   `seams-voice-intents-x-refresh` and two KV namespaces stay in the source account until
   the owner decides.
