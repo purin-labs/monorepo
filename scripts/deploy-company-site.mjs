@@ -38,8 +38,8 @@ const SITE_KEYS = Object.freeze([
 const PAGE_ENTRIES = Object.freeze([
   ['index.html', 'Home entry'],
   ['ja/index.html', 'Japanese home entry'],
-  ['ecommerce/index.html', 'Seams Pantry page entry'],
-  ['ja/ecommerce/index.html', 'Japanese Seams Pantry entry'],
+  ['ecommerce/index.html', 'Purin Pantry page entry'],
+  ['ja/ecommerce/index.html', 'Japanese Purin Pantry entry'],
   ['company/index.html', 'Company entry'],
   ['ja/company/index.html', 'Japanese company entry'],
   ['sitemap.xml', 'Sitemap'],

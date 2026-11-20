@@ -141,7 +141,7 @@ export function createSiteNavbarConfig(locale: Locale): SiteNavbarConfig {
   };
 
   // The About Us menu is shared with seams.sh.
-  const about = aboutMenu(locale);
+  const about = aboutMenu(locale, 'Seams');
 
   return {
     labels: {

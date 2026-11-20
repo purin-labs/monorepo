@@ -4,7 +4,7 @@ import type { SiteCopy } from '@/i18n/siteCopy';
 import { LanguageSelector } from '@/i18n/LanguageSelector';
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
-import SeamsWordmark from '@/components/icons/SeamsWordmark';
+import PurinWordmark from '@/components/icons/PurinWordmark';
 import { ArrowRightAnim } from '@/components/ArrowRightAnim';
 import { GrainField, type GrainFieldName } from '@seams-internal/grain-field';
 import { InkDrawing } from '@/components/h2/ink/InkScene';
@@ -676,7 +676,7 @@ export function H2Duo(): React.JSX.Element {
           <a className="h2-duo__panel" href={satyrProps.href} onClick={satyrProps.onClick}>
             <h3 className="h2-duo__title">
               <InkTile sign="shop" />
-              Seams Pantry
+              Purin Pantry
             </h3>
             <p className="h2-duo__panel-copy">{copy.duo.satyr}</p>
             <div className="h2-duo__visual">
@@ -1009,13 +1009,13 @@ function getFooterGroups(t: Translate): { heading: string; links: H2FooterLink[]
     {
       heading: t('products'),
       links: [
-        { label: 'Seams Pantry', to: '/ecommerce' },
+        { label: 'Purin Pantry', to: '/ecommerce' },
         { label: 'Kitchen', to: '/ecommerce#kitchen' },
         { label: 'Seams Wallet', to: '/wallet' },
       ],
     },
     {
-      heading: 'Seams Pantry',
+      heading: 'Purin Pantry',
       links: [
         { label: t('theSuite'), to: '/ecommerce#suite' },
         { label: t('agentWorkflows'), to: '/ecommerce#workflows' },
@@ -1115,8 +1115,8 @@ export function H2Footer({ faq }: { faq?: FooterFaqAudience } = {}): React.JSX.E
     <footer className="h2-footer h2-rule" aria-label={t('siteFooter')}>
       <div className="h2-footer__inner">
         <div className="h2-footer__brand">
-          <a href={homeProps.href} onClick={homeProps.onClick} aria-label={t('seamsHome')}>
-            <SeamsWordmark height={20} />
+          <a href={homeProps.href} onClick={homeProps.onClick} aria-label={t('purinHome')}>
+            <PurinWordmark height={32} />
           </a>
           <LanguageSelector placement="footer" />
         </div>

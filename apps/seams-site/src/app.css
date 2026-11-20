@@ -102,14 +102,7 @@ body,
   font-family: var(--site-font-sans);
 }
 
-.seams-logo-icon {
-  display: block;
-  flex: 0 0 auto;
-  object-fit: contain;
-  user-select: none;
-}
-
-.seams-wordmark {
+.purin-wordmark {
   display: inline-block;
   flex: 0 0 auto;
   vertical-align: middle;

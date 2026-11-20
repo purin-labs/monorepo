@@ -1,8 +1,8 @@
 import type { Locale } from './locale';
 
-/* The copy of the home page, the Seams Pantry page and the 404 page. English
+/* The copy of the home page, the Purin Pantry page and the 404 page. English
    is the source; Japanese must fill the same shape, so a missing string fails
-   the type check. Product and area names (Seams Pantry, Sous Chef, Kitchen,
+   the type check. Product and area names (Purin Pantry, Sous Chef, Kitchen,
    Seams Wallet, Slack) and
    Portal screenshots stay in English. A `rest` string follows a bold `lead`
    with no space added, so English starts it with a space and Japanese does not. */
@@ -14,7 +14,7 @@ const Z = '\u200b';
 const en = {
   common: {
     talkToUs: 'Talk to us',
-    exploreSatyr: 'Explore Seams Pantry',
+    exploreSatyr: 'Explore Purin Pantry',
     exploreKitchen: 'Explore the Kitchen',
     exploreWallet: 'Explore Seams Wallet',
     readDocs: 'Read the docs',
@@ -22,7 +22,7 @@ const en = {
     productViews: 'Product views',
   },
   homeHero: {
-    title: 'Seams Pantry:',
+    title: 'Purin Pantry:',
     titleMuted: 'the operating system for modern bakeries & cafés.',
     sub: 'Sous Chef agents run your shop, inbox and bake plan. Changes that matter wait for your approval.',
   },
@@ -32,7 +32,7 @@ const en = {
     views: 'Product views',
     explore: 'Explore {name}',
     features: '{name} features',
-    tabs: { satyr: 'Seams Pantry', kitchen: 'Kitchen' },
+    tabs: { satyr: 'Purin Pantry', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: 'Replies wait for you',
@@ -111,7 +111,7 @@ const en = {
       vault: {
         label: 'Vault',
         lead: 'Logins and keys that agents use but never see.',
-        rest: ' Keep them in Seams Vault or in your own 1Password.',
+        rest: ' Keep them in Purin Vault or in your own 1Password.',
         alt: 'The Vault page in Pantry: logins and API keys that agents use',
       },
     },
@@ -232,14 +232,14 @@ const en = {
     },
   },
   walletBand: {
-    title: 'Also from Seams: Seams Wallet',
+    title: 'Also from Purin: Seams Wallet',
     sub: 'A stablecoin wallet that opens with a passkey. Keys are split between the device and the server, so neither side can sign alone.',
   },
   cta: {
     home: {
       title: 'Put agents to work in your café',
       sub: 'We connect the shop, Slack and your mailbox with you, and we set the first approval rules together.',
-      secondary: 'Explore Seams Pantry',
+      secondary: 'Explore Purin Pantry',
     },
     ecommerce: {
       title: 'See Pantry run your shop',
@@ -257,9 +257,9 @@ const en = {
     },
     items: {
       whatIsSatyr: {
-        q: 'What is Seams Pantry?',
-        a: 'Seams Pantry is the operating system for modern bakeries and cafés. Sous Chef agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
-        more: 'Explore Seams Pantry',
+        q: 'What is Purin Pantry?',
+        a: 'Purin Pantry is the operating system for modern bakeries and cafés. Sous Chef agents run the online shop, menus, orders, payments, the inbox and the bake plan, and they work with your team in Slack and in the Portal.',
+        more: 'Explore Purin Pantry',
       },
       agents: {
         q: 'What can the agents do?',
@@ -273,7 +273,7 @@ const en = {
       },
       secrets: {
         q: 'Do agents see our passwords and keys?',
-        a: 'No. Logins and API keys stay in the Vault: Seams Vault or your own 1Password. Agents use them without seeing them, and no key enters a prompt or a transcript.',
+        a: 'No. Logins and API keys stay in the Vault: Purin Vault or your own 1Password. Agents use them without seeing them, and no key enters a prompt or a transcript.',
         more: '',
       },
       tools: {
@@ -283,7 +283,7 @@ const en = {
       },
       models: {
         q: 'Which AI models does Pantry use?',
-        a: 'You choose. Sign in with your ChatGPT account, add your own OpenAI API key, or use the models that Seams provides.',
+        a: 'You choose. Sign in with your ChatGPT account, add your own OpenAI API key, or use the models that Purin provides.',
         more: '',
       },
       start: {
@@ -295,7 +295,7 @@ const en = {
   },
   ecommerceHero: {
     title: 'Agents that run your café’s shop, inside your rules',
-    sub: 'Seams Pantry connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
+    sub: 'Purin Pantry connects the online shop, menus, payments, the inbox and the kitchen plan. Sous Chef agents work with your team in Slack and in the Portal. Each change that matters waits for your approval, and every action leaves a receipt.',
     secondary: 'See inside Pantry',
     scenes: 'Product scenes',
     previous: 'Previous product scene',
@@ -344,7 +344,7 @@ export type SiteCopy = typeof en;
 const ja: SiteCopy = {
   common: {
     talkToUs: 'ご相談はこちら',
-    exploreSatyr: 'Seams Pantryを見る',
+    exploreSatyr: 'Purin Pantryを見る',
     exploreKitchen: 'Kitchenを見る',
     exploreWallet: 'Seams Walletを見る',
     readDocs: 'ドキュメントを読む',
@@ -352,7 +352,7 @@ const ja: SiteCopy = {
     productViews: '製品の画面',
   },
   homeHero: {
-    title: 'Seams Pantry：',
+    title: 'Purin Pantry：',
     titleMuted: `モダンな${Z}ベーカリーと${Z}カフェの${Z}ための${Z}OS。`,
     sub: 'Sous Chefエージェントが、ショップ、受信箱、生産計画を運営します。重要な変更は、あなたの承認を待ちます。',
   },
@@ -362,7 +362,7 @@ const ja: SiteCopy = {
     views: '製品の画面',
     explore: '{name}を見る',
     features: '{name}の機能',
-    tabs: { satyr: 'Seams Pantry', kitchen: 'Kitchen' },
+    tabs: { satyr: 'Purin Pantry', kitchen: 'Kitchen' },
     items: {
       inbox: {
         title: '返信はあなたの承認待ち',
@@ -441,7 +441,7 @@ const ja: SiteCopy = {
       vault: {
         label: 'Vault',
         lead: 'エージェントが使い、中身は見ないログイン情報とキー。',
-        rest: 'Seams Vault、またはあなたの1Passwordに保管します。',
+        rest: 'Purin Vault、またはあなたの1Passwordに保管します。',
         alt: 'PantryのVaultページ：エージェントが使うログイン情報とAPIキー',
       },
     },
@@ -562,14 +562,14 @@ const ja: SiteCopy = {
     },
   },
   walletBand: {
-    title: `Seamsの${Z}もうひとつの${Z}製品：${Z}Seams Wallet`,
+    title: `Purinの${Z}もうひとつの${Z}製品：${Z}Seams Wallet`,
     sub: 'パスキーで開くステーブルコインウォレットです。鍵を端末とサーバーに分散するため、どちらか一方だけでは署名できません。',
   },
   cta: {
     home: {
       title: `あなたの${Z}カフェで、${Z}エージェントを${Z}働かせよう`,
       sub: 'ショップ、Slack、メールボックスの接続をご一緒に行い、最初の承認ルールも一緒に設定します。',
-      secondary: 'Seams Pantryを見る',
+      secondary: 'Purin Pantryを見る',
     },
     ecommerce: {
       title: `Pantryが${Z}あなたの${Z}ショップを${Z}運営する${Z}様子を見る`,
@@ -587,9 +587,9 @@ const ja: SiteCopy = {
     },
     items: {
       whatIsSatyr: {
-        q: 'Seams Pantryとは？',
-        a: 'Seams Pantryは、モダンなベーカリーとカフェのためのOSです。Sous Chefエージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
-        more: 'Seams Pantryを見る',
+        q: 'Purin Pantryとは？',
+        a: 'Purin Pantryは、モダンなベーカリーとカフェのためのOSです。Sous Chefエージェントがオンラインショップ、メニュー、注文、決済、受信箱、生産計画を運営し、Slackとポータルであなたのチームと一緒に働きます。',
+        more: 'Purin Pantryを見る',
       },
       agents: {
         q: 'エージェントは何ができますか？',
@@ -603,7 +603,7 @@ const ja: SiteCopy = {
       },
       secrets: {
         q: 'エージェントはパスワードやキーを見ますか？',
-        a: 'いいえ。ログイン情報とAPIキーはVault（Seams Vault、またはあなたの1Password）に保管します。エージェントは中身を見ずに使い、キーがプロンプトや会話記録に入ることはありません。',
+        a: 'いいえ。ログイン情報とAPIキーはVault（Purin Vault、またはあなたの1Password）に保管します。エージェントは中身を見ずに使い、キーがプロンプトや会話記録に入ることはありません。',
         more: '',
       },
       tools: {
@@ -613,7 +613,7 @@ const ja: SiteCopy = {
       },
       models: {
         q: 'PantryはどのAIモデルを使いますか？',
-        a: 'お選びいただけます。ChatGPTアカウントでサインインする、ご自身のOpenAI APIキーを追加する、またはSeamsが提供するモデルを使う、のいずれかです。',
+        a: 'お選びいただけます。ChatGPTアカウントでサインインする、ご自身のOpenAI APIキーを追加する、またはPurinが提供するモデルを使う、のいずれかです。',
         more: '',
       },
       start: {
@@ -625,7 +625,7 @@ const ja: SiteCopy = {
   },
   ecommerceHero: {
     title: `あなたの${Z}ルールの中で、${Z}カフェの${Z}ショップを${Z}運営する${Z}エージェント`,
-    sub: 'Seams Pantryは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
+    sub: 'Purin Pantryは、オンラインショップ、メニュー、決済、受信箱、キッチンの計画をつなぎます。Sous ChefエージェントはSlackとポータルであなたのチームと一緒に働きます。重要な変更はあなたの承認を待ち、すべての操作に記録が残ります。',
     secondary: 'Pantryの中を見る',
     scenes: '製品のシーン',
     previous: '前のシーン',

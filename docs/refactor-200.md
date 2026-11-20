@@ -173,8 +173,11 @@ Open:
   and `rsend`, TXT `resend._domainkey` and `_dmarc`. The one Resend key of all lanes had the
   domain `seams.sh`; it now has "All domains" (owner decision). `fromAddress` is
   `info@purin.io` in both target files. A test message from `info@purin.io` shows
-  "Delivered" for each lane key. Open: the production lanes send from the new address only
-  after their next backend deployment. Keep these four records when the zone moves.
+  "Delivered" for each lane key. Production has the sender since 2026-11-21: `main` merge
+  `0e6aed43`, full-stack runs 44760463374 (testnet) and 44762816205 (mainnet), both passed
+  with activation. The deployed Consoles and all Gateways have `info@purin.io` in
+  `CONSOLE_EMAIL_FROM` and `EMAIL_OTP_FROM_ADDRESS`. Not tested: a real Email OTP message
+  from production. Keep these four records when the zone moves.
 - Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
   projects and 3 containers are deleted in the source account. The record is the private file
   `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. The idle watchbook
