@@ -26,14 +26,19 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
   `purin.io` zone.
 - The Platform Console stays with the Console Worker in the Seams account, on a `seams.sh` host.
   Cloudflare Worker routes cannot cross accounts.
-- Pantry moves to the Purin account with `purin.io` host names. It calls the Seams account
-  authority over HTTPS. Pantry plans its own move in its repository.
+- Pantry moves to the Purin account with `purin.io` host names. Pantry plans its own move in
+  its repository. Pantry reaches the Console through a Cloudflare service binding
+  (`ACCOUNT_PLATFORM` to `seams-sdk-d1-console*`), and a binding cannot cross accounts. So
+  Pantry keeps using the old Console Workers and their D1 databases in the source account
+  until it has its own accounts ([Refactor 260](refactor-260-console-split.md)). Do not
+  retire `seams-sdk-d1-console`, `seams-sdk-d1-console-staging` and their databases before
+  that.
 - `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
 - No host is renamed in the source account first.
 - Decided later on 2026-11-20: the Seams Wallet and its Console become one separate product
   on `console.seams.sh`, and the Console code moves out of this repository to the
   `seams-tech` GitHub organisation. Pantry and the Wallet stop sharing organisation accounts.
-  That split is its own project. Until it lands, this migration keeps the Platform Console
+  That split is [Refactor 260](refactor-260-console-split.md). Until it lands, this migration keeps the Platform Console
   and the `/account-platform/v1/*` routes, and the `account.*` hosts are temporary.
 - The current deployment keys stay. Only the Cloudflare account values, the storage IDs and
   the host names change.
