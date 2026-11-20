@@ -281,7 +281,7 @@
           "kind": "provider_and_demo_code",
           "provider": {
             "kind": "resend",
-            "fromAddress": "confirm@seams.sh"
+            "fromAddress": "info@purin.io"
           }
         },
         "resources": {
@@ -521,7 +521,7 @@
           "kind": "email_provider",
           "provider": {
             "kind": "resend",
-            "fromAddress": "confirm@seams.sh"
+            "fromAddress": "info@purin.io"
           }
         },
         "resources": {
