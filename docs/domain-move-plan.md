@@ -80,8 +80,9 @@ Rules for these hosts:
 - The `wallet-site` deploy moves the host from the company project when needed, deploys
   the Worker `seams-host-redirects-<site>` (`deployment/host-redirects/worker.mjs`), and its
   smoke checks each redirect.
-- A Pages host that a deploy binds for the first time also gets its DNS record, a proxied
-  CNAME to the project.
+- The deploy token can bind Pages hosts but cannot read or change DNS. A deploy waits until
+  each Pages host is active. A new host needs its proxied CNAME to the project first, made in
+  the Cloudflare dashboard.
 
 ## What does not break
 

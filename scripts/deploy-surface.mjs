@@ -585,8 +585,9 @@ function deployPagesProject(outputDirectory, site, projectName) {
   runCommand('pnpm', args);
 }
 
-/* Binds the host to the Pages project. A new binding also points the DNS record at
-   the project. `releaseFrom` names the other projects that may hold the host. */
+/* Binds the host to the Pages project. `releaseFrom` names the other projects that may
+   hold the host before a move. The deploy token cannot change DNS, so a new binding
+   stops the deploy until the host's DNS record is a proxied CNAME to the project. */
 async function ensurePagesCustomDomain(origin, projectName, releaseFrom = []) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -595,57 +596,38 @@ async function ensurePagesCustomDomain(origin, projectName, releaseFrom = []) {
   const domainPath = (project) =>
     `${projectsPath}/${encodeURIComponent(project)}/domains/${encodeURIComponent(hostname)}`;
   const existing = await requestCloudflareApi(domainPath(projectName), apiToken, 'GET', [200, 404]);
-  if (existing.status === 200) return;
-  for (const previous of releaseFrom.filter((name) => name && name !== projectName)) {
-    const held = await requestCloudflareApi(domainPath(previous), apiToken, 'GET', [200, 404]);
-    if (held.status !== 200) continue;
-    await requestCloudflareApi(domainPath(previous), apiToken, 'DELETE', [200]);
-    process.stdout.write(`Released Pages custom domain ${hostname} from ${previous}\n`);
-  }
-  await requestCloudflareApi(
-    `${projectsPath}/${encodeURIComponent(projectName)}/domains`,
-    apiToken,
-    'POST',
-    [200],
-    { name: hostname },
-  );
-  process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
-  await ensurePagesDnsRecord(hostname, `${projectName}.pages.dev`, apiToken);
-}
-
-/* A Pages host is a proxied CNAME to its project. Only a CNAME to another Pages
-   project is changed; any other record stops the deploy. */
-async function ensurePagesDnsRecord(hostname, target, apiToken) {
-  const zoneName = hostname.split('.').slice(-2).join('.');
-  const zones = await readCloudflareJson(`/zones?name=${encodeURIComponent(zoneName)}`, apiToken);
-  const zone = zones.result?.[0];
-  if (!zone) throw new Error(`Cloudflare zone ${zoneName} is not visible to the deploy token`);
-  const recordsPath = `/zones/${zone.id}/dns_records`;
-  const records = await readCloudflareJson(
-    `${recordsPath}?name=${encodeURIComponent(hostname)}`,
-    apiToken,
-  );
-  const [record, ...others] = records.result ?? [];
-  if (others.length > 0) throw new Error(`${hostname} has more than one DNS record`);
-  const desired = { type: 'CNAME', name: hostname, content: target, proxied: true, ttl: 1 };
-  if (!record) {
-    await requestCloudflareApi(recordsPath, apiToken, 'POST', [200], desired);
-    process.stdout.write(`Created DNS record ${hostname} -> ${target}\n`);
-    return;
-  }
-  if (record.type === 'CNAME' && record.content === target && record.proxied) return;
-  if (record.type !== 'CNAME' || !record.content.endsWith('.pages.dev')) {
-    throw new Error(
-      `${hostname} has a ${record.type} record to ${record.content}; change it by hand`,
+  if (existing.status !== 200) {
+    for (const previous of releaseFrom.filter((name) => name && name !== projectName)) {
+      const held = await requestCloudflareApi(domainPath(previous), apiToken, 'GET', [200, 404]);
+      if (held.status !== 200) continue;
+      await requestCloudflareApi(domainPath(previous), apiToken, 'DELETE', [200]);
+      process.stdout.write(`Released Pages custom domain ${hostname} from ${previous}\n`);
+    }
+    await requestCloudflareApi(
+      `${projectsPath}/${encodeURIComponent(projectName)}/domains`,
+      apiToken,
+      'POST',
+      [200],
+      { name: hostname },
     );
+    process.stdout.write(`Bound Pages custom domain: ${hostname}\n`);
   }
-  await requestCloudflareApi(`${recordsPath}/${record.id}`, apiToken, 'PATCH', [200], desired);
-  process.stdout.write(`Pointed DNS record ${hostname} -> ${target}\n`);
+  await waitForActivePagesDomain(domainPath(projectName), hostname, projectName, apiToken);
 }
 
-async function readCloudflareJson(apiPath, apiToken) {
-  const response = await requestCloudflareApi(apiPath, apiToken, 'GET', [200]);
-  return response.json();
+async function waitForActivePagesDomain(domainPath, hostname, projectName, apiToken) {
+  const deadline = Date.now() + 120_000;
+  let status = '';
+  while (Date.now() < deadline) {
+    const response = await requestCloudflareApi(domainPath, apiToken, 'GET', [200]);
+    status = String((await response.json()).result?.status || '');
+    if (status === 'active') return;
+    await new Promise((resolve) => setTimeout(resolve, 10_000));
+  }
+  throw new Error(
+    `Pages custom domain ${hostname} is ${status || 'not active'}. ` +
+      `Make its DNS record a proxied CNAME to ${projectName}.pages.dev, then deploy again.`,
+  );
 }
 
 /* One Worker per site sends every former host to its successor. */
