@@ -29,6 +29,11 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
   authority over HTTPS. Pantry plans its own move in its repository.
 - `info@purin.io` replaces `sales@seams.sh` and `confirm@seams.sh`.
 - No host is renamed in the source account first.
+- The r150 benchmarks and the ML-DSA disposable fleet retire: they are not recreated. Their
+  evidence files stay.
+- `tatchi` (w3a) and `watchbook` retire with all their Workers and storage.
+- `hadimar`, `outlayer`, `underclerk` and `POLICY_KV` stay in the source account.
+- Delete a retired resource only after the owner confirms the list.
 
 ## Scope and completion conditions
 
@@ -36,7 +41,7 @@ repository moved to `purin-labs/monorepo` on 2026-11-20.
 - Recreate all four wallet regions: `US`, `WEUR`, `APAC`, and `OC`.
 - Include Console, Gateways, Wallet Runtime, Router, Deriver A, Deriver B, and SigningWorker.
 - Include the tenant-root control plane, Durable Objects, D1, R2, Pages, DNS, certificates, secrets, and scheduled work.
-- Include all deployed benchmarks, diagnostic Workers, and resources absent from checked-in targets.
+- Find all deployed benchmarks, diagnostic Workers, and resources absent from checked-in targets. Retire them; do not recreate them.
 - Recreate any additional Seams service found during the live inventory.
 - Move the company site (`seams-site`) and the `purin.io` zone to the Purin account.
 - Move Pantry's Cloudflare resources to the Purin account through a Pantry plan.
