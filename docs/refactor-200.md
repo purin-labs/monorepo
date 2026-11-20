@@ -220,6 +220,24 @@ Store secret values only in the existing protected deployment files or secret ma
 
 **Exit condition:** every source Seams resource and shared dependency has a recorded disposition.
 
+### Phase 1 result (Seams scope, 2026-11-20)
+
+The private inventory is `.artifacts/cloudflare-account-migration-20261120/inventory.md`.
+
+- Workers: 43 Seams Workers to recreate, 24 to retire, 8 Purin, 3 that stay.
+- Durable Object namespaces: 18 Seams, 21 to retire, 12 Purin, 2 that stay.
+- D1: the active Seams databases plus 9 retired copies; 14 experiment databases retire.
+- Zones: `seams.sh` goes to the Seams account; `purin.io` and `seams.tokyo` (Pantry's
+  `shop.seams.tokyo`) go to the Purin account. `seams.tech`, `getsignal.pro` and `tatchi.xyz`
+  wait for an owner decision.
+- `seams.sh` has 35 records and no zone rules. Two of them belong to Pantry
+  (`*.voice.seams.sh`, `square-sandbox-webhook`).
+- Email Routing on `seams.sh` forwards `confirm@`, `peita@` and `admin@`. `sales@seams.sh` has no
+  rule, so contact mail to it does not arrive.
+- The testnet and staging Routers have public `workers.dev` addresses (`workers_dev = true` in
+  `seams-wallet`); the production Router does not.
+- Durable Object SQL writes cost $49 of $51 this period; the fresh start resets that storage.
+
 ## Phase 2 — Prepare the destination accounts and billing
 
 Do these steps for `seamsadmin@gmail.com` (Seams) and for `purinindustries@gmail.com` (Purin).
