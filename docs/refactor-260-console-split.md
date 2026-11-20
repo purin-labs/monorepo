@@ -25,7 +25,7 @@ Remaining:
 | ------------------------------------ | --------------------- | ---------------------------------------------- |
 | 2. Keep Pantry's old Console Workers | Refactor 200, Phase 7 | Holds until step 3 ends                        |
 | 3. Pantry's own accounts             | Pantry Plan 95        | Plan 95 steps 1 to 4 (decisions taken)         |
-| 4. The company site deploy path      | This plan             | The company site's Purin account move          |
+| 4. The company site deploy path      | This plan             | The owner's go-ahead; nothing else blocks it   |
 | 5. Remove the Pantry service         | This plan             | Step 3                                         |
 | 6. Move the deploys                  | This plan             | Steps 1 and 4, six secrets, a new release root |
 | 7. New OIDC identity                 | This plan             | Part of step 6                                 |
@@ -213,9 +213,18 @@ five recommendations:
      package. The unused Wallet figures were deleted instead of copied.
    - Give the company site its own target file and deploy script. Its build no longer needs
      Wallet lane values; it reads only `VITE_SITE_ORIGIN`, `VITE_WALLET_SITE_ORIGIN` and
-     `VITE_DOCS_ORIGIN`. Do this with the company site's move to the Purin Cloudflare
-     account (Refactor 200), so the new script uses the Purin credentials
-     (`COMPANY_CLOUDFLARE_*`) from the start.
+     `VITE_DOCS_ORIGIN`. Build it on the existing company path: `withCompanyCloudflareAccount`
+     in `scripts/deploy-surface.mjs` deploys with the `COMPANY_CLOUDFLARE_ACCOUNT_ID` and
+     `COMPANY_CLOUDFLARE_API_TOKEN` secrets. Keep the new script free of account and zone
+     ids: only those two secrets and the Pages project name. Tell the Refactor 200 session
+     before a push that changes `scripts/deploy-surface.mjs`, because the Wallet lanes use it.
+   - This does not wait for the company site's move to the Purin Cloudflare account. The
+     owner ordered the Seams Wallet move first, then Purin; the Purin move has no owner yet.
+     `purin.io` can change accounts from 2026-11-27, and the Purin account has no API token
+     or Workers Paid plan yet. With the script in place, that move is: create the Pages
+     project in the Purin account, change the two secrets, deploy, then move the `purin.io`
+     zone and the custom domains. Refactor 200 Phase 7 does not touch the company Pages
+     project or `purin.io`.
 5. **Remove the Pantry service from the Console** (the list in "Accounts and billing").
    Remove the Platform Console build and the `account.*` hosts. Move the Console API to
    `console.seams.sh`.
