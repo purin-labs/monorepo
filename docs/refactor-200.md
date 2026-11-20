@@ -82,8 +82,14 @@ Owner steps need the owner's accounts, money or credentials. Claude does the oth
    target switch (new hosts and storage IDs).
 7. Claude: run the staging backend workflow with `prepare_only` and fix what an empty account
    shows. Then the same for the production lanes.
-8. Owner: move `seams.sh` to `seamsadmin` through the Cloudflare Registrar inter-account
-   transfer. This starts the maintenance window for all lanes.
+8. Owner: add `seams.sh` to `seamsadmin` as a site with a plan (it stays pending). Claude:
+   load its DNS records from the inventory into the pending zone. Owner: start the Registrar
+   move in the source account (Manage Domain → Configuration → Start) and accept it in
+   `seamsadmin` within five days. The move carries only the registration ("No other
+   configuration will be moved"): DNS records, certificates, Email Routing, Worker routes and
+   Pages domains are made again in `seamsadmin`. This starts the maintenance window for all
+   lanes. The registration is then transfer-locked for 30 days. `purin.io` can move only from
+   2026-11-27 (more than 10 days after registration).
 9. Claude: deploy each lane with public routes, create the fresh Console organisation,
    project and environment, record their IDs, activate, deploy the frontends and verify.
    Recreate the `seams.sh` Email Routing rules and check the Resend records.
