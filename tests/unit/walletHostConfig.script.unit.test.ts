@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { loadWalletHostConfig } from '../../apps/wallet-console/src/frontendConfig';
+import { readBackendLane } from '../../scripts/deployment-targets.mjs';
+
+// The frontend names each Gateway host itself. The deployment targets own the
+// hosts, so a host move that misses the frontend fails here.
+function discoveryUrl(lane: string): string {
+  return `${readBackendLane(lane).gatewayOrigin}/.well-known/seams-tenant-deployment.json`;
+}
 
 const productionEnvironment = {
   BASE_URL: '/',
@@ -33,16 +40,12 @@ test('hosted settings discovers only the tenant belonging to the current wallet 
     await expect(
       loadWalletHostConfig(productionEnvironment, 'https://sign.seams.sh'),
     ).rejects.toThrow('Tenant deployment is unavailable');
-    expect(requests.urls).toEqual([
-      'https://api.wallet.seams.sh/.well-known/seams-tenant-deployment.json',
-    ]);
+    expect(requests.urls).toEqual([discoveryUrl('production-mainnet')]);
     requests.urls.length = 0;
     await expect(
       loadWalletHostConfig(productionEnvironment, 'https://test.sign.seams.sh'),
     ).rejects.toThrow('Tenant deployment is unavailable');
-    expect(requests.urls).toEqual([
-      'https://test.api.wallet.seams.sh/.well-known/seams-tenant-deployment.json',
-    ]);
+    expect(requests.urls).toEqual([discoveryUrl('production-testnet')]);
     requests.urls.length = 0;
     await expect(
       loadWalletHostConfig(productionEnvironment, 'https://unknown.example'),
