@@ -34,6 +34,7 @@ const WALLET_SYSTEM_CLOUDFLARE_ENVIRONMENT_SUFFIXES = Object.freeze([
   '-deriver-a',
   '-deriver-b',
   '-signing-worker',
+  '-tenant-root-control-plane',
 ]);
 const GATEWAY_SECRET_INPUTS = Object.freeze([
   ['SPONSORED_EVM_EXECUTORS_JSON', 'SPONSORED_EVM_EXECUTORS_JSON'],
