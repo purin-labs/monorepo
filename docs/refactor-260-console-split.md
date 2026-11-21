@@ -56,6 +56,11 @@ Done on 2026-11-21:
     2026-11-20 15:09 UTC) passed it. Nothing changed on Deriver B; Deriver A and the
     Signing Worker redeployed the same role code. The testnet Console keeps working: its
     CORS list already includes `console.seams.sh`.
+- Cleanup, confirmed by the owner: the Pages projects `seams-platform-console` and
+  `seams-platform-console-staging` are deleted; `CF_PAGES_PROJECT_PLATFORM_CONSOLE`,
+  `COMPANY_CLOUDFLARE_*` and `CF_PAGES_PROJECT_VITE` are deleted from this repository's
+  `staging` and `production` environments, and the env scripts no longer write them
+  (`5e71da5b`); the repository `seams-tech/seams-console-mirror` is deleted.
 
 Done on 2026-11-20:
 
@@ -86,7 +91,6 @@ Remaining:
 | 3. Pantry's own accounts             | Pantry Plan 95     | Steps 2 to 4 (in test), then the step 5 gate  |
 | 5. Remove the Pantry service         | This plan          | Plan 95 step 4 (see below)                    |
 | Testnet deploy of `4ab30f88`         | Owner              | The Deriver B D1 placement (HKG, not SIN)     |
-| Cleanup of retired resources         | Owner confirms     | Nothing                                       |
 
 Steps 4, 6, 7 and 8 are done; step 9 is void, because `purin-labs/purin-monorepo` is a new
 repository. Refactor 200's migration session is archived, so Wave 2 and the placement
@@ -98,12 +102,6 @@ question have no other owner.
   Pantry production binds the old Console Worker in the old account and does not see code
   changes here. Pantry CI checks out `purin-labs/monorepo` at `3a05ce4`; the redirect keeps
   that working until Plan 95 step 4 deletes the step.
-- Cleanup, each item permanent, so the owner confirms the list: the Pages projects
-  `seams-platform-console` and `seams-platform-console-staging` (no host since the move); the
-  `CF_PAGES_PROJECT_PLATFORM_CONSOLE` secret, and `COMPANY_CLOUDFLARE_*` and
-  `CF_PAGES_PROJECT_VITE`, in this repository's `staging` and `production` environments
-  (copies are in `purin-labs/purin-monorepo` and `~/.seams`); and the repository
-  `seams-tech/seams-console-mirror`.
 
 ## Decision
 
