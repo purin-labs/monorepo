@@ -20,13 +20,6 @@ const CLOUDFLARE_SECRET_INPUTS = Object.freeze([
   ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_API_TOKEN'],
   ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_ACCOUNT_ID'],
 ]);
-// Refactor 200: the company site stays in another Cloudflare account than the
-// Wallet surfaces. Both are optional; without them the company site uses the
-// Wallet credentials.
-const COMPANY_CLOUDFLARE_SECRET_INPUTS = Object.freeze([
-  ['COMPANY_CLOUDFLARE_API_TOKEN', 'COMPANY_CLOUDFLARE_API_TOKEN'],
-  ['COMPANY_CLOUDFLARE_ACCOUNT_ID', 'COMPANY_CLOUDFLARE_ACCOUNT_ID'],
-]);
 const WALLET_SYSTEM_CLOUDFLARE_ENVIRONMENT_SUFFIXES = Object.freeze([
   '-gateway',
   '-mpc-router',
@@ -260,7 +253,6 @@ function buildBasePlan(options, repository, values) {
     } else {
       appendMappedUpdates(plan.variables, options.release, values, GENERAL_VARIABLE_INPUTS);
       appendMappedUpdates(plan.secrets, options.release, values, CLOUDFLARE_SECRET_INPUTS);
-      appendMappedUpdates(plan.secrets, options.release, values, COMPANY_CLOUDFLARE_SECRET_INPUTS);
       appendMappedUpdates(plan.secrets, options.release, values, [
         ['CF_PAGES_PROJECT_WALLET_SITE', 'CF_PAGES_PROJECT_WALLET_SITE'],
         ['CF_PAGES_PROJECT_WALLET_DOCS', 'CF_PAGES_PROJECT_WALLET_DOCS'],
@@ -289,12 +281,6 @@ function buildBasePlan(options, repository, values) {
 
 function appendProductionSiteUpdates(plan, values) {
   appendMappedUpdates(plan.secrets, plan.environmentPrefix, values, CLOUDFLARE_SECRET_INPUTS);
-  appendMappedUpdates(
-    plan.secrets,
-    plan.environmentPrefix,
-    values,
-    COMPANY_CLOUDFLARE_SECRET_INPUTS,
-  );
   appendMappedUpdates(plan.secrets, plan.environmentPrefix, values, [
     ['CF_PAGES_PROJECT_WALLET_SITE', 'CF_PAGES_PROJECT_WALLET_SITE'],
     ['CF_PAGES_PROJECT_WALLET_DOCS', 'CF_PAGES_PROJECT_WALLET_DOCS'],

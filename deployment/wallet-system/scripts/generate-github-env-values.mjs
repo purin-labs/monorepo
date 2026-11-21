@@ -883,7 +883,6 @@ function buildGeneralEnvironment(input) {
         SEAMS_WALLET_ARTIFACT_READ_TOKEN: manual(
           `${environmentName}-public-wallet-actions-read-token`,
         ),
-        CF_PAGES_PROJECT_VITE: manual(`${environmentName}-cloudflare-pages-app-project`),
         CF_PAGES_PROJECT_WALLET_SITE: manual(
           `${environmentName}-cloudflare-pages-wallet-site-project`,
         ),
@@ -915,7 +914,6 @@ function buildProductionSiteEnvironment(input) {
       SEAMS_WALLET_ARTIFACT_READ_TOKEN: manual(
         `${input.environmentPrefix}-public-wallet-actions-read-token`,
       ),
-      CF_PAGES_PROJECT_VITE: manual(`${input.environmentPrefix}-cloudflare-pages-app-project`),
       CF_PAGES_PROJECT_WALLET_SITE: manual(
         `${input.environmentPrefix}-cloudflare-pages-wallet-site-project`,
       ),
