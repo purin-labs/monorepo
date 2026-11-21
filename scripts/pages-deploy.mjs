@@ -78,13 +78,15 @@ export async function ensurePagesCustomDomain(origin, projectName) {
   await waitForActivePagesDomain(domainPath, hostname, projectName, apiToken);
 }
 
-/* Removes each host from the Pages project that serves it in this account. A host that no
-   project serves is left alone. Workers then take the host as a custom domain. */
+/* Removes each host from the Pages project that serves it in this account and returns the
+   released hosts. A host that no project serves is left alone. Workers then take the host
+   as a custom domain. */
 export async function releasePagesCustomDomains(hostnames) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
   const wanted = new Set(hostnames);
   const projectsPath = `/accounts/${encodeURIComponent(accountId)}/pages/projects`;
+  const released = [];
   for (let page = 1; ; page += 1) {
     const response = await requestCloudflareApi(
       `${projectsPath}?page=${page}&per_page=10`,
@@ -103,9 +105,10 @@ export async function releasePagesCustomDomains(hostnames) {
           [200],
         );
         process.stdout.write(`Released Pages custom domain ${domain} from ${project.name}\n`);
+        released.push(domain);
       }
     }
-    if (page >= Number(body.result_info?.total_pages ?? 1)) return;
+    if (page >= Number(body.result_info?.total_pages ?? 1)) return released;
   }
 }
 

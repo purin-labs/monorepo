@@ -40,6 +40,7 @@ const HOST_REDIRECTS_WORKER = path.join(
   'worker.mjs',
 );
 const HOST_REDIRECTS_COMPATIBILITY_DATE = '2026-11-01';
+const HOST_RELEASE_DEPLOY_ATTEMPTS = 8;
 const SURFACES = Object.freeze(['wallet-console', 'wallet-docs', 'wallet-site', 'wallet-host']);
 const COMPONENTS = Object.freeze(['all', ...SURFACES]);
 
@@ -499,11 +500,14 @@ async function deployFrontend(site, component, walletLanes) {
 
 /* One Worker per site sends every former host to its successor. A former host that a
    Pages project in this account still serves is released first, so the Worker's custom
-   domain can take it. */
+   domain can take it. The host's own DNS record must be gone too: the deploy token
+   cannot remove it. */
 async function deployHostRedirects(site) {
   const redirects = readHostRedirects(site.id);
   if (redirects.length === 0) return;
-  await releasePagesCustomDomains(redirects.map(({ from }) => new URL(from).hostname));
+  const released = await releasePagesCustomDomains(
+    redirects.map(({ from }) => new URL(from).hostname),
+  );
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'seams-host-redirects-'));
   const configPath = path.join(directory, 'wrangler.json');
   const hosts = redirects.map(({ from, to }) => [new URL(from).hostname, to]);
@@ -520,7 +524,21 @@ async function deployHostRedirects(site) {
   };
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
   try {
-    runCommand('pnpm', ['exec', 'wrangler', 'deploy', '--config', configPath]);
+    // Pages lets a released host go some time after the API call returns, and a Worker
+    // custom domain on that host fails until then (2026-11-21: 5 s was too short).
+    const attempts = released.length > 0 ? HOST_RELEASE_DEPLOY_ATTEMPTS : 1;
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        runCommand('pnpm', ['exec', 'wrangler', 'deploy', '--config', configPath]);
+        return;
+      } catch (error) {
+        if (attempt >= attempts) throw error;
+        process.stdout.write(
+          `Redirect Worker deploy failed after a Pages release; retry ${attempt}/${attempts - 1} in 30 s\n`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 30_000));
+      }
+    }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
