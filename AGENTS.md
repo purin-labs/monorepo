@@ -1,4 +1,4 @@
-# seams-monorepo — agent instructions
+# seams-console — agent instructions
 
 Single instruction file for all coding agents: Codex reads it natively; Claude Code
 injects it via the SessionStart hook in `.claude/settings.json`. This repo deliberately
@@ -17,6 +17,10 @@ agent session. When working under `tests/`, also read `tests/AGENTS.md`.
 
 ## Repo shape (the non-obvious parts)
 
+- This repository is `seams-tech/seams-console`. It moved from `purin-labs/monorepo` on
+  2026-11-21 with its environments and secrets. The Purin company site moves to
+  `purin-labs/purin-monorepo`; `apps/seams-site` stays here only until its deploy runs from
+  there (`docs/refactor-260-console-split.md`, step 8).
 - Private TypeScript applications and Console packages live in `apps/` and `packages/`. Wallet SDK, Rust/WASM, CLI, and public docs sources live in the separate `seams-wallet` repository; consume their exact package releases here.
 - ALL TypeScript tests live in the top-level `tests/` workspace (`tests/unit/`,
   `tests/e2e/`, `tests/relayer/`, `tests/wallet-iframe/`, ...) — never co-located with
