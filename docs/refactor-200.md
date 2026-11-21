@@ -184,17 +184,18 @@ Open:
 - Production frontend, 2026-11-21: the Wallet frontend named the former Gateway hosts, so
   tenant discovery failed and the `seams.sh` demo was unavailable since the cutover. Fix
   `4017a423`, frontend run 44849337343 from `seams-tech/seams-console`; the demo works.
-  Open: `sign.seams.sh` still shows "Wallet settings are unavailable". The mainnet tenant
-  uses the `:dev` environment, so its discovery document says `development_testnet_v1`,
-  and the frontend requires `production_mainnet_v1` for mainnet. The repair is a `:prod`
-  environment for the mainnet project with its own activation. Mainnet has zero wallets.
-  State on 2026-11-21: a $10 support credit for `org_ri0bh5kt0er2` is in
-  (`ble_mwpr820v_wkbv6vc4`). Left: the owner of "Seams" (GitHub sign-in) sends
-  `POST /console/projects/proj_e8f2db07d5d24c109a8c27f0c2dc86cc/services/wallet/enable` with
-  `desiredRevision` 2, so `:prod` turns ACTIVE; then the mainnet `environmentId` changes to
-  `…:prod` and the mainnet full stack runs (its activation creates the `:prod` key).
-  A Google sign-in made a second mainnet organisation, "Purin Heavy Industries"
-  (`org_bqzydcm176nt`); it is not used.
+  `sign.seams.sh` then showed "Wallet settings are unavailable": the mainnet tenant ran on
+  the `:dev` environment, so discovery said `development_testnet_v1`. Fixed on 2026-11-21:
+  the owner signs in to the Console with Google only, and the former tenant organisation
+  "Seams" (`org_ri0bh5kt0er2`) has only a GitHub owner. The owner chose the organisation
+  "Seams Wallets II" (`org_bqzydcm176nt`, project `proj_65be6ecba1ff48d6a7294f0db59964ca`).
+  A $10 support credit (`ble_mwprjgfn_bv20gsjk`) and a Wallet re-enable (revision 2) turned
+  its `:prod` ACTIVE. Commit `544874cb` names `…:prod` as the mainnet tenant; full-stack run
+  44853719629 passed with activation. Discovery on `api.seams.sh` says
+  `production_mainnet_v1`, and `sign.seams.sh` loads. The recovery trust bundle and snapshot
+  match the saved signed files before and after. Mainnet had zero wallets. "Seams" stays
+  unused with its own $10 credit (`ble_mwpr820v_wkbv6vc4`). Production pauses new work if
+  no card is on file by 2026-12-21.
 - Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
   projects and 3 containers are deleted in the source account. The record is the private file
   `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. The idle watchbook
