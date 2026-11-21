@@ -12,7 +12,6 @@ import {
   DashboardTableState,
   dashboardTableColumns,
 } from '../../components/DashboardTable';
-import { platformConsoleHref } from '../../consoleNavigation';
 import { formatDashboardTimestamp } from '../../utils/timestamps';
 import {
   listServiceProjects,
@@ -83,11 +82,7 @@ export function ServiceProjectsSection(props: {
       <div className="dashboard-section-toolbar dashboard-account-section-header">
         <div className="dashboard-section-toolbar__copy">
           <h2>{t('accountServiceProjectsTitle', { label })}</h2>
-          <p className="dashboard-pagination-note">
-            {t('accountServiceProjectsHelp', { label })}
-            <a href={platformConsoleHref('/dashboard/account-settings')}>Platform Console</a>
-            {t('accountServiceProjectsHelpEnd')}
-          </p>
+          <p className="dashboard-pagination-note">{t('accountServiceProjectsHelp', { label })}</p>
         </div>
       </div>
       <DashboardTable

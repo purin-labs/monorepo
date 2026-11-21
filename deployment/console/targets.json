@@ -3,7 +3,7 @@
   "lanes": {
     "staging-testnet": {
       "environment": "staging-console",
-      "origin": "https://staging.seams.sh",
+      "origin": "https://console.staging.seams.sh",
       "siteOrigin": "https://staging.seams.sh",
       "workerName": "seams-sdk-d1-console-staging",
       "platformSupportEmails": ["n6378056@gmail.com"],
@@ -42,7 +42,7 @@
     },
     "production-mainnet": {
       "environment": "production-console",
-      "origin": "https://seams.sh",
+      "origin": "https://console.seams.sh",
       "siteOrigin": "https://seams.sh",
       "workerName": "seams-sdk-d1-console",
       "platformSupportEmails": ["n6378056@gmail.com"],
@@ -64,19 +64,18 @@
   "frontends": {
     "staging": {
       "branch": "dev",
-      "platformOrigin": "https://account.staging.seams.sh",
-      "formerPlatformOrigins": ["https://staging.console.seams.sh"],
       "walletConsoleOrigin": "https://console.staging.seams.sh",
-      "formerWalletConsoleOrigins": ["https://console.staging.wallet.seams.sh"],
-      "platformPagesProjectEnv": "CF_PAGES_PROJECT_PLATFORM_CONSOLE",
+      "formerWalletConsoleOrigins": [
+        "https://account.staging.seams.sh",
+        "https://staging.console.seams.sh",
+        "https://console.staging.wallet.seams.sh"
+      ],
       "walletConsolePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_CONSOLE"
     },
     "production": {
       "branch": "main",
-      "platformOrigin": "https://account.seams.sh",
       "walletConsoleOrigin": "https://console.seams.sh",
-      "formerWalletConsoleOrigins": ["https://console.wallet.seams.sh"],
-      "platformPagesProjectEnv": "CF_PAGES_PROJECT_PLATFORM_CONSOLE",
+      "formerWalletConsoleOrigins": ["https://account.seams.sh", "https://console.wallet.seams.sh"],
       "walletConsolePagesProjectEnv": "CF_PAGES_PROJECT_WALLET_CONSOLE"
     }
   }

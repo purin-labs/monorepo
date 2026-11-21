@@ -1,5 +1,4 @@
 import { t } from '@core/i18n';
-import type { DashboardExternalLink } from '../types';
 import React from 'react';
 import { DashboardMenu, DashboardMenuItem, useDashboardMenu } from '../components/DashboardMenu';
 import { dashboardCreateIntentHref } from '../utils/routeCreateIntent';
@@ -62,7 +61,6 @@ export type DashboardSidebarProps<Route extends string, GroupKey extends string>
   network?: DashboardNetworkSwitch;
   onSelectAccount: (value: string) => void;
   groups: SidebarGroup<Route, GroupKey>[];
-  externalLinks?: readonly DashboardExternalLink[];
   isSidebarExpanded: boolean;
   activeRoute: Route;
   disableNavigationItems?: boolean;
@@ -502,35 +500,12 @@ function selectMobileAccountOption(onSelect: (value: string) => void, option: To
   onSelect(option.value);
 }
 
-function ExternalConsoleLink({
-  link,
-}: {
-  readonly link: DashboardExternalLink;
-}): React.JSX.Element {
-  const Icon = link.icon;
-  return (
-    <li>
-      <a className="dashboard-nav-item" href={link.href}>
-        <span className="dashboard-nav-icon" aria-hidden="true">
-          <Icon size={20} />
-        </span>
-        <span className="dashboard-nav-label">{link.label}</span>
-      </a>
-    </li>
-  );
-}
-
-function externalConsoleLink(link: DashboardExternalLink): React.JSX.Element {
-  return <ExternalConsoleLink key={link.href} link={link} />;
-}
-
 export function DashboardSidebar<Route extends string, GroupKey extends string>({
   accountLabel,
   accountOptions,
   network,
   onSelectAccount,
   groups,
-  externalLinks = [],
   isSidebarExpanded,
   activeRoute,
   disableNavigationItems = false,
@@ -650,14 +625,6 @@ export function DashboardSidebar<Route extends string, GroupKey extends string>(
           </ul>
         </section>
       ))}
-      {externalLinks.length > 0 ? (
-        <section className="dashboard-sidebar-group">
-          <p className="dashboard-sidebar-group__title">
-            {product?.currentId === 'platform' ? t('commonSidebarProducts') : t('navPlatform')}
-          </p>
-          <ul className="dashboard-nav-list">{externalLinks.map(externalConsoleLink)}</ul>
-        </section>
-      ) : null}
       {mobile ? (
         <div className="dashboard-mobile-support">
           <a href={getDocsOrigin()} target="_blank" rel="noreferrer">

@@ -7,7 +7,7 @@ Rust/WASM, CLI, runtime builds, and public documentation are owned by
 ## Applications and packages
 
 - `apps/wallet-console`: Wallet Console frontend and product composition.
-- `apps/seams-site`: company/product discovery site and current local Caddy setup.
+- `scripts/local-wallet`: the local Caddy setup (`Caddyfile`, `run_caddy.sh`) for `pnpm site`.
 - `packages/console-{server,shared}-ts`: product-neutral Console core.
 - `packages/wallet-console-{server,shared}-ts`: private Wallet integration.
 - `deployment/console`: Console deployment inputs.

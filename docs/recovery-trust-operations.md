@@ -28,18 +28,22 @@ signing key and from every tenant root.
 
 ## Backups and deployed settings
 
-The private key is saved in `~/.seams/recovery-signing-2026-10.env` with mode `0600`.
+`~/.seams/README.md` shows the folder layout: one folder per lane, `recovery-root/`, and
+`old/`. It was checked against the live Workers on 2026-11-21. The former file names are
+links to the new files.
+
+The private key is saved in `~/.seams/recovery-root/signing-key.env` with mode `0600`.
 The `~/.seams` directory has mode `0700`. This file contains
 `SEAMS_RECOVERY_SIGNING_KEY` and `SEAMS_RECOVERY_SIGNER_KEY_ID`. Never print,
 commit, or pass the key to a runtime Worker. The protected `recovery-signing`
-GitHub environment in `purin-labs/monorepo` holds the same two values.
+GitHub environment in `seams-tech/seams-console` holds the same two values.
 Its [signing run] produced a snapshot that verifies against the new CLI pin.
 GitHub does not return the private value after storage.
 
 [signing run]: https://github.com/purin-labs/monorepo/actions/runs/39909176129
 
 Public signed records and their SHA-256 manifest are in
-`~/.seams/recovery-trust-2026-10/` with mode `0700` for the directory and `0600`
+`~/.seams/recovery-root/trust-2026-10/` with mode `0700` for the directory and `0600`
 for the files. `bundle.json` holds the public root. `snapshot.json` is the
 workflow-signed version 1 snapshot with zero revocation entries. The staging and
 production certificate files bind the current signer keys in those lanes.
@@ -51,8 +55,8 @@ and lane-specific certificates:
 
 | Lane | Control-plane backup | Console backup | GitHub environments |
 | --- | --- | --- | --- |
-| Staging testnet | `~/.seams/staging-deployment.env` | `~/.seams/console/staging-testnet-deployment.env` | `staging-tenant-root-control-plane`, `staging-console` |
-| Production mainnet | `~/.seams/production-deployment.env` | `~/.seams/console/production-mainnet-deployment.env` | `production-tenant-root-control-plane`, `production-console` |
+| Staging testnet | `~/.seams/staging-testnet/wallet-system.env` | `~/.seams/staging-testnet/console.env` | `staging-tenant-root-control-plane`, `staging-console` |
+| Production mainnet | `~/.seams/production-mainnet/wallet-system.env` | `~/.seams/production-mainnet/console.env` | `production-tenant-root-control-plane`, `production-console` |
 
 The four deployment files also contain unrelated secrets. Parse only the needed
 values; do not execute or print an entire file. The pre-rotation copies of these

@@ -3,6 +3,7 @@ import { t } from '@core/i18n';
 import { ApiKeyManagementPage } from '@core/dashboard/routes/api-keys/page';
 import { BillingConsoleShell } from '@core/dashboard/routes/billing/BillingConsoleShell';
 import { PlanStartPage } from '@core/dashboard/routes/billing/PlanStartPage';
+import { PlatformBillingPage } from '@core/dashboard/routes/platform-billing/page';
 import { TeamMembersPage } from '@core/dashboard/routes/team-members/page';
 import { DashboardOnboardingPage } from '@core/dashboard/routes/onboarding/page';
 import type { ApiCredentialScopeCatalog } from '@core/dashboard/routes/api-keys/apiKeyScopeCatalog';
@@ -70,7 +71,11 @@ export type WalletDashboardRoute =
   | '/dashboard/wallet-sessions'
   | '/dashboard/gas-sponsorship';
 export type ComposedDashboardRoute = DashboardRoute | WalletDashboardRoute;
-export type ComposedSidebarGroupKey = SidebarGroupKey | 'operationsSecurity' | 'account';
+export type ComposedSidebarGroupKey =
+  | SidebarGroupKey
+  | 'operationsSecurity'
+  | 'account'
+  | 'support';
 type ComposedSidebarItem = SidebarItem<ComposedDashboardRoute>;
 type ComposedSidebarGroup = SidebarGroup<ComposedDashboardRoute, ComposedSidebarGroupKey>;
 
@@ -411,9 +416,8 @@ const sidebarGroups: ComposedSidebarGroup[] = [
     items: operationsSecurityItems,
   },
   {
-    // 'platform' is the platform-admin group, which only support accounts see.
     key: 'account',
-    label: t('navPlatform'),
+    label: t('navAccount'),
     items: [
       {
         key: 'account-settings',
@@ -457,6 +461,21 @@ const sidebarGroups: ComposedSidebarGroup[] = [
       },
     ],
   },
+  {
+    key: 'support',
+    label: t('navAdmin'),
+    items: [
+      {
+        key: 'platform-billing',
+        label: t('navAdminSupport'),
+        path: '/platform/billing',
+        icon: CreditCardIcon,
+        component: PlatformBillingPage,
+        context: 'account',
+        access: 'platform_support',
+      },
+    ],
+  },
 ];
 
 export const SIDEBAR_GROUPS: ComposedSidebarGroup[] = sidebarGroups.filter(
@@ -476,8 +495,7 @@ export const DEFAULT_EXPANDED_SIDEBAR_GROUPS: ExpandedSidebarGroupsState<Compose
     administration: true,
     operationsSecurity: true,
     account: true,
-    billing: true,
-    platform: true,
+    support: true,
   };
 
 export const SIDEBAR_GROUP_KEYS = Object.keys(

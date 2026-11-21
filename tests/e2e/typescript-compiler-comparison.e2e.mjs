@@ -35,7 +35,6 @@ const projects = [
   'packages/wallet-console-shared-ts/tsconfig.json',
   'packages/console-server-ts/tsconfig.json',
   'packages/wallet-console-server-ts/tsconfig.json',
-  'apps/seams-site/tsconfig.json',
   'apps/wallet-console/tsconfig.json',
   'tests/tsconfig.typecheck.json',
   'tests/tsconfig.console.json',

@@ -94,7 +94,7 @@ async function completeOnboarding(page: Page, provider: 'Google' | 'GitHub'): Pr
   const project = page.getByRole('form', { name: 'Create project', exact: true });
   await project.getByLabel('Project name').fill(`${provider} project`);
   await project.getByRole('button', { name: 'Create project', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Account settings', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard\/overview(?:\?|$)/);
 }
 
 async function verifyProfileProvider(
@@ -145,7 +145,7 @@ test('Google sign-in recovers from prompt failures and both providers remain vis
   const { createServer } = await import(require.resolve('vite', { paths: [appDirectory] }));
   const frontend = await createServer({
     configFile: `${appDirectory}vite.console.config.ts`,
-    mode: 'platform',
+    mode: 'wallet',
     base: '/',
     cacheDir: testInfo.outputPath('vite'),
     server: { host: '127.0.0.1', port: 0, strictPort: false },

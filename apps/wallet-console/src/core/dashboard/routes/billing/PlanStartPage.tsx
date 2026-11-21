@@ -3,7 +3,7 @@ import React from 'react';
 import { consoleLocale, t } from '@core/i18n';
 import { Check, CheckCircle2, Rocket, Sprout, TrendingUp, type LucideIcon } from 'lucide-react';
 import { GrainField, type GrainFieldName } from '@seams-internal/grain-field';
-import { walletConsoleOverviewHref } from '../../consoleNavigation';
+import { consoleOverviewHref } from '../../consoleNavigation';
 import { canDashboardManageBilling, useDashboardConsoleSession } from '../../consoleSession';
 import { useDashboardSelectedContext } from '../../selectedContext';
 import {
@@ -260,7 +260,7 @@ export function PlanStartPage(): React.JSX.Element {
   const [workspaceOverviewHref, setWorkspaceOverviewHref] = React.useState<string | null>(null);
   const overviewHref =
     workspaceOverviewHref ??
-    walletConsoleOverviewHref({
+    consoleOverviewHref({
       organization: session.claims?.orgId || selectedContext.organization,
       project: session.claims?.projectId || selectedContext.project,
     });

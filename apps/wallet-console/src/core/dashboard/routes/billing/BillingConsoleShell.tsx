@@ -10,7 +10,6 @@ import { BillingAccountView } from './BillingAccountView';
 import { BillingUsageCostsSection } from './BillingUsageCostsSection';
 import { BillingInvoiceDetailView } from './BillingInvoiceDetailView';
 import { BillingInvoicesView } from './BillingInvoicesView';
-import { PlatformBillingView } from './PlatformBillingView';
 import { BillingAccountActivitySection } from './billingSections';
 import {
   createDashboardStripeCheckoutSession,
@@ -47,9 +46,9 @@ import { platformServiceLabel } from '../services/serviceProjects';
 import { DashboardPageSkeleton } from '../../components/DashboardSkeleton';
 
 export interface BillingConsoleShellProps {
-  defaultPath: '/dashboard/billing/account' | '/dashboard/invoices' | '/platform/billing';
+  defaultPath: '/dashboard/billing/account' | '/dashboard/invoices';
   /** Shows that service's usage only and marks the shared organization billing state. */
-  serviceId?: PlatformServiceIdV1;
+  serviceId: PlatformServiceIdV1;
 }
 
 const DATE_INPUT_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -206,14 +205,13 @@ function filterInvoices(input: {
 
 export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.Element {
   const { defaultPath, serviceId } = props;
-  const serviceLabel = serviceId ? platformServiceLabel(serviceId) : null;
+  const serviceLabel = platformServiceLabel(serviceId);
   const session = useDashboardConsoleSession();
   const selectedContext = useDashboardSelectedContext();
   const { go } = useSiteRouter();
   const pathname = typeof window === 'undefined' ? defaultPath : window.location.pathname;
   const search = typeof window === 'undefined' ? '' : window.location.search;
   const subview = React.useMemo(() => parseBillingSubview(pathname), [pathname]);
-  const isPlatformBillingPage = pathname === '/platform/billing';
   const activeInvoiceId = subview.kind === 'invoice' ? subview.invoiceId : '';
 
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -387,27 +385,22 @@ export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.
       setLoading(true);
       return;
     }
-    if (subview.kind !== 'account' || isPlatformBillingPage) {
+    if (subview.kind !== 'account') {
       setLoading(false);
       setErrorMessage('');
       setBillingWarningMessage('');
       return;
     }
     void refreshBillingShellData();
-  }, [isPlatformBillingPage, refreshBillingShellData, session.loading, subview.kind]);
+  }, [refreshBillingShellData, session.loading, subview.kind]);
 
   React.useEffect(() => {
-    if (!session.claims || subview.kind === 'invoice' || isPlatformBillingPage) return;
+    if (!session.claims || subview.kind === 'invoice') return;
     void loadInvoiceListPage();
-  }, [isPlatformBillingPage, loadInvoiceListPage, session.claims, subview.kind]);
+  }, [loadInvoiceListPage, session.claims, subview.kind]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (isPlatformBillingPage) {
-      activeCheckoutReconcileRef.current = '';
-      setCheckoutReturnMessage('');
-      return;
-    }
     const params = new URLSearchParams(search);
     const checkout = String(params.get('checkout') || '')
       .trim()
@@ -456,7 +449,6 @@ export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.
       }
     })();
   }, [
-    isPlatformBillingPage,
     loadInvoiceListPage,
     pathname,
     refreshBillingShellData,
@@ -612,8 +604,6 @@ export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.
     );
   }, [activeInvoiceId, invoiceActivity?.invoice, invoiceDetail, invoices]);
 
-  const isPlatformAdmin = session.claims?.platformSupport === true;
-
   const onStartStripeCheckout = React.useCallback(
     async ({ creditPackId }: Pick<DashboardStripeCheckoutSessionRequest, 'creditPackId'>) => {
       if (!session.claims) {
@@ -683,83 +673,66 @@ export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.
           <p>{t('billingDataUnavailable', { error: errorMessage })}</p>
         </section>
       ) : subview.kind === 'account' ? (
-        isPlatformBillingPage ? (
-          isPlatformAdmin ? (
-            <PlatformBillingView />
-          ) : (
-            <section className="dashboard-view__section">
-              <p>{t('billingAdminOnly')}</p>
-            </section>
-          )
-        ) : (
-          <>
-            {serviceLabel ? (
-              <OrganizationSharedNote serviceLabel={serviceLabel} subject="account" />
+        <>
+          <OrganizationSharedNote serviceLabel={serviceLabel} subject="account" />
+          <FreePlanBanners
+            variant="billing"
+            canManageBilling={canDashboardManageBilling(session.claims)}
+            search={search}
+          />
+          <PaymentAccountPanel
+            key={selectedContext.organization || session.claims.orgId}
+            canManage={canDashboardManageBilling(session.claims)}
+          >
+            {billingWarningMessage && !billingWarningDismissed ? (
+              <section className="dashboard-view__section">
+                <div className="dashboard-warning-banner" role="alert">
+                  <p>{billingWarningMessage}</p>
+                  <button
+                    type="button"
+                    className="dashboard-warning-banner__dismiss"
+                    aria-label={t('billingDismissWarningLabel')}
+                    onClick={() => setBillingWarningDismissed(true)}
+                  >
+                    {t('billingDismiss')}
+                  </button>
+                </div>
+              </section>
             ) : null}
-            <FreePlanBanners
-              variant="billing"
-              canManageBilling={canDashboardManageBilling(session.claims)}
-              search={search}
+            <BillingMetricsGrid
+              metrics={summaryMetrics}
+              ariaLabel={t('billingSummaryMetricsLabel')}
             />
-            {serviceLabel ? null : (
-              <p className="dashboard-pagination-note">{t('billingOrgScoped')}</p>
-            )}
-            <PaymentAccountPanel
-              key={selectedContext.organization || session.claims.orgId}
-              canManage={canDashboardManageBilling(session.claims)}
-            >
-              {billingWarningMessage && !billingWarningDismissed ? (
-                <section className="dashboard-view__section">
-                  <div className="dashboard-warning-banner" role="alert">
-                    <p>{billingWarningMessage}</p>
-                    <button
-                      type="button"
-                      className="dashboard-warning-banner__dismiss"
-                      aria-label={t('billingDismissWarningLabel')}
-                      onClick={() => setBillingWarningDismissed(true)}
-                    >
-                      {t('billingDismiss')}
-                    </button>
-                  </div>
-                </section>
-              ) : null}
-              <BillingMetricsGrid
-                metrics={summaryMetrics}
-                ariaLabel={t('billingSummaryMetricsLabel')}
-              />
-              <BillingUsageCostsSection
-                organizationId={selectedContext.organization || session.claims.orgId}
-                state={costs}
-                serviceId={serviceId}
-              />
-              <BillingAccountView
-                canManageBilling={canDashboardManageBilling(session.claims)}
-                checkoutActionError={checkoutActionError}
-                startingCheckoutPackId={startingCheckoutPackId}
-                refunds={refunds}
-                refundsLoading={refundsLoading}
-                refundsError={refundsError}
-                onStartStripeCheckout={(checkoutRequest) => {
-                  void onStartStripeCheckout(checkoutRequest);
-                }}
-              />
-            </PaymentAccountPanel>
-            <section
-              id="billing-account-activity"
-              className="dashboard-view__section dashboard-view__section--plain"
-            >
-              <BillingAccountActivitySection
-                accountActivity={accountActivity}
-                accountActivityError={accountActivityError}
-              />
-            </section>
-          </>
-        )
+            <BillingUsageCostsSection
+              organizationId={selectedContext.organization || session.claims.orgId}
+              state={costs}
+              serviceId={serviceId}
+            />
+            <BillingAccountView
+              canManageBilling={canDashboardManageBilling(session.claims)}
+              checkoutActionError={checkoutActionError}
+              startingCheckoutPackId={startingCheckoutPackId}
+              refunds={refunds}
+              refundsLoading={refundsLoading}
+              refundsError={refundsError}
+              onStartStripeCheckout={(checkoutRequest) => {
+                void onStartStripeCheckout(checkoutRequest);
+              }}
+            />
+          </PaymentAccountPanel>
+          <section
+            id="billing-account-activity"
+            className="dashboard-view__section dashboard-view__section--plain"
+          >
+            <BillingAccountActivitySection
+              accountActivity={accountActivity}
+              accountActivityError={accountActivityError}
+            />
+          </section>
+        </>
       ) : subview.kind === 'invoices' ? (
         <>
-          {serviceLabel ? (
-            <OrganizationSharedNote serviceLabel={serviceLabel} subject="invoices" />
-          ) : null}
+          <OrganizationSharedNote serviceLabel={serviceLabel} subject="invoices" />
           <BillingInvoicesView
             invoiceMetrics={invoiceSummaryMetrics}
             invoiceListLoading={invoiceListLoading}
@@ -784,9 +757,7 @@ export function BillingConsoleShell(props: BillingConsoleShellProps): React.JSX.
         </>
       ) : (
         <>
-          {serviceLabel ? (
-            <OrganizationSharedNote serviceLabel={serviceLabel} subject="invoices" />
-          ) : null}
+          <OrganizationSharedNote serviceLabel={serviceLabel} subject="invoices" />
           <BillingInvoiceDetailView
             invoiceId={activeInvoiceId}
             invoice={invoiceDetailRecord}

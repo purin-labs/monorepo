@@ -303,7 +303,7 @@ day.
    analytics.
 3. Recompute the margin table.
 4. Update the Wallet price definitions in the Console billing code. The public
-   pricing page in `apps/seams-site` already shows this model.
+   pricing page on the Wallet site (`apps/wallet-console`) already shows this model.
 5. Build the free plan limits in the Console: the origin check across free
    organizations, the hard stop, the cost alert, and the card and Growth-move
    rules in [the Free plan card plan](../feat-4-free-plan-card-and-growth-move.md).

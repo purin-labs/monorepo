@@ -17,9 +17,8 @@ import {
   type DashboardBillingCostsState,
   type DashboardBillingUsageCharges,
 } from './consoleBillingApi';
-import { BillingMetricsGrid, textWithNodes } from './billingShared';
+import { BillingMetricsGrid } from './billingShared';
 import { DashboardPageSkeleton } from '../../components/DashboardSkeleton';
-import { platformConsoleHref } from '../../consoleNavigation';
 import { platformServiceLabel } from '../services/serviceProjects';
 
 interface BillingCostGroup {
@@ -31,7 +30,6 @@ interface BillingCostGroup {
 interface BillingCostBreakdown {
   readonly totalMinor: number;
   readonly projects: readonly BillingCostGroup[];
-  readonly services: readonly BillingCostGroup[];
   readonly meters: readonly BillingCostGroup[];
 }
 
@@ -68,9 +66,8 @@ function compareCostGroups(left: BillingCostGroup, right: BillingCostGroup): num
 /** Keeps the charges attributed to one service; historical charges have no service. */
 function scopedCharges(
   data: DashboardBillingUsageCharges,
-  serviceId: PlatformServiceIdV1 | undefined,
+  serviceId: PlatformServiceIdV1,
 ): DashboardBillingUsageCharges['charges'] {
-  if (!serviceId) return data.charges;
   return data.charges.filter(
     (charge) => charge.kind === 'instance' && charge.attribution.serviceId === serviceId,
   );
@@ -80,7 +77,6 @@ function buildCostBreakdown(
   charges: DashboardBillingUsageCharges['charges'],
 ): BillingCostBreakdown {
   const projects = new Map<string, BillingCostGroup>();
-  const services = new Map<string, BillingCostGroup>();
   const meters = new Map<string, BillingCostGroup>();
   let totalMinor = 0;
   for (const charge of charges) {
@@ -93,17 +89,10 @@ function buildCostBreakdown(
           charge.attribution.scope.projectId,
           charge.amountMinor,
         );
-        addCostGroup(
-          services,
-          `instance:${charge.attribution.serviceId}`,
-          charge.attribution.serviceId,
-          charge.amountMinor,
-        );
         addCostGroup(meters, `instance:${charge.meterId}`, charge.meterId, charge.amountMinor);
         break;
       case 'historical_organization':
         addCostGroup(projects, 'historical_organization', HISTORICAL_LABEL, charge.amountMinor);
-        addCostGroup(services, 'historical_organization', HISTORICAL_LABEL, charge.amountMinor);
         addCostGroup(meters, 'historical_organization', HISTORICAL_LABEL, charge.amountMinor);
         break;
       default:
@@ -113,7 +102,6 @@ function buildCostBreakdown(
   return {
     totalMinor,
     projects: Array.from(projects.values()).sort(compareCostGroups),
-    services: Array.from(services.values()).sort(compareCostGroups),
     meters: Array.from(meters.values()).sort(compareCostGroups),
   };
 }
@@ -129,19 +117,17 @@ function renderCostGroup(group: BillingCostGroup): React.JSX.Element {
   );
 }
 
-function costDimensionLabel(dimension: 'project' | 'service' | 'meter'): string {
+function costDimensionLabel(dimension: 'project' | 'meter'): string {
   switch (dimension) {
     case 'project':
       return t('billingDimensionProject');
-    case 'service':
-      return t('billingDimensionService');
     case 'meter':
       return t('billingDimensionMeter');
   }
 }
 
 function BillingCostTable(props: {
-  readonly dimension: 'project' | 'service' | 'meter';
+  readonly dimension: 'project' | 'meter';
   readonly groups: readonly BillingCostGroup[];
 }): React.JSX.Element {
   const dimensionLabel = costDimensionLabel(props.dimension);
@@ -170,14 +156,14 @@ function BillingCostTable(props: {
   );
 }
 
-/** With `serviceId`, only that service's attributed usage is shown. */
+/** Shows the usage that is attributed to one service. */
 export function BillingUsageCostsSection(props: {
   readonly organizationId: string;
   readonly state: DashboardBillingCostsState;
-  readonly serviceId?: PlatformServiceIdV1;
+  readonly serviceId: PlatformServiceIdV1;
 }): React.JSX.Element {
   const { state, organizationId, serviceId } = props;
-  const serviceLabel = serviceId ? platformServiceLabel(serviceId) : null;
+  const serviceLabel = platformServiceLabel(serviceId);
   if (state.kind === 'unavailable' || state.organizationId !== organizationId) {
     return <p className="dashboard-pagination-note">{t('billingUsageCostsUnavailableOrg')}</p>;
   }
@@ -210,17 +196,9 @@ export function BillingUsageCostsSection(props: {
         <section
           id="billing-usage-costs"
           className="dashboard-view__section dashboard-view__section--plain"
-          aria-label={
-            serviceLabel
-              ? t('billingServiceUsageCostsLabel', { service: serviceLabel })
-              : t('billingOrgUsageCostsLabel')
-          }
+          aria-label={t('billingServiceUsageCostsLabel', { service: serviceLabel })}
         >
-          <h2>
-            {serviceLabel
-              ? t('billingServiceUsageCostsLabel', { service: serviceLabel })
-              : t('billingUsageCostsLink')}
-          </h2>
+          <h2>{t('billingServiceUsageCostsLabel', { service: serviceLabel })}</h2>
           <label className="dashboard-form-field">
             <span>{t('billingUsageCostMonth')}</span>
             <input
@@ -240,28 +218,17 @@ export function BillingUsageCostsSection(props: {
                 label: t('billingPostedUsageCost'),
                 value: formatUsdMinor(costs.totalMinor),
                 hint: t('billingCostTotalHint', {
-                  subject: serviceLabel ?? t('billingSubjectOrganization'),
+                  subject: serviceLabel,
                   period: state.data.periodMonthUtc,
                 }),
               },
             ]}
           />
-          {serviceLabel ? (
-            <p className="dashboard-pagination-note">
-              {textWithNodes(t('billingServiceOnlyNote', { service: serviceLabel }), {
-                platformLink: (
-                  <a href={platformConsoleHref('/dashboard/billing/account')}>
-                    {t('billingPlatformConsoleLink')}
-                  </a>
-                ),
-              })}
-            </p>
-          ) : (
-            <p className="dashboard-pagination-note">{t('billingIdsNote')}</p>
-          )}
+          <p className="dashboard-pagination-note">
+            {t('billingServiceOnlyNote', { service: serviceLabel })}
+          </p>
           <div className="dashboard-view-grid">
             <BillingCostTable dimension="project" groups={costs.projects} />
-            {serviceLabel ? null : <BillingCostTable dimension="service" groups={costs.services} />}
             <BillingCostTable dimension="meter" groups={costs.meters} />
           </div>
         </section>

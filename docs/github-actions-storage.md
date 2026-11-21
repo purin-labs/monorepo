@@ -34,7 +34,7 @@ Environment IDs and Wallet source revisions are resolved automatically.
 3. Deploy the Signing Worker, Derivers A/B, Router, tenant-root control plane, regional Wallet Runtimes, and Gateways.
 4. Deploy Console using its own protected environment.
 5. Obtain fresh resource proofs, activate the configured tenant, and run the activation canary and backend health checks.
-6. Build and deploy the Platform Console frontend, Wallet Console frontend, Wallet site, showcases, docs, and hosted Wallet assets.
+6. Build and deploy the Wallet Console frontend, Wallet site, showcases, docs, and hosted Wallet assets.
 7. Check frontend routes and assets, verify the hosted SDK version, then check Wallet API and Console readiness again.
 
 Each pipeline deploys the selected lane's backend and activates its configured tenant.
@@ -49,12 +49,8 @@ A run succeeds only after deployment, tenant activation, frontend checks, and fi
 
 ### Company site
 
-The company site (`apps/seams-site`, `purin.io`) is not part of these pipelines. Deploy it with
-`Deploy / company site` (`.github/workflows/deploy-company-site.yml`): staging from `dev`,
-production from `main`. It runs `pnpm deploy:company-site <plan|build|deploy|smoke> --site <site>`
-with the targets in `deployment/company-site/targets.json`. The `COMPANY_CLOUDFLARE_API_TOKEN`
-and `COMPANY_CLOUDFLARE_ACCOUNT_ID` secrets of the `staging` and `production` environments
-choose its Cloudflare account, so a move to another account changes only those two secrets.
+The company site (`purin.io`) is not in this repository. It deploys from
+`purin-labs/purin-monorepo` with its workflow `Deploy / company site`.
 
 ### Follow a run or retry a failure
 

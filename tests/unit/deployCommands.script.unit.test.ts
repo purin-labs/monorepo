@@ -353,8 +353,9 @@ test('frontend build uses canonical Console origins for every production lane', 
   const resolved = buildFrontendEnvironment(site, site.walletSiteOrigin, environment);
 
   expect(resolved.VITE_TESTNET_CONSOLE_BASE_URL).toBe('https://test.console.seams.sh');
-  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://seams.sh');
-  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://account.seams.sh');
+  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://console.seams.sh');
+  expect(resolved.VITE_WALLET_CONSOLE_ORIGIN).toBe('https://console.seams.sh');
+  expect(resolved).not.toHaveProperty('VITE_PLATFORM_CONSOLE_ORIGIN');
 });
 
 test('frontend Pages headers align with hosted wallet asset policies', () => {
@@ -895,7 +896,7 @@ test('frontend commands reject backend-only operations and unknown surface argum
     runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'gateway']),
     /--component must be/u,
   );
-  // The company site deploys through scripts/deploy-company-site.mjs.
+  // The company site deploys from purin-labs/purin-monorepo.
   expectFailure(
     runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'company']),
     /--component must be/u,

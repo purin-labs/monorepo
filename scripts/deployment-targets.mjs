@@ -147,16 +147,8 @@ export function readConsoleFrontendSite(siteId) {
   const frontends = requireObject(document.frontends, 'Console frontends');
   requireExactKeys(frontends, CONSOLE_FRONTEND_SITE_IDS, 'Console frontends');
   const site = requireObject(frontends[siteId], `Console frontends.${siteId}`);
-  const keys = [
-    'branch',
-    'platformOrigin',
-    'walletConsoleOrigin',
-    'platformPagesProjectEnv',
-    'walletConsolePagesProjectEnv',
-  ];
-  for (const optional of ['formerPlatformOrigins', 'formerWalletConsoleOrigins']) {
-    if (Object.hasOwn(site, optional)) keys.push(optional);
-  }
+  const keys = ['branch', 'walletConsoleOrigin', 'walletConsolePagesProjectEnv'];
+  if (Object.hasOwn(site, 'formerWalletConsoleOrigins')) keys.push('formerWalletConsoleOrigins');
   requireExactKeys(site, keys, 'Console frontend');
   return Object.freeze({
     id: siteId,
@@ -168,19 +160,10 @@ export function readConsoleFrontendSite(siteId) {
             { network: 'mainnet', origin: lanes['production-mainnet'].origin },
           ],
     branch: requireString(site.branch, 'Console frontend branch'),
-    platformOrigin: requireHttpsOrigin(site.platformOrigin, 'Platform Console origin'),
     walletConsoleOrigin: requireHttpsOrigin(site.walletConsoleOrigin, 'Wallet Console origin'),
-    formerPlatformOrigins: parseFormerOrigins(
-      site.formerPlatformOrigins,
-      'Console frontend formerPlatformOrigins',
-    ),
     formerWalletConsoleOrigins: parseFormerOrigins(
       site.formerWalletConsoleOrigins,
       'Console frontend formerWalletConsoleOrigins',
-    ),
-    platformPagesProjectEnv: requireEnvironmentName(
-      site.platformPagesProjectEnv,
-      'Platform Pages project',
     ),
     walletConsolePagesProjectEnv: requireEnvironmentName(
       site.walletConsolePagesProjectEnv,
@@ -197,7 +180,6 @@ export function readHostRedirects(siteId) {
   const redirects = [
     ...site.formerWalletSiteOrigins.map((from) => ({ from, to: site.walletSiteOrigin })),
     ...site.formerDocsOrigins.map((from) => ({ from, to: site.docsOrigin })),
-    ...consoles.formerPlatformOrigins.map((from) => ({ from, to: consoles.platformOrigin })),
     ...consoles.formerWalletConsoleOrigins.map((from) => ({
       from,
       to: consoles.walletConsoleOrigin,
@@ -207,7 +189,6 @@ export function readHostRedirects(siteId) {
     site.origin,
     site.walletSiteOrigin,
     site.docsOrigin,
-    consoles.platformOrigin,
     consoles.walletConsoleOrigin,
     ...site.lanes.flatMap((lane) => [lane.gatewayOrigin, lane.walletOrigin, lane.console?.origin]),
   ]);
@@ -730,10 +711,12 @@ function assertConsoleTargetMatchesLane(lane, consoleTarget) {
   }
 }
 
+/* The Console API answers on the Wallet Console host. Production testnet keeps its own
+   Console on test.console.seams.sh until the testnet lane uses another Console. */
 function expectedConsoleOrigin(lane) {
   return lane.id === 'production-testnet'
     ? 'https://test.console.seams.sh'
-    : lane.site.walletSiteOrigin;
+    : readConsoleFrontendSite(lane.site.id).walletConsoleOrigin;
 }
 
 function parseProvisioning(value, laneId, network, provisioningPath) {

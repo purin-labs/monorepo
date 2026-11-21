@@ -2,7 +2,7 @@
  * The one HTML layout for every Seams email: Console notices and Wallet Email OTP codes.
  *
  * Mail clients ignore stylesheets and most modern CSS, so the layout is tables with
- * inline styles. It follows the front page and apps/seams-site/src/styles/h2.css.
+ * inline styles. It follows the Purin front page styles (purin-labs/purin-monorepo).
  * The wordmark is a PNG because Gmail does not show SVG images; its alt text keeps
  * the brand when images are blocked. Clients without CSS gradients (Gmail, Outlook)
  * show the hero in the middle sage colour.

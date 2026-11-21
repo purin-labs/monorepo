@@ -1,12 +1,9 @@
 import {
-  sharedAccountHref,
-  linksWithConsoleContext,
   consoleSessionHref,
   consoleSignInHref,
   forgetConsoleSignInContext,
   rememberConsoleContext,
   readConsoleSignInContext,
-  platformConsoleHref,
 } from './consoleNavigation';
 import { DashboardOnboardingPage } from './routes/onboarding/page';
 import { readUnscopedConsoleSession } from './routes/onboarding/initialOrganizationApi';
@@ -24,6 +21,7 @@ import type {
   DashboardProductId,
   DashboardRoute,
   SidebarGroupKey,
+  SidebarItem,
   TopbarContextState,
   TopbarMenuKey,
   TopbarOption,
@@ -291,6 +289,22 @@ function findPreferredOrganizationSummary(input: {
   return organizations.find((entry) => entry.isCurrentOrg) || organizations[0] || null;
 }
 
+function canSeeSidebarItem(
+  item: Pick<SidebarItem<string>, 'access'>,
+  claims: DashboardConsoleSessionClaims | null,
+): boolean {
+  switch (item.access) {
+    case undefined:
+      return true;
+    case 'owner':
+      return claims?.role === 'OWNER';
+    case 'platform_support':
+      return claims?.platformSupport === true;
+    default:
+      return assertNever(item.access);
+  }
+}
+
 function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends string>({
   composition,
   pathname = '/dashboard',
@@ -308,13 +322,26 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
     getRouteFromPathname,
     getViewForRoute,
   } = composition;
-  const requestedRoute = getRouteFromPathname(pathname);
+  const consoleSession = useDashboardConsoleSession();
+  const isPlatformSupport = consoleSession.claims?.platformSupport === true;
+  /* Only a platform support session opens a support route. For any other session the
+     path is not a route, so it gets the redirect of an unknown path. */
+  const resolveRoute = React.useCallback(
+    (path: string): DashboardRoute | ProductRoute | null => {
+      const route = getRouteFromPathname(path);
+      if (!route) return null;
+      return getViewForRoute(route).access === 'platform_support' && !isPlatformSupport
+        ? null
+        : route;
+    },
+    [getRouteFromPathname, getViewForRoute, isPlatformSupport],
+  );
+  const requestedRoute = resolveRoute(pathname);
   const usesWalletContext =
     requestedRoute !== null && getViewForRoute(requestedRoute).context === 'wallet';
   const frontendRuntime = useFrontendRuntime();
   const { go, linkProps } = useSiteRouter();
   const homeProps = linkProps('https://seams.sh/');
-  const consoleSession = useDashboardConsoleSession();
   const persistedSelectedContext = React.useMemo(() => readPersistedDashboardSelectedContext(), []);
   const persistedOrganizationId = String(persistedSelectedContext.organization || '').trim();
   const persistedProjectId = String(persistedSelectedContext.project || '').trim();
@@ -384,10 +411,9 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
   const currentOrganizationProjectId = String(
     currentOrganizationSummary?.selectedProjectId || '',
   ).trim();
-  const isPlatformRoute = pathname === PLATFORM_BILLING_ROUTE || pathname.startsWith('/platform/');
-  const isPlatformAdmin = consoleSession.claims?.platformSupport === true;
+  const isPlatformBillingRoute = isPlatformSupport && pathname === PLATFORM_BILLING_ROUTE;
   const isSidebarNavigationLocked =
-    !isPlatformRoute &&
+    !isPlatformBillingRoute &&
     onboardingGateEnabled &&
     (onboardingLoading || !onboardingState || onboardingState.currentStep !== 'complete');
   /* Only claim setup is incomplete once the onboarding status has actually
@@ -514,19 +540,18 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
     if (isRecoveringOrganizationContext || isSelectingRequestedOrganization) return;
     if (isWaitingForCurrentOrgOnboardingState) return;
     if (!onboardingGateEnabled || !onboardingState) return;
-    const isOnboardingRoute = pathname === DASHBOARD_ONBOARDING_ROUTE;
-    const isPlatformBillingRoute = pathname === PLATFORM_BILLING_ROUTE;
     if (
       onboardingState.currentStep !== 'complete' &&
-      !isOnboardingRoute &&
+      pathname !== DASHBOARD_ONBOARDING_ROUTE &&
       !isPlatformBillingRoute
     ) {
-      go(sharedAccountHref(DASHBOARD_ONBOARDING_ROUTE));
+      go(DASHBOARD_ONBOARDING_ROUTE);
     }
   }, [
     consoleSession.claims,
     consoleSession.loading,
     go,
+    isPlatformBillingRoute,
     isRecoveringOrganizationContext,
     isSelectingRequestedOrganization,
     isWaitingForCurrentOrgOnboardingState,
@@ -961,7 +986,7 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
         return;
       }
       if (menu === 'accountSettings' && value === DASHBOARD_ACCOUNT_SETTINGS_ACCOUNT_OPTION) {
-        go(sharedAccountHref(DASHBOARD_ACCOUNT_SETTINGS_ROUTE));
+        go(DASHBOARD_ACCOUNT_SETTINGS_ROUTE);
         return;
       }
       if (menu === 'accountSettings' && value === DASHBOARD_ACCOUNT_SETTINGS_SIGN_OUT_OPTION) {
@@ -988,7 +1013,7 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
         menu === 'environment' &&
         dropdownOptions.environment.find((entry) => entry.value === value)?.disabled === true
       ) {
-        go(sharedAccountHref('/dashboard/billing/account?billing=production_required'));
+        go('/dashboard/billing/account?billing=production_required');
         return;
       }
       onSelectContextRaw(menu, value);
@@ -1033,12 +1058,11 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
     if (onboardingGateEnabled && !onboardingState) return;
     if (isRecoveringOrganizationContext || isSelectingRequestedOrganization) return;
     if (pathname === '/dashboard') {
-      go(sharedAccountHref(dashboardEntryRoute));
+      go(dashboardEntryRoute);
     }
   }, [
     consoleSession.claims,
     dashboardEntryRoute,
-    getRouteFromPathname,
     go,
     isRecoveringOrganizationContext,
     isSelectingRequestedOrganization,
@@ -1058,14 +1082,13 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
     if (
       pathname !== '/dashboard' &&
       (pathname.startsWith('/dashboard/') || pathname.startsWith('/platform/')) &&
-      !getRouteFromPathname(pathname)
+      !resolveRoute(pathname)
     ) {
-      go(sharedAccountHref(dashboardEntryRoute));
+      go(dashboardEntryRoute);
     }
   }, [
     consoleSession.claims,
     dashboardEntryRoute,
-    getRouteFromPathname,
     go,
     isRecoveringOrganizationContext,
     isSelectingRequestedOrganization,
@@ -1074,6 +1097,7 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
     onboardingLoading,
     onboardingState,
     pathname,
+    resolveRoute,
   ]);
 
   React.useEffect(() => {
@@ -1107,11 +1131,11 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
   }, [signedIn, frontendRuntime.selectedNetwork]);
 
   const activeRoute = React.useMemo<DashboardRoute | ProductRoute>(() => {
-    const resolved = getRouteFromPathname(pathname);
+    const resolved = resolveRoute(pathname);
     if (resolved) return resolved;
     if (pathname === '/dashboard') return dashboardEntryRoute;
     return DEFAULT_DASHBOARD_ROUTE;
-  }, [DEFAULT_DASHBOARD_ROUTE, dashboardEntryRoute, getRouteFromPathname, pathname]);
+  }, [DEFAULT_DASHBOARD_ROUTE, dashboardEntryRoute, pathname, resolveRoute]);
 
   const activeView = React.useMemo(
     () => getViewForRoute(activeRoute),
@@ -1125,23 +1149,19 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
   const navigationLockExemptPaths = React.useMemo<ReadonlySet<DashboardRoute | ProductRoute>>(
     () =>
       new Set<DashboardRoute | ProductRoute>(
-        isPlatformAdmin
+        isPlatformSupport
           ? [DASHBOARD_ACCOUNT_SETTINGS_ROUTE, PLATFORM_BILLING_ROUTE]
           : [DASHBOARD_ACCOUNT_SETTINGS_ROUTE],
       ),
-    [isPlatformAdmin],
+    [isPlatformSupport],
   );
   const visibleSidebarGroups = React.useMemo(
     () =>
-      SIDEBAR_GROUPS.filter((group) => group.key !== 'platform' || isPlatformAdmin)
-        .map((group) => ({
-          ...group,
-          items: group.items.filter(
-            (item) => item.access !== 'owner' || consoleSession.claims?.role === 'OWNER',
-          ),
-        }))
-        .filter((group) => group.items.length > 0),
-    [SIDEBAR_GROUPS, consoleSession.claims?.role, isPlatformAdmin],
+      SIDEBAR_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => canSeeSidebarItem(item, consoleSession.claims)),
+      })).filter((group) => group.items.length > 0),
+    [SIDEBAR_GROUPS, consoleSession.claims],
   );
 
   const topbarSearchItems = React.useMemo(
@@ -1168,7 +1188,6 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
   }
 
   if (
-    import.meta.env.MODE === 'wallet' &&
     projectResolution.kind === 'unavailable' &&
     projectResolution.orgId === currentOrgId &&
     !pendingOrganizationContextOrgId
@@ -1181,9 +1200,8 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
             ? t('commonShellSelectionUnavailable')
             : t('commonShellProjectsLoadFailed')}
         </p>
-        <a href={platformConsoleHref('/dashboard/account-settings')}>
-          {t('commonShellOpenPlatformConsole')}
-        </a>
+        {/* A whole page load drops the context that the URL requested. */}
+        <a href={DASHBOARD_ACCOUNT_SETTINGS_ROUTE}>{t('navAccountSettings')}</a>
         <button type="button" onClick={consoleSession.refresh}>
           {t('commonShellRetry')}
         </button>
@@ -1235,7 +1253,6 @@ function DashboardPageInner<ProductRoute extends string, ProductGroupKey extends
         pageTitle={activeView.label}
         network={consoleNetworkSwitch(frontendRuntime, go)}
         groups={visibleSidebarGroups}
-        externalLinks={linksWithConsoleContext(composition.externalLinks ?? [], selectedContext)}
         activeRoute={activeRoute}
         isSidebarExpanded={isSidebarExpanded}
         onToggleSidebar={toggleSidebar}
@@ -1339,15 +1356,18 @@ function DashboardPendingShell<ProductRoute extends string, ProductGroupKey exte
   const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(
     readInitialDashboardSidebarExpanded,
   );
-  const route = composition.getRouteFromPathname(pathname) ?? composition.defaultRoute;
+  const requested = composition.getRouteFromPathname(pathname);
+  const route =
+    requested && composition.getViewForRoute(requested).access !== 'platform_support'
+      ? requested
+      : composition.defaultRoute;
   const view = composition.getViewForRoute(route);
   const groups = React.useMemo(
     () =>
       composition.sidebarGroups
-        .filter((group) => group.key !== 'platform')
         .map((group) => ({
           ...group,
-          items: group.items.filter((item) => item.access !== 'owner'),
+          items: group.items.filter((item) => item.access === undefined),
         }))
         .filter((group) => group.items.length > 0),
     [composition.sidebarGroups],

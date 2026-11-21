@@ -29,7 +29,6 @@ const appUrl = process.env.SEAMS_INTENDED_APP_URL || 'http://localhost:4001';
 const routerUrl = process.env.SEAMS_INTENDED_ROUTER_URL || 'https://localhost:4101';
 const walletOrigin = process.env.SEAMS_INTENDED_WALLET_ORIGIN || 'https://localhost:4002';
 const consoleOrigin = 'http://localhost:4005';
-const platformConsoleOrigin = 'http://localhost:4007';
 const consoleStaticUrl = `${consoleOrigin}/dashboard-static/`;
 const projectEnvironmentId = 'local-smoke-project:dev';
 let publishableKey = '';
@@ -151,8 +150,6 @@ async function main() {
   const walletTestApp = startWalletTestApp();
   await waitForHttpOk(walletTestAppViteUrl, 'Wallet test app Vite', 120_000);
   const consoleApp = startConsole();
-  startPlatformConsole();
-  await waitForHttpOk(platformConsoleOrigin, 'Platform Console', 120_000);
   await waitForHttpOk(appUrl, 'Wallet test app', 120_000);
   await waitForHttpOk(consoleStaticUrl, 'console frontend', 120_000);
   await waitForConsoleDocument(
@@ -332,34 +329,8 @@ function startConsole() {
   );
 }
 
-function startPlatformConsole() {
-  return spawnManaged(
-    'platform-console',
-    [
-      '-C',
-      'apps/wallet-console',
-      'exec',
-      'vite',
-      '--config',
-      'vite.console.config.ts',
-      '--mode',
-      'platform',
-      '--host',
-      '127.0.0.1',
-      '--port',
-      '4007',
-    ],
-    {
-      ...consoleEnv(),
-      VITE_SITE_ORIGIN: platformConsoleOrigin,
-      VITE_ASSET_BASE_PATH: '/',
-      VITE_CONSOLE_BASE_URL: platformConsoleOrigin,
-    },
-  );
-}
-
 function startCaddy() {
-  return spawnManaged('caddy', ['-C', 'apps/seams-site', 'run', 'caddy'], caddyEnv());
+  return spawnManaged('caddy', ['run', 'caddy'], caddyEnv());
 }
 
 function startRouter() {
@@ -482,7 +453,6 @@ function consoleEnv() {
     ...process.env,
     VITE_SITE_ORIGIN: appUrl,
     VITE_ASSET_BASE_PATH: '/dashboard-static/',
-    VITE_PLATFORM_CONSOLE_ORIGIN: platformConsoleOrigin,
     VITE_WALLET_CONSOLE_ORIGIN: appUrl,
     VITE_CONSOLE_BASE_URL: routerUrl,
     VITE_RELAYER_URL: routerUrl,
@@ -1159,7 +1129,9 @@ function isConsoleViteCommand(command) {
 }
 
 function isSiteCaddyCommand(command) {
-  return command.includes(`caddy run --config ${path.join(repoRoot, 'apps/seams-site/Caddyfile')}`);
+  return command.includes(
+    `caddy run --config ${path.join(repoRoot, 'scripts/local-wallet/Caddyfile')}`,
+  );
 }
 
 function isDocsVitepressCommand(command) {
