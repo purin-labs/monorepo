@@ -189,14 +189,12 @@ function buildConsoleConfig(
   const frontendOrigins =
     deployment.lane === 'production-testnet' || customerReplica
       ? []
-      : [consoleSite.platformOrigin, consoleSite.walletConsoleOrigin];
+      : [consoleSite.walletConsoleOrigin];
   // Former hosts keep the Console API routes; their pages redirect to the new hosts.
   const formerFrontendOrigins =
-    frontendOrigins.length === 0
-      ? []
-      : [...consoleSite.formerPlatformOrigins, ...consoleSite.formerWalletConsoleOrigins];
+    frontendOrigins.length === 0 ? [] : consoleSite.formerWalletConsoleOrigins;
   const production = deployment.lane !== 'staging-testnet';
-  const consoleBaseUrl = new URL(consoleSite.platformOrigin);
+  const consoleBaseUrl = new URL(consoleSite.walletConsoleOrigin);
   consoleBaseUrl.searchParams.set(
     'db_network',
     consoleTarget.walletServiceDeploymentId === 'production-mainnet' ? 'mainnet' : 'testnet',
@@ -221,11 +219,7 @@ function buildConsoleConfig(
       relyingPartyId: new URL(walletOrigin).hostname,
     }),
     CONSOLE_BASE_URL: consoleBaseUrl.href,
-    CONSOLE_CORS_ORIGINS: [
-      walletSiteOrigin,
-      consoleSite.platformOrigin,
-      consoleSite.walletConsoleOrigin,
-    ].join(','),
+    CONSOLE_CORS_ORIGINS: [walletSiteOrigin, consoleSite.walletConsoleOrigin].join(','),
     CONSOLE_STEP_UP_RP_ID: new URL(
       customerReplica ? consoleSite.walletConsoleOrigin : walletSiteOrigin,
     ).hostname,
@@ -313,38 +307,37 @@ function buildConsoleConfig(
   };
 }
 
+/* The Console API answers on its own origin. A Console with no frontend host (production
+   testnet, a customer replica) owns its host as a custom domain. Otherwise the origin is the
+   Wallet Console host: its API and tenant-deployment paths go to this Worker and its pages
+   to Pages. Former Console hosts and the Wallet site hosts keep the API paths, so a client
+   that names an older host keeps working; an API host never redirects. */
 export function buildConsoleRoutes(
   consoleOrigin,
   walletSiteOrigin,
   frontendOrigins,
   formerWalletSiteOrigins = [],
 ) {
-  const frontendRoutes = frontendOrigins.flatMap((origin) => {
+  const apiPaths = ['/console', '/console/*'];
+  const routesOn = (origin, paths) => {
     const host = new URL(origin).hostname;
     const zone = zoneNameFor(host);
-    return [
-      { pattern: `${host}/console`, zone_name: zone },
-      { pattern: `${host}/console/*`, zone_name: zone },
-    ];
-  });
-  const hostname = new URL(consoleOrigin).hostname;
-  if (consoleOrigin !== walletSiteOrigin) {
-    return [{ pattern: hostname, custom_domain: true }, ...frontendRoutes];
+    return paths.map((routePath) => ({ pattern: `${host}${routePath}`, zone_name: zone }));
+  };
+  const frontendRoutes = frontendOrigins.flatMap((origin) => routesOn(origin, apiPaths));
+  if (!frontendOrigins.includes(consoleOrigin)) {
+    return [{ pattern: new URL(consoleOrigin).hostname, custom_domain: true }, ...frontendRoutes];
   }
-  // The Console API shares the Wallet site host. A former Wallet site host keeps the
-  // same API routes, so the Wallet CLI and account services that name it keep working.
-  const siteRoutes = [consoleOrigin, ...formerWalletSiteOrigins].flatMap((origin) => {
-    const host = new URL(origin).hostname;
-    const zone = zoneNameFor(host);
-    return [
-      { pattern: `${host}/console`, zone_name: zone },
-      { pattern: `${host}/console/*`, zone_name: zone },
-      { pattern: `${host}/account-platform/v1/*`, zone_name: zone },
-      { pattern: `${host}/internal/tenant-deployment/v1/verify-resource`, zone_name: zone },
-      { pattern: `${host}/internal/tenant-deployment/v1/cutover`, zone_name: zone },
-    ];
-  });
-  return [...frontendRoutes, ...siteRoutes];
+  return [
+    ...frontendRoutes,
+    ...routesOn(consoleOrigin, [
+      '/internal/tenant-deployment/v1/verify-resource',
+      '/internal/tenant-deployment/v1/cutover',
+    ]),
+    ...[walletSiteOrigin, ...formerWalletSiteOrigins].flatMap((origin) =>
+      routesOn(origin, apiPaths),
+    ),
+  ];
 }
 
 function zoneNameFor(hostname) {

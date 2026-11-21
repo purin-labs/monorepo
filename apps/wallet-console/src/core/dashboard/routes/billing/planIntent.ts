@@ -1,4 +1,4 @@
-import { walletConsoleOverviewHref } from '../../consoleNavigation';
+import { consoleOverviewHref } from '../../consoleNavigation';
 import { replaceDashboardSelectedContext } from '../../useDashboardUiPreferences';
 import { deriveDashboardOrganizationSlug } from '../../utils/organizationIdentity';
 import {
@@ -155,10 +155,10 @@ async function readDashboardPlanContext(): Promise<{
   }
 }
 
-/* The Wallet Console overview for the organization's first project. */
+/* The dashboard overview for the organization's first project. */
 export async function readDashboardOverviewHref(): Promise<string | null> {
   const context = await readDashboardPlanContext();
-  return context ? walletConsoleOverviewHref(context) : null;
+  return context ? consoleOverviewHref(context) : null;
 }
 
 /**

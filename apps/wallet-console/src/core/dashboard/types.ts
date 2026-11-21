@@ -1,7 +1,7 @@
 import React from 'react';
 import type { GrainFieldName } from '@seams-internal/grain-field';
 
-export type SidebarGroupKey = 'overview' | 'administration' | 'billing' | 'platform';
+export type SidebarGroupKey = 'overview' | 'administration';
 
 export type DashboardRoute =
   | '/dashboard/account-settings'
@@ -17,7 +17,7 @@ export type DashboardRoute =
   | '/dashboard/api-keys'
   | '/dashboard/webhooks';
 
-export type DashboardProductId = 'embedded-wallets' | 'platform';
+export type DashboardProductId = 'embedded-wallets';
 
 export type DashboardProduct = {
   id: DashboardProductId;
@@ -56,7 +56,8 @@ export type SidebarItem<Route extends string = DashboardRoute> = {
   context: 'account' | 'wallet';
   /** Renders a trailing "+" in the rail that opens this route's create dialog. */
   createLabel?: string;
-  access?: 'owner';
+  /** Who sees the item. A `platform_support` route is also closed to every other session. */
+  access?: 'owner' | 'platform_support';
 };
 
 export type SidebarGroup<
@@ -75,12 +76,6 @@ export type ExpandedSidebarGroupsState<GroupKey extends string = SidebarGroupKey
   boolean
 >;
 
-export interface DashboardExternalLink {
-  readonly label: string;
-  readonly href: string;
-  readonly icon: SidebarIconComponent;
-}
-
 export type DashboardComposition<Route extends string, GroupKey extends string> = {
   accountSettingsAccountOption: string;
   accountSettingsSignOutOption: string;
@@ -89,7 +84,6 @@ export type DashboardComposition<Route extends string, GroupKey extends string> 
   defaultProductId: DashboardProductId;
   defaultRoute: Route;
   sidebarGroups: SidebarGroup<Route, GroupKey>[];
-  externalLinks?: readonly DashboardExternalLink[];
   defaultExpandedSidebarGroups: ExpandedSidebarGroupsState<GroupKey>;
   sidebarGroupKeys: GroupKey[];
   getRouteFromPathname: (pathname: string) => Route | null;

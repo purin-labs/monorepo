@@ -5,15 +5,12 @@
   "scripts": {
     "vite": "vite --host 127.0.0.1 --port 4005",
     "dev": "vite --config vite.console.config.ts --mode wallet",
-    "build": "pnpm run build:platform && pnpm run build:wallet && pnpm run build:marketing",
+    "build": "pnpm run build:wallet && pnpm run build:marketing",
     "typecheck": "tsrs --noEmit",
     "preview": "vite preview --host 127.0.0.1 --port 4005",
-    "dev:platform": "vite --config vite.console.config.ts --mode platform",
     "dev:marketing": "vite --host 127.0.0.1 --port 4008",
-    "build:platform": "vite build --config vite.console.config.ts --mode platform",
     "build:wallet": "vite build --config vite.console.config.ts --mode wallet",
     "build:marketing": "vite build",
-    "preview:platform": "vite preview --config vite.console.config.ts --mode platform",
     "preview:wallet": "vite preview --config vite.console.config.ts --mode wallet"
   },
   "dependencies": {

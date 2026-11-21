@@ -1,6 +1,5 @@
 import React from 'react';
 import type {
-  DashboardExternalLink,
   DashboardProduct,
   DashboardProductId,
   SidebarGroup,
@@ -32,7 +31,6 @@ export type DashboardNavigationProps<Route extends string, GroupKey extends stri
   pageTitle: string;
   network?: DashboardNetworkSwitch;
   groups: SidebarGroup<Route, GroupKey>[];
-  externalLinks?: readonly DashboardExternalLink[];
   activeRoute: Route;
   isSidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -61,7 +59,6 @@ export function DashboardNavigation<Route extends string, GroupKey extends strin
   pageTitle,
   network,
   groups,
-  externalLinks,
   activeRoute,
   isSidebarExpanded,
   onToggleSidebar,
@@ -102,7 +99,6 @@ export function DashboardNavigation<Route extends string, GroupKey extends strin
         network={network}
         onSelectAccount={selectContextOption.bind(null, onSelectContext, 'accountSettings')}
         groups={groups}
-        externalLinks={externalLinks}
         isSidebarExpanded={isSidebarExpanded}
         activeRoute={activeRoute}
         disableNavigationItems={disableNavigationItems}

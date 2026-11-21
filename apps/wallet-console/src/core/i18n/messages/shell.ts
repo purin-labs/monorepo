@@ -7,9 +7,7 @@ export const shellMessages = {
   navOverview: { en: 'Overview', ja: '概要' },
   navAdministration: { en: 'Administration', ja: '管理' },
   navWalletOperations: { en: 'Wallet operations', ja: 'ウォレット運用' },
-  navPlatform: { en: 'Platform', ja: 'プラットフォーム' },
   navAccount: { en: 'Account', ja: 'アカウント' },
-  navBilling: { en: 'Billing', ja: '請求' },
   navAdmin: { en: 'Admin', ja: '管理者' },
 
   // Navigation items
@@ -30,7 +28,6 @@ export const shellMessages = {
   navInvoices: { en: 'Invoices', ja: '請求書' },
   navAdminSupport: { en: 'Admin support', ja: '管理サポート' },
   navOnboarding: { en: 'Onboarding', ja: 'オンボーディング' },
-  navOnboardingWizard: { en: 'Onboarding wizard', ja: 'オンボーディングウィザード' },
 
   // Create actions
   createGasSponsorshipPolicy: {
@@ -39,12 +36,6 @@ export const shellMessages = {
   },
   createPolicy: { en: 'New policy', ja: '新しいポリシー' },
   createWebhookEndpoint: { en: 'New webhook endpoint', ja: '新しいWebhookエンドポイント' },
-
-  // Products
-  productPlatformDescription: {
-    en: 'Developer accounts and billing',
-    ja: '開発者アカウントと請求',
-  },
 
   // Webhook event categories
   webhookWalletLabel: { en: 'Wallet activity', ja: 'ウォレットのアクティビティ' },
@@ -85,10 +76,6 @@ export const shellMessages = {
   menuAccountFallback: { en: 'Account', ja: 'アカウント' },
 
   // Loading
-  loadingOpeningPlatformConsole: {
-    en: 'Opening Platform Console...',
-    ja: 'Platform Consoleを開いています…',
-  },
   loadingPrepareWorkspace: {
     en: 'Please wait while we prepare your workspace.',
     ja: 'ワークスペースを準備しています。しばらくお待ちください。',

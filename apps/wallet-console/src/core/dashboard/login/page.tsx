@@ -32,7 +32,6 @@ import {
   consoleSignInHref,
   rememberConsoleContext,
   readConsoleSignInContext,
-  walletConsoleHref,
 } from '../consoleNavigation';
 import { readPendingDashboardInvitation } from '../routes/invitations/invitation';
 import { getDashboardBillingPlan, startDashboardCardSetup } from '../routes/billing/freePlanApi';
@@ -59,7 +58,7 @@ function normalizeBaseUrl(input: unknown): string {
 }
 
 function loginDestination(pathname: '/dashboard' | '/dashboard/onboarding'): string {
-  if (import.meta.env.MODE === 'platform' && readPendingDashboardInvitation()) {
+  if (readPendingDashboardInvitation()) {
     return consoleSignInHref('/dashboard/invitations/accept');
   }
   return consoleSignInHref(pathname);
@@ -73,10 +72,6 @@ function readLoginPresentation(): LoginPresentation {
   if (isEmbeddedSignIn()) return 'embedded';
   return isGithubOAuthPopup() ? 'github_popup' : 'page';
 }
-
-/* A plan picked on the pricing page ends in Wallet Console: Stripe returns to its
-   dashboard, where this session is. Platform Console keeps its plan page. */
-const PLAN_RETURN_PAGE = import.meta.env.MODE === 'wallet' ? 'dashboard' : 'plan_page';
 
 /** The login text for a visitor who picked a plan on the pricing page. */
 const PLAN_LOGIN_TEXT: Record<DashboardPlanChoice, { title: string; description: string }> = {
@@ -291,19 +286,18 @@ export function DashboardLoginPage(): React.JSX.Element {
             const plan = await getDashboardBillingPlan();
             if (plan?.plan === 'free' && plan.card.kind !== 'usable') {
               setPreparingPlan('stripe');
-              const checkoutUrl = await startDashboardCardSetup(intent.plan, PLAN_RETURN_PAGE);
-              // Only the plan page reads the intent after Stripe.
-              if (PLAN_RETURN_PAGE === 'dashboard') {
-                await selectDashboardPlanContext();
-              }
+              /* Stripe returns to the dashboard, where this session is. Only the plan
+                 page reads the intent after Stripe, so select the plan's context now. */
+              const checkoutUrl = await startDashboardCardSetup(intent.plan, 'dashboard');
+              await selectDashboardPlanContext();
               openPage(checkoutUrl);
               return;
             }
           }
-          if (PLAN_RETURN_PAGE === 'dashboard' && intent.plan === 'free') {
+          if (intent.plan === 'free') {
             setPreparingPlan('dashboard');
             clearPendingDashboardPlanIntent();
-            openPage((await readDashboardOverviewHref()) ?? walletConsoleHref('/dashboard'));
+            openPage((await readDashboardOverviewHref()) ?? '/dashboard');
             return;
           }
           openPage('/dashboard/billing/plan');

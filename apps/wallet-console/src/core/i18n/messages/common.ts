@@ -201,14 +201,13 @@ export const commonMessages = {
     ja: 'このプロジェクトを開けません',
   },
   commonShellSelectionUnavailable: {
-    en: 'The selected account or project is unavailable. Choose a project in Platform Console.',
-    ja: '選択したアカウントまたはプロジェクトは利用できません。Platform Consoleでプロジェクトを選択してください。',
+    en: 'The selected account or project is unavailable. Choose an organization in account settings.',
+    ja: '選択したアカウントまたはプロジェクトは利用できません。アカウント設定で組織を選択してください。',
   },
   commonShellProjectsLoadFailed: {
     en: 'Projects could not be loaded. Try again.',
     ja: 'プロジェクトを読み込めませんでした。もう一度お試しください。',
   },
-  commonShellOpenPlatformConsole: { en: 'Open Platform Console', ja: 'Platform Consoleを開く' },
   commonShellRetry: { en: 'Retry', ja: '再試行' },
   commonShellRedirectingToSignIn: {
     en: 'Redirecting to sign in...',

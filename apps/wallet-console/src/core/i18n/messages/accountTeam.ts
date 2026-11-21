@@ -110,10 +110,9 @@ export const accountTeamMessages = {
   accountServiceStatusFailed: { en: 'Failed', ja: '失敗' },
   accountServiceProjectsTitle: { en: '{label} projects', ja: '{label}のプロジェクト' },
   accountServiceProjectsHelp: {
-    en: 'Projects in the current organization that run {label}. Create projects and enable services in ',
-    ja: '現在の組織で{label}を実行しているプロジェクトです。プロジェクトの作成とサービスの有効化は',
+    en: 'Projects in the current organization that run {label}.',
+    ja: '現在の組織で{label}を実行しているプロジェクトです。',
   },
-  accountServiceProjectsHelpEnd: { en: '.', ja: 'で行います。' },
   accountColProject: { en: 'Project', ja: 'プロジェクト' },
   accountColCreated: { en: 'Created', ja: '作成日時' },
   accountServiceProjectsLoading: {
@@ -180,9 +179,6 @@ export const accountTeamMessages = {
   teamPermManageProjects: { en: 'Manage projects', ja: 'プロジェクトの管理' },
   teamPermViewBilling: { en: 'View billing', ja: '請求の閲覧' },
   teamPermManageBilling: { en: 'Manage billing', ja: '請求の管理' },
-  teamNoProjectAccess: { en: 'No project access', ja: 'プロジェクトへのアクセスなし' },
-  teamProjectCountOne: { en: '1 project', ja: '1件のプロジェクト' },
-  teamProjectCountMany: { en: '{count} projects', ja: '{count}件のプロジェクト' },
   teamNoScopedProjectAccess: {
     en: 'No {label} project access',
     ja: '{label}プロジェクトへのアクセスなし',

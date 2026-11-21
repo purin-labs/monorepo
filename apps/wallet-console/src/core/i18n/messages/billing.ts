@@ -19,14 +19,6 @@ export const billingMessages = {
     ja: '請求データを利用できません: {error}',
   },
   billingLoadingData: { en: 'Loading billing data', ja: '請求データを読み込み中' },
-  billingAdminOnly: {
-    en: 'Admin support is only available to platform support accounts.',
-    ja: '管理サポートはプラットフォームサポートアカウントのみ利用できます。',
-  },
-  billingOrgScoped: {
-    en: 'Billing is organization-scoped. All projects and services use the same billing account.',
-    ja: '請求は組織単位です。すべてのプロジェクトとサービスが同じ請求アカウントを使用します。',
-  },
   billingDismissWarningLabel: { en: 'Dismiss billing warning', ja: '請求の警告を閉じる' },
   billingDismiss: { en: 'Dismiss', ja: '閉じる' },
   billingSummaryMetricsLabel: {
@@ -333,7 +325,6 @@ export const billingMessages = {
     ja: '過去の帰属先不明の組織料金',
   },
   billingDimensionProject: { en: 'project', ja: 'プロジェクト' },
-  billingDimensionService: { en: 'service', ja: 'サービス' },
   billingDimensionMeter: { en: 'meter', ja: 'メーター' },
   billingCostByDimensionLabel: {
     en: 'Usage cost by {dimension}',
@@ -359,23 +350,16 @@ export const billingMessages = {
     ja: '使用コストがこの組織と一致しませんでした。',
   },
   billingServiceUsageCostsLabel: { en: '{service} usage costs', ja: '{service}の使用コスト' },
-  billingOrgUsageCostsLabel: { en: 'Organization usage costs', ja: '組織の使用コスト' },
   billingUsageCostMonth: { en: 'Usage cost month (UTC)', ja: '使用コストの月（UTC）' },
   billingPostedUsageIntro: {
     en: 'Posted service usage for {period} (UTC). Payments, refunds, disputes, and manual adjustments remain in account activity.',
     ja: '{period}（UTC）に計上されたサービスの使用量です。支払い、返金、不審請求、手動調整はアカウントアクティビティに残ります。',
   },
   billingPostedUsageTotalLabel: { en: 'Posted usage total', ja: '計上済みの使用量合計' },
-  billingSubjectOrganization: { en: 'Organization', ja: '組織' },
   billingCostTotalHint: { en: '{subject} total for {period}', ja: '{period}の{subject}合計' },
   billingServiceOnlyNote: {
-    en: 'Only {service} usage is shown. Usage of other products and historical organization charges are in {platformLink}.',
-    ja: '{service}の使用量のみ表示しています。他のプロダクトの使用量と過去の組織料金は{platformLink}で確認できます。',
-  },
-  billingPlatformConsoleLink: { en: 'Platform Console', ja: 'Platform Console' },
-  billingIdsNote: {
-    en: 'Project, service, and meter IDs identify attributable costs. Historical charges without source evidence remain organization charges.',
-    ja: 'プロジェクト、サービス、メーターのIDで、帰属可能なコストを識別します。発生元の根拠がない過去の料金は、組織の料金として残ります。',
+    en: 'Only {service} usage is shown.',
+    ja: '{service}の使用量のみ表示しています。',
   },
 
   // Account activity

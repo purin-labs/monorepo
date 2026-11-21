@@ -353,8 +353,9 @@ test('frontend build uses canonical Console origins for every production lane', 
   const resolved = buildFrontendEnvironment(site, site.walletSiteOrigin, environment);
 
   expect(resolved.VITE_TESTNET_CONSOLE_BASE_URL).toBe('https://test.console.seams.sh');
-  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://seams.sh');
-  expect(resolved.VITE_PLATFORM_CONSOLE_ORIGIN).toBe('https://account.seams.sh');
+  expect(resolved.VITE_MAINNET_CONSOLE_BASE_URL).toBe('https://console.seams.sh');
+  expect(resolved.VITE_WALLET_CONSOLE_ORIGIN).toBe('https://console.seams.sh');
+  expect(resolved).not.toHaveProperty('VITE_PLATFORM_CONSOLE_ORIGIN');
 });
 
 test('frontend Pages headers align with hosted wallet asset policies', () => {

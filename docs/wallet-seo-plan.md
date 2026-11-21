@@ -53,7 +53,7 @@ Search volume, current rankings, and conversion baselines remain unknown.
 | The English homepage title is only “Seams Wallet.”                                        | `src/marketing/i18n/catalog.ts`                                           | Describe the product category in the title.                              |
 | The deployment script adds staging `noindex` to the root docs artifact.                   | `scripts/deploy-surface.mjs`                                              | Check all surface headers and apply a complete staging policy.           |
 | Public documentation comes from an exact `seams-wallet` revision.                         | `docs/README.md`, `scripts/deploy-surface.mjs`                            | Preserve that ownership and artifact publication path.                   |
-| Marketing and both Console builds share a public asset directory.                         | `apps/wallet-console/vite.console.config.ts`                              | Generate crawl rules per deployment surface.                             |
+| Marketing and the Console build share a public asset directory.                           | `apps/wallet-console/vite.console.config.ts`                              | Generate crawl rules per deployment surface.                             |
 
 Source paths beginning with `src/` in this table are relative to `apps/wallet-console`.
 

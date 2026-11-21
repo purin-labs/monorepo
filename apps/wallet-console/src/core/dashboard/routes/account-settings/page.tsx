@@ -66,9 +66,9 @@ function isProvisionedPlaceholderOrganization(organization: DashboardAccountOrga
   });
 }
 
-/** With `serviceId`, the page also lists the current organization's projects that run it. */
+/** The page also lists the current organization's projects that run `serviceId`. */
 export function AccountSettingsPage(props: {
-  readonly serviceId?: PlatformServiceIdV1;
+  readonly serviceId: PlatformServiceIdV1;
 }): React.JSX.Element {
   const { go } = useSiteRouter();
   const session = useDashboardConsoleSession();
@@ -630,7 +630,7 @@ export function AccountSettingsPage(props: {
         </div>
       </section>
 
-      {props.serviceId && session.claims?.orgId ? (
+      {session.claims?.orgId ? (
         <ServiceProjectsSection organizationId={session.claims.orgId} serviceId={props.serviceId} />
       ) : null}
 

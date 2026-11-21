@@ -20,7 +20,7 @@ import { dashboardStatusLabel, dashboardStatusTone } from '../../utils/statusTon
 import { DashboardInlineModal } from '../../components/DashboardInlineModal';
 import { DashboardPageActions } from '../../components/DashboardPageActions';
 import type { PlatformServiceIdV1 } from '@seams-internal/console-shared/accountPlatform';
-import { listDashboardProjects, type DashboardConsoleProject } from '../../consoleContextApi';
+import type { DashboardConsoleProject } from '../../consoleContextApi';
 import { listServiceProjects, platformServiceLabel } from '../services/serviceProjects';
 import { useDashboardConsoleSession } from '../../consoleSession';
 import { formatDashboardTimestamp } from '../../utils/timestamps';
@@ -160,22 +160,16 @@ interface ServiceScope {
 
 function scopedAccess(
   assignments: readonly DashboardProjectAccessAssignment[],
-  scope: ServiceScope | null,
+  scope: ServiceScope,
 ): readonly DashboardProjectAccessAssignment[] {
-  return scope
-    ? assignments.filter((assignment) => scope.projectIds.has(assignment.projectId))
-    : assignments;
+  return assignments.filter((assignment) => scope.projectIds.has(assignment.projectId));
 }
 
 function projectAccessSummary(
   assignments: readonly DashboardProjectAccessAssignment[],
-  scope: ServiceScope | null,
+  scope: ServiceScope,
 ): string {
   const count = scopedAccess(assignments, scope).length;
-  if (!scope) {
-    if (count === 0) return t('teamNoProjectAccess');
-    return count === 1 ? t('teamProjectCountOne') : t('teamProjectCountMany', { count });
-  }
   const label = scope.label;
   if (count === 0) {
     return t('teamNoScopedProjectAccess', { label });
@@ -191,15 +185,12 @@ function inServiceScope(
     readonly role: string;
     readonly projectAccess: readonly DashboardProjectAccessAssignment[];
   },
-  scope: ServiceScope | null,
+  scope: ServiceScope,
 ): boolean {
-  return !scope || grant.role !== 'MEMBER' || scopedAccess(grant.projectAccess, scope).length > 0;
+  return grant.role !== 'MEMBER' || scopedAccess(grant.projectAccess, scope).length > 0;
 }
 
-function roleSummary(
-  membership: DashboardOrganizationMembership,
-  scope: ServiceScope | null,
-): string {
+function roleSummary(membership: DashboardOrganizationMembership, scope: ServiceScope): string {
   if (membership.role === 'OWNER') return t('teamFullOrganizationAccess');
   if (membership.role === 'ADMIN') {
     if (membership.adminPermissions.length === 0) return t('teamReadOnlyAdministrator');
@@ -210,7 +201,7 @@ function roleSummary(
 
 function invitationSummary(
   invitation: DashboardOrganizationInvitation,
-  scope: ServiceScope | null,
+  scope: ServiceScope,
 ): string {
   if (invitation.role === 'OWNER') return t('teamFullOrganizationAccess');
   if (invitation.role === 'ADMIN') {
@@ -224,7 +215,7 @@ function invitationSummary(
 function membershipMatchesQuery(
   membership: DashboardOrganizationMembership,
   queryRaw: string,
-  scope: ServiceScope | null,
+  scope: ServiceScope,
 ): boolean {
   const query = queryRaw.trim().toLowerCase();
   if (!query) return true;
@@ -350,9 +341,9 @@ function GrantEditor(props: GrantEditorProps): React.JSX.Element {
   );
 }
 
-/** With `serviceId`, project access covers that service's projects only. */
+/** Project access covers the projects of one service only. */
 export function TeamMembersPage(props: {
-  readonly serviceId?: PlatformServiceIdV1;
+  readonly serviceId: PlatformServiceIdV1;
 }): React.JSX.Element {
   const { serviceId } = props;
   const session = useDashboardConsoleSession();
@@ -395,9 +386,7 @@ export function TeamMembersPage(props: {
     Promise.all([
       listDashboardOrganizationMemberships('all'),
       listDashboardOrganizationInvitations('pending'),
-      serviceId
-        ? listServiceProjects(orgId, serviceId).then((rows) => rows.map((row) => row.project))
-        : listDashboardProjects({ status: 'ACTIVE' }),
+      listServiceProjects(orgId, serviceId).then((rows) => rows.map((row) => row.project)),
     ])
       .then(([nextMemberships, nextInvitations, nextProjects]) => {
         if (canceled) return;
@@ -422,14 +411,11 @@ export function TeamMembersPage(props: {
     return reload();
   }, [reload, session.loading]);
 
-  const scope = React.useMemo<ServiceScope | null>(
-    () =>
-      serviceId
-        ? {
-            label: platformServiceLabel(serviceId),
-            projectIds: new Set(projects.map((project) => project.id)),
-          }
-        : null,
+  const scope = React.useMemo<ServiceScope>(
+    () => ({
+      label: platformServiceLabel(serviceId),
+      projectIds: new Set(projects.map((project) => project.id)),
+    }),
     [projects, serviceId],
   );
   const outsideScopeCount =
@@ -736,25 +722,23 @@ export function TeamMembersPage(props: {
             {mutationError}
           </p>
         ) : null}
-        {scope ? (
-          <p className="dashboard-pagination-note">
-            {t('teamScopeNote', { label: scope.label })}
-            {outsideScopeCount > 0 ? (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  className="dashboard-inline-link-button"
-                  onClick={() => setShowOutsideScope((current) => !current)}
-                >
-                  {showOutsideScope
-                    ? t('teamHideOutsideScope', { label: scope.label })
-                    : t('teamShowOutsideScope', { count: outsideScopeCount, label: scope.label })}
-                </button>
-              </>
-            ) : null}
-          </p>
-        ) : null}
+        <p className="dashboard-pagination-note">
+          {t('teamScopeNote', { label: scope.label })}
+          {outsideScopeCount > 0 ? (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="dashboard-inline-link-button"
+                onClick={() => setShowOutsideScope((current) => !current)}
+              >
+                {showOutsideScope
+                  ? t('teamHideOutsideScope', { label: scope.label })
+                  : t('teamShowOutsideScope', { count: outsideScopeCount, label: scope.label })}
+              </button>
+            </>
+          ) : null}
+        </p>
       </section>
 
       {!canOpenTeamPage && !session.loading ? (

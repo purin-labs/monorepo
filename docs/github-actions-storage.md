@@ -34,7 +34,7 @@ Environment IDs and Wallet source revisions are resolved automatically.
 3. Deploy the Signing Worker, Derivers A/B, Router, tenant-root control plane, regional Wallet Runtimes, and Gateways.
 4. Deploy Console using its own protected environment.
 5. Obtain fresh resource proofs, activate the configured tenant, and run the activation canary and backend health checks.
-6. Build and deploy the Platform Console frontend, Wallet Console frontend, Wallet site, showcases, docs, and hosted Wallet assets.
+6. Build and deploy the Wallet Console frontend, Wallet site, showcases, docs, and hosted Wallet assets.
 7. Check frontend routes and assets, verify the hosted SDK version, then check Wallet API and Console readiness again.
 
 Each pipeline deploys the selected lane's backend and activates its configured tenant.
