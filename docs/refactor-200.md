@@ -187,7 +187,14 @@ Open:
   Open: `sign.seams.sh` still shows "Wallet settings are unavailable". The mainnet tenant
   uses the `:dev` environment, so its discovery document says `development_testnet_v1`,
   and the frontend requires `production_mainnet_v1` for mainnet. The repair is a `:prod`
-  environment for the mainnet project with its own activation (owner decision).
+  environment for the mainnet project with its own activation. Mainnet has zero wallets.
+  State on 2026-11-21: a $10 support credit for `org_ri0bh5kt0er2` is in
+  (`ble_mwpr820v_wkbv6vc4`). Left: the owner of "Seams" (GitHub sign-in) sends
+  `POST /console/projects/proj_e8f2db07d5d24c109a8c27f0c2dc86cc/services/wallet/enable` with
+  `desiredRevision` 2, so `:prod` turns ACTIVE; then the mainnet `environmentId` changes to
+  `…:prod` and the mainnet full stack runs (its activation creates the `:prod` key).
+  A Google sign-in made a second mainnet organisation, "Purin Heavy Industries"
+  (`org_bqzydcm176nt`); it is not used.
 - Phase 7, Wave 1 is done (2026-11-20): 52 Workers, 39 D1 databases, 11 R2 buckets, 15 Pages
   projects and 3 containers are deleted in the source account. The record is the private file
   `.artifacts/cloudflare-account-migration-20261120/retirement-list.md`. The idle watchbook
