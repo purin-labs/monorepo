@@ -1,5 +1,6 @@
-import { useTranslation, type MarketingTranslator } from '@/marketing/context';
+import { useMarketingPage, useTranslation, type MarketingTranslator } from '@/marketing/context';
 import type { MessageKey } from '@/marketing/i18n/catalog';
+import type { Locale } from '@/marketing/i18n/locale';
 import React from 'react';
 import {
   ChevronDown,
@@ -486,20 +487,33 @@ export function H2Security(): React.JSX.Element {
 
 /* ---------- get started band (stacked two-column rows) ---------- */
 
+/* Each console screen is captured once per page language, so a page shows
+   the Console in its own language. A new language must add every screen. */
+const CONSOLE_SCREEN_IMAGES = {
+  observability: {
+    en: '/wallet-preview/wallet-console-observability.png?v=2',
+    ja: '/wallet-preview/wallet-console-observability-ja.png?v=1',
+  },
+  audit: {
+    en: '/wallet-preview/wallet-console-audit.png?v=6',
+    ja: '/wallet-preview/wallet-console-audit-ja.png?v=1',
+  },
+} as const satisfies Record<string, Record<Locale, string>>;
+
 /* The console band's two screens: the legend rows and the stage cards are
    driven from one list so a label can never name the screen beside it. */
-function createConsoleScreens(t: MarketingTranslator) {
+function createConsoleScreens(t: MarketingTranslator, locale: Locale) {
   return [
     {
       id: 'observability' as const,
       label: t('observability'),
-      src: '/wallet-preview/wallet-console-observability.png?v=2',
+      src: CONSOLE_SCREEN_IMAGES.observability[locale],
       callout: t('failureAlerts'),
     },
     {
       id: 'audit' as const,
       label: t('auditLogs'),
-      src: '/wallet-preview/wallet-console-audit.png?v=6',
+      src: CONSOLE_SCREEN_IMAGES.audit[locale],
       callout: t('csvExport'),
     },
   ];
@@ -624,7 +638,8 @@ export function FieldBanner({
 
 export function H2Start(): React.JSX.Element {
   const t = useTranslation();
-  const CONSOLE_SCREENS = createConsoleScreens(t);
+  const { locale } = useMarketingPage();
+  const CONSOLE_SCREENS = createConsoleScreens(t, locale);
   const ACCOUNT_NOTES = createAccountNotes(t);
   const POLICY_NOTES = createPolicyNotes(t);
   const { linkProps } = useSiteRouter();
