@@ -81,10 +81,7 @@ function parseOptions(args) {
     mode,
     lane,
     target,
-    valuesFile: path.resolve(
-      values.get('--values-file') ||
-        localConsoleValuesFile(laneId),
-    ),
+    valuesFile: path.resolve(values.get('--values-file') || localConsoleValuesFile(laneId)),
     manifestFile: values.has('--manifest-file')
       ? path.resolve(values.get('--manifest-file'))
       : undefined,
