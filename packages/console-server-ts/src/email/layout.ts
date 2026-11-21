@@ -10,7 +10,7 @@
 
 const SITE_ORIGIN = 'https://seams.sh';
 const WORDMARK_URL = `${SITE_ORIGIN}/brand/seams-wordmark-email.png`;
-const COMPANY_NAME = 'Seams Technologies KK';
+const COMPANY_NAME = 'Purin Heavy Industries';
 
 const COLOR = {
   page: '#ffffff',
