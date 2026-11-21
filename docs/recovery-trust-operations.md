@@ -28,11 +28,14 @@ signing key and from every tenant root.
 
 ## Backups and deployed settings
 
+`~/.seams/LABELS.md` marks which local files are current and which are old backups.
+It was checked against the live Workers on 2026-11-21.
+
 The private key is saved in `~/.seams/recovery-signing-2026-10.env` with mode `0600`.
 The `~/.seams` directory has mode `0700`. This file contains
 `SEAMS_RECOVERY_SIGNING_KEY` and `SEAMS_RECOVERY_SIGNER_KEY_ID`. Never print,
 commit, or pass the key to a runtime Worker. The protected `recovery-signing`
-GitHub environment in `purin-labs/monorepo` holds the same two values.
+GitHub environment in `seams-tech/seams-console` holds the same two values.
 Its [signing run] produced a snapshot that verifies against the new CLI pin.
 GitHub does not return the private value after storage.
 
