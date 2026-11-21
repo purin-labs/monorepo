@@ -46,6 +46,7 @@ async function prepareCheckout(checkout: string) {
     'scripts/deploy-surface.mjs',
     'scripts/deployment-targets.mjs',
     'scripts/deployment-smoke.mjs',
+    'scripts/pages-deploy.mjs',
     'deployment/wallet-system/targets.json',
     'deployment/console/targets.json',
     'packages/wallet-console-server-ts/scripts/gateway-deployment-config.mjs',
