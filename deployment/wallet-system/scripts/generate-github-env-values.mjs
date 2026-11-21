@@ -1,7 +1,6 @@
 import { createHash, generateKeyPairSync, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
@@ -19,6 +18,11 @@ import {
   readFrontendSite,
   tenantRootManagedBackupConfig,
 } from '../../../scripts/deployment-targets.mjs';
+import {
+  laneForEnvironmentPrefix,
+  localSecretsRoot,
+  localWalletSystemValuesFile,
+} from '../../../scripts/local-secrets.mjs';
 
 const VALID_DEPLOYMENT_COMPONENTS = new Set(['wallet-system', 'site']);
 const githubCli = process.env.GITHUB_CLI_BIN || 'gh';
@@ -389,7 +393,7 @@ Options:
                                Browser-facing project-environment id.
   --tenant-namespace <name>    Tenant storage namespace.
   --values-file <path>         Protected .env file containing external values.
-                               Defaults to the lane/site deployment values file under ~/.seams.
+                               Defaults to ~/.seams/<lane>/wallet-system.env.
   --prepare                    Provision infrastructure and write one protected authority manifest.
   --manifest-file <path>       Prepared wallet-system or site manifest.
   --component <name>           wallet-system or site.
@@ -1628,13 +1632,13 @@ function loadSuppliedValues(valuesFilePath) {
 }
 
 function findDefaultValuesFile(identity) {
-  const fileName =
+  const defaultPath = localWalletSystemValuesFile(
     identity.kind === 'lane' && identity.id === 'production-testnet'
-      ? 'production-testnet-deployment.env'
+      ? 'production-testnet'
       : identity.release === 'production'
-        ? 'production-deployment.env'
-        : 'staging-deployment.env';
-  const defaultPath = join(homedir(), '.seams', fileName);
+        ? 'production-mainnet'
+        : 'staging-testnet',
+  );
   return existsSync(defaultPath) ? defaultPath : undefined;
 }
 
@@ -1697,7 +1701,7 @@ function requireCloudflareApiTokenForApply(environmentPrefix, suppliedValues, va
   }
   const source = valuesFilePath
     ? resolve(repoRoot, valuesFilePath)
-    : join(homedir(), '.seams', `${environmentPrefix}-deployment.env`);
+    : localWalletSystemValuesFile(laneForEnvironmentPrefix(environmentPrefix));
   throw new Error(
     `CLOUDFLARE_API_TOKEN is required before apply mode can provision resources. ` +
       `Add it to ${source}.`,
@@ -2000,8 +2004,7 @@ function assertCompleteApplyInput(outputDocument, shouldApply, incompleteAllowed
     valuesFileInstruction = `Complete ${resolve(repoRoot, valuesFilePath)} and rerun the command.`;
   } else {
     valuesFileInstruction =
-      'Create ~/.seams/' +
-      `${outputDocument.target}-deployment.env from ` +
+      `Create ${localWalletSystemValuesFile(outputDocument.lane)} from ` +
       'deployment/wallet-system/env/deployment-values.example.env, fill it, and rerun.';
   }
   throw new Error(
@@ -2422,7 +2425,7 @@ function runJsonScript(scriptPath, args) {
 }
 
 function writePreparedComponentManifestFor(output, component) {
-  const backupDirectory = join(homedir(), '.seams', 'backups');
+  const backupDirectory = join(localSecretsRoot(), 'backups');
   mkdirSync(backupDirectory, { recursive: true, mode: 0o700 });
   chmodSync(backupDirectory, 0o700);
   const manifest = buildPreparedComponentManifest(output, component);

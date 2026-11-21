@@ -3,7 +3,6 @@
 import { createHash, generateKeyPairSync, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { parseEnv } from 'node:util';
@@ -14,6 +13,7 @@ import {
   CONSOLE_SERVICE_ENVIRONMENT_NAMES,
   readConsoleServiceEnvironment,
 } from './deployment-targets.mjs';
+import { localConsoleValuesFile, localSecretsRoot } from './local-secrets.mjs';
 
 const MODES = new Set(['prepare', 'apply', 'update']);
 const OPTIONAL_SECRET_INPUTS = Object.freeze([
@@ -83,7 +83,7 @@ function parseOptions(args) {
     target,
     valuesFile: path.resolve(
       values.get('--values-file') ||
-        path.join(homedir(), '.seams', 'console', `${laneId}-deployment.env`),
+        localConsoleValuesFile(laneId),
     ),
     manifestFile: values.has('--manifest-file')
       ? path.resolve(values.get('--manifest-file'))
@@ -220,7 +220,7 @@ function assertOwnedSecretNames(lane, secrets) {
 }
 
 function writeManifest(laneId, manifest) {
-  const directory = path.join(homedir(), '.seams', 'backups', 'console');
+  const directory = path.join(localSecretsRoot(), 'backups', 'console');
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   chmodSync(directory, 0o700);
   const outputPath = path.join(directory, `${laneId}-${manifest.generationId}.json`);

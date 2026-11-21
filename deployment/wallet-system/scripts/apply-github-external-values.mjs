@@ -1,10 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { resolve } from 'node:path';
 import { parseEnv } from 'node:util';
 import { gatewayRuntimeProfileNearNetwork } from '../../../packages/wallet-console-server-ts/scripts/gateway-deployment-config.mjs';
 import { readBackendLane, readFrontendSite } from '../../../scripts/deployment-targets.mjs';
+import { localWalletSystemValuesFile } from '../../../scripts/local-secrets.mjs';
 
 const COMPONENTS = new Set(['wallet-system', 'site']);
 const githubCli = process.env.GITHUB_CLI_BIN || 'gh';
@@ -170,13 +169,13 @@ function assertProvisionedIdentity(identityId, provisioningKind) {
 }
 
 function defaultValuesFile(identity) {
-  const fileName =
+  return localWalletSystemValuesFile(
     identity.lane.id === 'production-testnet'
-      ? 'production-testnet-deployment.env'
+      ? 'production-testnet'
       : identity.release === 'production'
-        ? 'production-deployment.env'
-        : 'staging-deployment.env';
-  return resolve(homedir(), '.seams', fileName);
+        ? 'production-mainnet'
+        : 'staging-testnet',
+  );
 }
 
 function parseUpdateSelection() {
@@ -725,7 +724,7 @@ Options:
   --lane <id>           Required for wallet-system.
   --site <id>           Required for site: staging or production.
   --component <name>    Required. wallet-system or site.
-  --values-file <path>  Defaults to the lane/site deployment values file under ~/.seams.
+  --values-file <path>  Defaults to ~/.seams/<lane>/wallet-system.env.
   --repo <owner/repo>   Defaults to the repository for the current checkout.
   --only <names>        Update only the comma-separated GitHub value names.
   --variables-only      Update variables and leave every secret unchanged.
