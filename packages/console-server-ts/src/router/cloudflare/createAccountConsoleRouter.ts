@@ -51,7 +51,6 @@ export interface AccountConsoleRouterOptions {
   readonly session: SessionAdapter;
   readonly readyCheck: () => Promise<void> | void;
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1 | null;
-  readonly satyrProvisioning: AccountServiceProvisioningAdapterV1 | null;
   readonly billingStripeWebhookSigningSecret: string | null;
   readonly billingHooks?: ConsoleBillingRouteHooks;
   readonly requestCompleted?: (
@@ -115,7 +114,6 @@ async function routeAccountRequest(
     billingStripeWebhookSigningSecret: options.billingStripeWebhookSigningSecret,
     accountPlatform: options.services.accountPlatform,
     walletProvisioning: options.walletProvisioning,
-    satyrProvisioning: options.satyrProvisioning,
     onboarding: options.services.onboarding,
     orgProjects: options.services.orgProjects,
     organizationAccess: options.services.organizationAccess,

@@ -26,10 +26,7 @@ import { fundsChargeId } from '../../../packages/console-server-ts/src/billingPr
 import { buildConsoleBillingInvoicePdf } from '../../../packages/console-server-ts/src/billing/pdf';
 import { listD1BillingUsageCharges } from '../../../packages/console-server-ts/src/billing/attribution';
 import { TrustedWalletExecutionQuoteV1 } from '../../../packages/console-server-ts/src/billing/pricing';
-import type {
-  D1BillingUsageService,
-  SatyrTestPricingPolicyV1,
-} from '../../../packages/console-server-ts/src/billing/usage';
+import type { D1BillingUsageService } from '../../../packages/console-server-ts/src/billing/usage';
 import { createAppSessionConsoleAuthAdapter } from '../../../packages/console-server-ts/src/router/consoleAppSessionAuth';
 import {
   createAccountConsoleRouter,
@@ -47,9 +44,7 @@ const origin = 'https://account-usage.acceptance.invalid';
 const owner = { orgId: 'usage-organisation-a', actorUserId: 'verified-usage-owner' };
 const otherOwner = { orgId: 'usage-organisation-b', actorUserId: owner.actorUserId };
 const wallet = { serviceId: 'wallet', deploymentId: 'usage-wallet' } as const;
-const satyr = { serviceId: 'satyr', deploymentId: 'usage-satyr' } as const;
 const quoteVersion = 'wallet-accepted-quote-v1';
-const satyrPrice = 'satyr-completed-turn-test-v1';
 const secret = 'isolated-usage-acceptance-session-secret';
 const occurredAt = '2026-10-04T01:00:00.000Z';
 
@@ -130,14 +125,13 @@ function clearCookie(): string {
 
 function ready(): void {}
 
-async function compose(database: D1DatabaseLike, satyrTestPricing: SatyrTestPricingPolicyV1) {
+async function compose(database: D1DatabaseLike) {
   const core = await createCloudflareD1AccountServiceBundle({
     database,
     namespace,
     externalDeletionGuard: null,
     ensureSchema: true,
     now,
-    satyrTestPricing,
     billingEmailConsoleBaseUrl: origin,
   });
   const session = new ConsoleSessionService({
@@ -154,7 +148,6 @@ async function compose(database: D1DatabaseLike, satyrTestPricing: SatyrTestPric
     session,
     readyCheck: ready,
     walletProvisioning: null,
-    satyrProvisioning: null,
     billingStripeWebhookSigningSecret: null,
   });
   return { core, session, router };
@@ -168,20 +161,13 @@ async function enable(
 ): Promise<string> {
   const scope = accepted(await core.accountPlatform.bindProjectBilling(context, projectId));
   const instanceId = `${authority.serviceId}:${projectId}`;
-  const nativeScope =
-    authority.serviceId === 'wallet'
-      ? {
-          serviceId: 'wallet',
-          deploymentId: authority.deploymentId,
-          namespace,
-          nativeOrganizationId: context.orgId,
-          nativeProjectId: projectId,
-        }
-      : {
-          serviceId: 'satyr',
-          deploymentId: authority.deploymentId,
-          nativeOrganizationId: `native:${projectId}`,
-        };
+  const nativeScope = {
+    serviceId: authority.serviceId,
+    deploymentId: authority.deploymentId,
+    namespace,
+    nativeOrganizationId: context.orgId,
+    nativeProjectId: projectId,
+  };
   const binding = accepted(ServiceTenantBindingV1.parse({ instanceId, scope, nativeScope }));
   const command = accepted(
     ServiceProvisionCommandV1.parse({
@@ -268,7 +254,7 @@ async function reserve(
           instanceId,
           executionId,
           requestedMinor,
-          priceVersion: authority.serviceId === 'satyr' ? satyrPrice : quoteVersion,
+          priceVersion: quoteVersion,
         }),
       ),
     ),
@@ -354,45 +340,6 @@ async function settleWallet(
   );
 }
 
-async function turn(
-  core: CloudflareD1AccountServiceBundle,
-  instanceId: string,
-  turnId: string,
-  terminalOutcome: 'completed' | 'failed' | 'cancelled',
-  funding: 'customer' | 'platform',
-): Promise<PlatformUsageEventV1> {
-  const sessionId = 'accepted-session';
-  const executionId = JSON.stringify([sessionId, turnId]);
-  const reservation = await reserve(core, satyr, instanceId, executionId, 1);
-  const event = accepted(
-    PlatformUsageEventV1.parse({
-      version: 1,
-      eventId: `turn:${turnId}`,
-      instanceId,
-      occurredAt,
-      meterId: 'satyr.completed_turn.test',
-      quantity: terminalOutcome === 'completed' ? 1 : 0,
-      unit: 'turn',
-      evidence: {
-        kind: 'satyr_turn',
-        sourceRecordId: `accepted:${turnId}`,
-        sourceDigest: 'd'.repeat(64),
-        sessionId,
-        turnId,
-        terminalOutcome,
-        reservationId: reservation.reservationId,
-        funding: {
-          kind: funding,
-          selection: funding === 'customer' ? 'codex_subscription' : 'satyr_platform',
-          modelRouteDigest: 'e'.repeat(64),
-        },
-      },
-    }),
-  );
-  accepted(await core.billingUsage.record(satyr, event));
-  return event;
-}
-
 async function request(
   router: AccountConsoleFetchHandler,
   token: string,
@@ -469,28 +416,18 @@ async function journey(): Promise<void> {
   try {
     let database = await databaseOf(worker);
     const migrations = await migrate(database);
-    let product = await compose(database, { kind: 'disabled' });
+    let product = await compose(database);
     for (const context of [owner, otherOwner]) {
       await product.core.account.createOrganization(identity(context.actorUserId, null), {
         id: context.orgId,
         name: context.orgId,
       });
     }
-    product = await compose(database, {
-      kind: 'isolated_e2e',
-      organizationIds: [owner.orgId],
-    });
     const core = product.core;
     await core.orgProjects.createProject(owner, { id: 'project-a', name: 'Platform project A' });
     await core.orgProjects.createProject(owner, { id: 'project-b', name: 'Platform project B' });
-    await core.orgProjects.createProject(otherOwner, {
-      id: 'customer-project',
-      name: 'Separate customer',
-    });
     const walletA = await enable(core, owner, 'project-a', wallet);
     const walletB = await enable(core, owner, 'project-b', wallet);
-    const satyrA = await enable(core, owner, 'project-a', satyr);
-    const customerSatyr = await enable(core, otherOwner, 'customer-project', satyr);
     await core.billingUsage.ensureSchema();
     await core.billing.grantManualSupportCredit(owner, {
       amountMinor: 2000,
@@ -574,10 +511,6 @@ async function journey(): Promise<void> {
         first,
       ),
     ).toEqual({ kind: 'rejected', error: { code: 'scope_forbidden' } });
-    expect(await core.billingUsage.record(satyr, first)).toEqual({
-      kind: 'rejected',
-      error: { code: 'scope_forbidden' },
-    });
 
     const reservationA = await reserve(core, wallet, walletA, 'execution-a', 20);
     const quoteA = walletQuote(walletA, 'execution-a', 25);
@@ -616,28 +549,6 @@ async function journey(): Promise<void> {
     accepted(await core.billingUsage.record(wallet, usageB));
     accepted(await settleWallet(core, quoteB, reservationB));
 
-    const completed = await turn(
-      core,
-      satyrA,
-      'customer-funded-completed',
-      'completed',
-      'customer',
-    );
-    await turn(core, satyrA, 'platform-funded-completed', 'completed', 'platform');
-    await turn(core, satyrA, 'failed', 'failed', 'customer');
-    await turn(core, satyrA, 'cancelled', 'cancelled', 'platform');
-    const customerDenied = ReserveFundsRequestV1.parse({
-      version: 1,
-      operationId: 'customer-satyr',
-      instanceId: customerSatyr,
-      executionId: '["customer","turn"]',
-      requestedMinor: 1,
-      priceVersion: satyrPrice,
-    });
-    expect(await core.funds.reserve(satyr, accepted(customerDenied))).toEqual({
-      kind: 'rejected',
-      error: { code: 'price_unavailable' },
-    });
     await addReaders(core);
     const financeToken = await tokenFor(product.session, 'finance');
     const operatorToken = await tokenFor(product.session, 'operator');
@@ -657,7 +568,7 @@ async function journey(): Promise<void> {
       organizationId: owner.orgId,
       periodMonthUtc: '2026-10',
     });
-    const totals = { wallet: 0, satyr: 0, historical: 0 };
+    const totals = { wallet: 0, historical: 0 };
     for (const charge of attributedCharges) {
       switch (charge.kind) {
         case 'historical_organization':
@@ -668,7 +579,7 @@ async function journey(): Promise<void> {
           break;
       }
     }
-    expect(totals).toEqual({ wallet: 642, satyr: 2, historical: 37 });
+    expect(totals).toEqual({ wallet: 642, historical: 37 });
     await saveJson('charges.json', charges);
     for (const [name, endpoint] of [
       ['session', '/console/session'],
@@ -685,12 +596,12 @@ async function journey(): Promise<void> {
       await saveJson(`ui-fixture/${name}.json`, await response.json());
     }
     const overview = await core.billing.getOverview(owner);
-    expect(overview.creditBalanceMinor).toBe(1019);
+    expect(overview.creditBalanceMinor).toBe(1021);
     expect(overview).toMatchObject({
       reservedMinor: 0,
       activeReservationCount: 0,
       pendingRefundMinor: 0,
-      availableBalanceMinor: 1019,
+      availableBalanceMinor: 1021,
     });
     const warnings = await database
       .prepare(
@@ -703,7 +614,7 @@ async function journey(): Promise<void> {
     const statement = await core.billing.generateMonthlyInvoice(owner, {
       periodMonthUtc: '2026-10',
     });
-    expect(statement.invoice.amountDueMinor).toBe(681);
+    expect(statement.invoice.amountDueMinor).toBe(679);
     const statements = await core.billing.listInvoicesPage(owner, {
       documentType: 'USAGE_STATEMENT',
       periodMonthUtc: '2026-10',
@@ -724,9 +635,9 @@ async function journey(): Promise<void> {
       sha256: createHash('sha256').update(pdf).digest('hex'),
     });
     const before = await snapshot(database);
-    expect(before.billing_usage_events).toHaveLength(10);
-    expect(before.billing_usage_receipts).toHaveLength(10);
-    expect(before.billing_execution_charges).toHaveLength(6);
+    expect(before.billing_usage_events).toHaveLength(6);
+    expect(before.billing_usage_receipts).toHaveLength(6);
+    expect(before.billing_execution_charges).toHaveLength(2);
     const balanced = await database
       .prepare(
         `SELECT ledger_entry_id FROM billing_ledger_postings
@@ -740,14 +651,10 @@ async function journey(): Promise<void> {
     await worker.dispose();
     worker = runtime();
     database = await databaseOf(worker);
-    product = await compose(database, {
-      kind: 'isolated_e2e',
-      organizationIds: [owner.orgId],
-    });
+    product = await compose(database);
     expect(await snapshot(database)).toEqual(before);
     expect(await product.core.billingUsage.record(wallet, first)).toEqual(firstReceipt);
     accepted(await product.core.billingUsage.record(wallet, usageB));
-    accepted(await product.core.billingUsage.record(satyr, completed));
     expect(await snapshot(database)).toEqual(before);
     await saveJson('after-restart.json', await snapshot(database));
     await saveJson('report.json', {
@@ -757,9 +664,9 @@ async function journey(): Promise<void> {
         'pnpm -C tests exec playwright test -c playwright.config.ts e2e/console/shared-account-usage.e2e.test.ts --reporter=line',
       migrations,
       expected: {
-        octoberUsageMinor: 681,
+        octoberUsageMinor: 679,
         septemberUsageMinor: 300,
-        postedBalanceMinor: 1019,
+        postedBalanceMinor: 1021,
         unresolvedHoldsMinor: 0,
       },
       checks: [
@@ -769,9 +676,6 @@ async function journey(): Promise<void> {
         'producer substitution denied',
         'explicit settlement then usage',
         'usage then explicit settlement',
-        'customer and platform Satyr funding retained',
-        'failed and cancelled zero-charge receipts',
-        'customer Satyr price denied',
         'finance access without service grants',
         'operator finance denied',
         'historical unattributed costs',
@@ -779,8 +683,6 @@ async function journey(): Promise<void> {
         'billing document and balanced ledger evidence',
         'one monthly low-balance warning across replay',
       ],
-      limitation:
-        'Satyr terminal facts are isolated contract fixtures; native Satyr execution is Phase 4.',
       evidence: [
         'before-restart.json',
         'after-restart.json',

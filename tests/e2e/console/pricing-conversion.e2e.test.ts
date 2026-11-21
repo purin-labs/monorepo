@@ -122,7 +122,6 @@ async function startConsole(testInfo: TestInfo, providers: BillingProviderAdapte
     session,
     readyCheck: ready,
     walletProvisioning: null,
-    satyrProvisioning: null,
     billingStripeWebhookSigningSecret: null,
     corsOrigins: [new URL(appUrl).origin],
   });

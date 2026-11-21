@@ -130,10 +130,7 @@ function receiptMatchesTarget(
     target.configuration.deploymentId !== native.deploymentId
   )
     return false;
-  return (
-    target.serviceId !== 'wallet' ||
-    (native.serviceId === 'wallet' && target.configuration.namespace === native.namespace)
-  );
+  return target.configuration.namespace === native.namespace;
 }
 
 function receiptResult(command: ServiceProvisionCommandV1): AcceptedServiceReceiptV1['result'] {
@@ -157,10 +154,7 @@ function transactionError(error: unknown): AccountPlatformError['code'] | null {
     message.includes('platform_receipt_conflict')
   )
     return 'binding_conflict';
-  if (
-    message.includes('UNIQUE constraint failed: wallet_service_bindings') ||
-    message.includes('UNIQUE constraint failed: satyr_service_bindings')
-  )
+  if (message.includes('UNIQUE constraint failed: wallet_service_bindings'))
     return 'binding_conflict';
   if (
     message.includes('UNIQUE constraint failed: platform_service_instances') ||
@@ -187,34 +181,19 @@ function nativeBindingStatement(
   binding: ServiceTenantBindingV1,
 ): D1PreparedStatementLike {
   const native = binding.nativeScope;
-  if (native.serviceId === 'wallet') {
-    return database
-      .prepare(
-        `INSERT INTO wallet_service_bindings
-      (namespace, instance_id, deployment_id, native_namespace, native_org_id, native_project_id, binding_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(namespace, instance_id) DO NOTHING`,
-      )
-      .bind(
-        binding.scope.namespace,
-        binding.instanceId,
-        native.deploymentId,
-        native.namespace,
-        native.nativeOrganizationId,
-        native.nativeProjectId,
-        JSON.stringify(binding),
-      );
-  }
   return database
     .prepare(
-      `INSERT INTO satyr_service_bindings
-    (namespace, instance_id, deployment_id, native_org_id, binding_json)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT(namespace, instance_id) DO NOTHING`,
+      `INSERT INTO wallet_service_bindings
+    (namespace, instance_id, deployment_id, native_namespace, native_org_id, native_project_id, binding_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(namespace, instance_id) DO NOTHING`,
     )
     .bind(
       binding.scope.namespace,
       binding.instanceId,
       native.deploymentId,
+      native.namespace,
       native.nativeOrganizationId,
+      native.nativeProjectId,
       JSON.stringify(binding),
     );
 }
@@ -706,44 +685,6 @@ export class D1AccountPlatformService {
     return accepted(persistedInstance(instance));
   }
 
-  /**
-   * The owner under whom a service's report of its own native end is recorded:
-   * the requester of the instance's current command while they still own the
-   * organization, else its earliest owner.
-   */
-  async releaseActor(
-    authority: ServiceProducerAuthorityV1,
-    instanceId: string,
-  ): Promise<string | null> {
-    const row = await queryD1One(
-      this.database,
-      `SELECT m.user_id FROM platform_service_instances i
-       JOIN platform_provision_operations o ON o.namespace = i.namespace AND o.id = i.operation_id
-       JOIN organization_memberships m ON m.namespace = i.namespace AND m.org_id = i.org_id
-       WHERE i.namespace = ? AND i.id = ? AND i.service_id = ? AND i.deployment_id = ?
-         AND m.kind = 'ACTIVE' AND m.role = 'OWNER'
-       ORDER BY m.user_id = o.actor_user_id DESC, m.created_at_ms, m.id LIMIT 1`,
-      [this.namespace, instanceId, authority.serviceId, authority.deploymentId],
-    );
-    return typeof row?.user_id === 'string' ? row.user_id : null;
-  }
-
-  /** Projects whose instance of the service is disabled or archived; setup cannot use them. */
-  async closedServiceProjects(
-    ctx: OrganizationAccessContext,
-    serviceId: ServiceProducerAuthorityV1['serviceId'],
-  ): Promise<ReadonlySet<string>> {
-    const authorization = await this.authorize(ctx, false);
-    if (!authorization) return new Set();
-    const rows = await queryD1All(
-      this.database,
-      `SELECT project_id FROM platform_service_instances
-       WHERE namespace = ? AND org_id = ? AND service_id = ? AND phase IN ('disabled', 'archived')`,
-      [this.namespace, ctx.orgId, serviceId],
-    );
-    return new Set(rows.map(projectIdColumn));
-  }
-
   async assertOrganizationCanBeDeleted(ctx: OrganizationAccessContext): Promise<void> {
     const authorization = await this.authorize(ctx, true);
     if (!authorization) throw new Error('scope_forbidden');
@@ -754,10 +695,6 @@ export class D1AccountPlatformService {
     );
     if (instance) throw new Error('service_instances_exist');
   }
-}
-
-function projectIdColumn(row: D1Row): string {
-  return textValue(row.project_id, 'project_id');
 }
 
 function provisionDelivery(row: D1Row): ServiceProvisionDeliveryV1 {

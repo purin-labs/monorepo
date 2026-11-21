@@ -39,7 +39,6 @@ const repository = fileURLToPath(new URL('../../../', import.meta.url));
 const output = path.join(repository, '.artifacts/shared-account-platform/funds');
 const namespace = 'shared-account-funds-acceptance';
 const wallet = { serviceId: 'wallet', deploymentId: 'funds-wallet' } as const;
-const satyr = { serviceId: 'satyr', deploymentId: 'funds-satyr' } as const;
 
 function now(): Date {
   return new Date('2026-10-13T03:00:00.000Z');
@@ -146,55 +145,40 @@ async function seedOrganization(
       idempotencyKey: `credit-${orgId}`,
     });
 }
-async function activate(
-  database: D1DatabaseLike,
-  orgId: string,
-  serviceId: 'wallet' | 'satyr',
-): Promise<PlatformScopeV1> {
+async function activate(database: D1DatabaseLike, orgId: string): Promise<PlatformScopeV1> {
   const source = await services(database);
   const scope = accepted(
     await source.platform.bindProjectBilling(context(orgId), `project-${orgId}`),
   );
-  const authority = serviceId === 'wallet' ? wallet : satyr;
-  const configuration =
-    serviceId === 'wallet'
-      ? { deploymentId: wallet.deploymentId, namespace, signingRootVersion: 'default' }
-      : {
-          deploymentId: satyr.deploymentId,
-          placementCellId: 'acceptance-apac',
-          environment: 'development',
-        };
+  const configuration = {
+    deploymentId: wallet.deploymentId,
+    namespace,
+    signingRootVersion: 'default',
+  };
   const command = accepted(
     ServiceProvisionCommandV1.parse({
       version: 1,
-      operationId: `enable-${serviceId}-${orgId}`,
-      instanceId: `${serviceId}-${orgId}`,
+      operationId: `enable-wallet-${orgId}`,
+      instanceId: `wallet-${orgId}`,
       desiredRevision: 1,
       command: 'enable',
-      binding: { kind: 'create_native_scope', serviceId, parent: scope, configuration },
+      binding: { kind: 'create_native_scope', serviceId: 'wallet', parent: scope, configuration },
     }),
   );
   accepted(await source.platform.requestProvision(context(orgId), { scope, command }));
-  const nativeScope =
-    serviceId === 'wallet'
-      ? {
-          serviceId,
-          deploymentId: wallet.deploymentId,
-          namespace,
-          nativeOrganizationId: orgId,
-          nativeProjectId: `project-${orgId}`,
-        }
-      : {
-          serviceId,
-          deploymentId: satyr.deploymentId,
-          nativeOrganizationId: `satyr-native-${orgId}`,
-        };
+  const nativeScope = {
+    serviceId: 'wallet',
+    deploymentId: wallet.deploymentId,
+    namespace,
+    nativeOrganizationId: orgId,
+    nativeProjectId: `project-${orgId}`,
+  };
   const binding = accepted(
     ServiceTenantBindingV1.parse({ instanceId: command.instanceId, scope, nativeScope }),
   );
   accepted(
     await source.platform.acknowledgeProvision(
-      authority,
+      wallet,
       accepted(
         parseServiceProvisionReceiptV1({
           version: 1,
@@ -375,7 +359,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
         .prepare("SELECT name FROM sqlite_master WHERE name='billing_reservation_history'")
         .first(),
     ).toBeNull();
-    await activate(database, 'migration', 'wallet');
+    await activate(database, 'migration');
     await applyMigration(database, '0094_funds_authority.sql');
     await migrateAfterFunds(database);
     const history = await database
@@ -404,18 +388,10 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
     expect(accepted(await store.getSummary(wallet, imported.instanceId)).reservedMinor).toBe(60);
 
     await seedOrganization(database, 'limited', 1);
-    await activate(database, 'limited', 'wallet');
-    await activate(database, 'limited', 'satyr');
-    await database
-      .prepare('INSERT INTO billing_isolated_test_accounts (namespace,org_id) VALUES (?,?)')
-      .bind(namespace, 'limited')
-      .run();
+    await activate(database, 'limited');
     const cross = await Promise.all([
       store.reserve(wallet, reserveRequest('wallet-limited', 'wallet-race', 1)),
-      store.reserve(
-        satyr,
-        reserveRequest('satyr-limited', 'satyr-race', 1, 'satyr-completed-turn-test-v1'),
-      ),
+      store.reserve(wallet, reserveRequest('wallet-limited', 'wallet-second-race', 1)),
     ]);
     expect(cross.filter(isAccepted).length).toBe(1);
     expect(accepted(await store.getSummary(wallet, 'wallet-limited'))).toMatchObject({
@@ -425,7 +401,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
       availableBalanceMinor: 0,
     });
     await seedOrganization(database, 'duplicate', 5);
-    await activate(database, 'duplicate', 'wallet');
+    await activate(database, 'duplicate');
     const same = reserveRequest('wallet-duplicate', 'same-request', 5);
     const duplicates = await Promise.all([
       store.reserve(wallet, same),
@@ -476,7 +452,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
     ).toBe(1);
 
     await seedOrganization(database, 'refund-race', 0);
-    await activate(database, 'refund-race', 'wallet');
+    await activate(database, 'refund-race');
     const source = await services(database);
     const purchase = await source.billing.createStripeCheckoutSession(context('refund-race'), {
       creditPackId: 'usd_10',
@@ -511,7 +487,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
     );
 
     await seedOrganization(database, 'debit-race', 100);
-    await activate(database, 'debit-race', 'wallet');
+    await activate(database, 'debit-race');
     const debitRace = await Promise.all([
       store.reserve(wallet, reserveRequest('wallet-debit-race', 'debit-race', 90)),
       source.billing.appendManualAdminDebit(context('debit-race'), {
@@ -533,7 +509,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
     );
 
     await seedOrganization(database, 'uncertain', 20);
-    await activate(database, 'uncertain', 'wallet');
+    await activate(database, 'uncertain');
     const unresolved = accepted(
       await store.reserve(wallet, reserveRequest('wallet-uncertain', 'uncertain-execution', 12)),
     ).reservation;
@@ -557,7 +533,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
       await store.settle(wallet, settlement(unresolved, 12), terminalOptions(unresolved, [])),
     ).toMatchObject({ kind: 'rejected', error: { code: 'execution_unreconciled' } });
     await seedOrganization(database, 'zero', 0);
-    await activate(database, 'zero', 'wallet');
+    await activate(database, 'zero');
     const zero = accepted(
       await store.reserve(wallet, reserveRequest('wallet-zero', 'zero-execution', 0)),
     ).reservation;
@@ -576,14 +552,6 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
         .bind(namespace, 'zero')
         .first(),
     ).toBeNull();
-    await seedOrganization(database, 'customer-satyr', 10);
-    await activate(database, 'customer-satyr', 'satyr');
-    expect(
-      await store.reserve(
-        satyr,
-        reserveRequest('satyr-customer-satyr', 'customer-turn', 1, 'satyr-completed-turn-test-v1'),
-      ),
-    ).toMatchObject({ kind: 'rejected', error: { code: 'price_unavailable' } });
     const beforeRestart = await moneySnapshot(database);
     await writeFile(
       path.join(output, 'before-restart.json'),
@@ -685,7 +653,7 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
         'unmapped migration rolls back original rows and triggers',
         'original open and closed reservation rows preserved',
         'open imported holds become indeterminate',
-        'cross-service limited balance race',
+        'limited balance race between executions',
         'identical reserve race returns one durable hold',
         'actual Wallet cost exceeds hold and preserves negative balance',
         'terminal race executes extension once',
@@ -696,7 +664,6 @@ test('shared funds preserve old holds and serialize service, refund, debit, and 
         'restart and crash-after-commit replay',
         'proof-backed reconciliation',
         'zero holds and charges create no zero postings',
-        'customer Satyr test price denied',
       ],
     };
     await writeFile(path.join(output, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);

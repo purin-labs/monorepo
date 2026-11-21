@@ -20,10 +20,6 @@ import {
   createD1ConsoleWebhookService,
   type ConsoleWebhookSecretCipher,
 } from '@seams-internal/console-server/webhooks/d1';
-import {
-  satyrProvisioningForConsoleRoute,
-  type SatyrProvisioningEnvironment,
-} from '@seams-internal/console-server/accountPlatform/satyrProvisioningEnvironment';
 import { createConsoleSessionAuthAdapter } from './d1StagingSession';
 import { createWalletBillingRouteHooks, observeWalletAccountRequest } from './walletBillingHooks';
 import { createD1ConsoleSponsoredCallService } from '../../sponsoredCalls/d1';
@@ -79,7 +75,6 @@ export interface D1AccountConsoleCompositionOptions extends Omit<
   readonly session: SessionAdapter;
   readonly platformSupportEmails: string | undefined;
   readonly walletDeploymentId: string | null;
-  readonly satyrEnvironment: SatyrProvisioningEnvironment;
   readonly webhookSecretCipher: ConsoleWebhookSecretCipher | null;
   readonly billingStripeWebhookSigningSecret: string | null;
   readonly corsOrigins: readonly string[];
@@ -179,12 +174,6 @@ export async function createD1AccountConsoleComposition(
     auth,
     session: options.session,
     walletProvisioning,
-    satyrProvisioning: satyrProvisioningForConsoleRoute(
-      pathname,
-      options.satyrEnvironment,
-      services.serviceAccess,
-      globalThis.fetch.bind(globalThis),
-    ),
     readyCheck: options.readyCheck,
     billingStripeWebhookSigningSecret: options.billingStripeWebhookSigningSecret,
     billingHooks,

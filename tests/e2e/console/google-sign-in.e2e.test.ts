@@ -195,7 +195,6 @@ test('Google sign-in recovers from prompt failures and both providers remain vis
       session,
       readyCheck: ready,
       walletProvisioning: null,
-      satyrProvisioning: null,
       billingStripeWebhookSigningSecret: null,
       corsOrigins: [new URL(appUrl).origin],
     });

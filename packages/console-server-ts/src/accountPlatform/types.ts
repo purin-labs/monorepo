@@ -233,8 +233,7 @@ export class AccountServiceInstanceV1 {
     ) {
       throw new Error('Persisted instance does not match its current operation');
     }
-    if (record.service_id !== 'wallet' && record.service_id !== 'satyr')
-      throw new Error('Invalid persisted service');
+    if (record.service_id !== 'wallet') throw new Error('Invalid persisted service');
     const scope = readPlatformScopeColumns(record);
     const deploymentId = textValue(record.deployment_id, 'deployment_id');
     const binding = command.binding;

@@ -30,7 +30,7 @@ export const ACCOUNT_PLATFORM_D1_SCHEMA_SQL = Object.freeze([
     org_id TEXT NOT NULL,
     project_id TEXT NOT NULL,
     billing_account_id TEXT NOT NULL,
-    service_id TEXT NOT NULL CHECK (service_id IN ('wallet', 'satyr')),
+    service_id TEXT NOT NULL CHECK (service_id = 'wallet'),
     deployment_id TEXT NOT NULL,
     desired_revision INTEGER NOT NULL CHECK (desired_revision > 0),
     desired_state TEXT NOT NULL CHECK (desired_state IN ('enabled', 'disabled', 'archived')),
@@ -70,18 +70,6 @@ export const ACCOUNT_PLATFORM_D1_SCHEMA_SQL = Object.freeze([
     FOREIGN KEY (namespace, instance_id, service_id)
       REFERENCES platform_service_instances(namespace, id, service_id)
   )`,
-  `CREATE TABLE IF NOT EXISTS satyr_service_bindings (
-    namespace TEXT NOT NULL,
-    instance_id TEXT NOT NULL,
-    service_id TEXT NOT NULL DEFAULT 'satyr' CHECK (service_id = 'satyr'),
-    deployment_id TEXT NOT NULL,
-    native_org_id TEXT NOT NULL,
-    binding_json TEXT NOT NULL CHECK (json_valid(binding_json)),
-    PRIMARY KEY (namespace, instance_id),
-    UNIQUE (deployment_id, native_org_id),
-    FOREIGN KEY (namespace, instance_id, service_id)
-      REFERENCES platform_service_instances(namespace, id, service_id)
-  )`,
   `CREATE TABLE IF NOT EXISTS platform_provision_operations (
     namespace TEXT NOT NULL,
     id TEXT NOT NULL,
@@ -89,7 +77,7 @@ export const ACCOUNT_PLATFORM_D1_SCHEMA_SQL = Object.freeze([
     org_id TEXT NOT NULL,
     project_id TEXT NOT NULL,
     billing_account_id TEXT NOT NULL,
-    service_id TEXT NOT NULL CHECK (service_id IN ('wallet', 'satyr')),
+    service_id TEXT NOT NULL CHECK (service_id = 'wallet'),
     deployment_id TEXT NOT NULL,
     desired_revision INTEGER NOT NULL CHECK (desired_revision > 0),
     command TEXT NOT NULL CHECK (command IN ('enable', 'disable', 'archive')),
@@ -155,9 +143,6 @@ export const ACCOUNT_PLATFORM_D1_SCHEMA_SQL = Object.freeze([
       AND NOT EXISTS (SELECT 1 FROM wallet_service_bindings b
         WHERE b.namespace = i.namespace AND b.instance_id = i.id
         AND b.binding_json = json_extract(NEW.payload_json, '$.binding'))
-      AND NOT EXISTS (SELECT 1 FROM satyr_service_bindings b
-        WHERE b.namespace = i.namespace AND b.instance_id = i.id
-        AND b.binding_json = json_extract(NEW.payload_json, '$.binding'))
     );
     SELECT RAISE(ABORT, 'platform_transition_conflict') WHERE NOT (
       COALESCE((NEW.command = 'enable' AND NEW.desired_revision = 1
@@ -214,14 +199,9 @@ export const ACCOUNT_PLATFORM_D1_SCHEMA_SQL = Object.freeze([
         WHERE namespace = o.namespace AND id = o.instance_id
       ) THEN 'applied' ELSE 'stale' END
       AND NEW.result = CASE o.command WHEN 'enable' THEN 'active' WHEN 'disable' THEN 'disabled' ELSE 'archived' END
-      AND (
-        EXISTS (SELECT 1 FROM wallet_service_bindings b
-          WHERE b.namespace = o.namespace AND b.instance_id = o.instance_id
-          AND b.binding_json = json_extract(NEW.payload_json, '$.binding'))
-        OR EXISTS (SELECT 1 FROM satyr_service_bindings b
-          WHERE b.namespace = o.namespace AND b.instance_id = o.instance_id
-          AND b.binding_json = json_extract(NEW.payload_json, '$.binding'))
-      )
+      AND EXISTS (SELECT 1 FROM wallet_service_bindings b
+        WHERE b.namespace = o.namespace AND b.instance_id = o.instance_id
+        AND b.binding_json = json_extract(NEW.payload_json, '$.binding'))
     );
   END`,
   `CREATE TRIGGER IF NOT EXISTS platform_provision_acknowledged

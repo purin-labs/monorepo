@@ -264,12 +264,12 @@ async function verifyDeletion(
       command: 'enable',
       binding: {
         kind: 'create_native_scope',
-        serviceId: 'satyr',
+        serviceId: 'wallet',
         parent: scope,
         configuration: {
-          deploymentId: 'isolated-satyr',
-          placementCellId: 'acceptance-apac',
-          environment: 'development',
+          deploymentId: 'isolated-wallet',
+          namespace,
+          signingRootVersion: 'acceptance-root-v1',
         },
       },
     }),

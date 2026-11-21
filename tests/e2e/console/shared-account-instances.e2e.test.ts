@@ -34,7 +34,7 @@ const namespace = 'account-instance-acceptance';
 const owner = { orgId: 'organisation-a', actorUserId: 'verified-owner' };
 const otherOwner = { orgId: 'organisation-b', actorUserId: 'verified-owner' };
 const walletProducer = { serviceId: 'wallet', deploymentId: 'wallet-acceptance' } as const;
-const satyrProducer = { serviceId: 'satyr', deploymentId: 'satyr-acceptance' } as const;
+const foreignProducer = { serviceId: 'wallet', deploymentId: 'foreign-wallet' } as const;
 
 function now(): Date {
   return new Date('2026-10-13T02:00:00.000Z');
@@ -92,9 +92,13 @@ async function seed(database: D1DatabaseLike): Promise<ConsoleOrganizationAccess
       displayName: 'Acceptance owner',
     });
   }
-  await projects.createProject(owner, { id: 'project-a', name: 'Two services' });
+  await projects.createProject(owner, { id: 'project-a', name: 'First Wallet project' });
   await projects.createProject(owner, { id: 'project-a-second', name: 'Another Wallet project' });
   await projects.createProject(otherOwner, { id: 'project-b', name: 'Separate account' });
+  await projects.createProject(otherOwner, {
+    id: 'project-b-retry',
+    name: 'Retried Wallet project',
+  });
   return access;
 }
 
@@ -134,15 +138,16 @@ function walletRequest(scope: PlatformScopeV1, nativeProjectId: string): Service
   });
 }
 
-function satyrRequest(scope: PlatformScopeV1): ServiceBindingRequestV1 {
+/** Wallet creates the native project, so its receipt names the native identity. */
+function walletCreateRequest(scope: PlatformScopeV1): ServiceBindingRequestV1 {
   return readServiceBindingRequest({
     kind: 'create_native_scope',
-    serviceId: 'satyr',
+    serviceId: 'wallet',
     parent: scope,
     configuration: {
-      deploymentId: satyrProducer.deploymentId,
-      placementCellId: 'acceptance-apac',
-      environment: 'development',
+      deploymentId: walletProducer.deploymentId,
+      namespace: 'wallet-native',
+      signingRootVersion: 'acceptance-root-v1',
     },
   });
 }
@@ -150,32 +155,18 @@ function satyrRequest(scope: PlatformScopeV1): ServiceBindingRequestV1 {
 function bound(
   scope: PlatformScopeV1,
   instanceId: string,
-  service: 'wallet' | 'satyr',
-  nativeId: string,
+  nativeProjectId: string,
 ): ServiceTenantBindingV1 {
-  if (service === 'wallet') {
-    return accepted(
-      ServiceTenantBindingV1.parse({
-        instanceId,
-        scope,
-        nativeScope: {
-          serviceId: service,
-          deploymentId: walletProducer.deploymentId,
-          namespace: 'wallet-native',
-          nativeOrganizationId: 'native-wallet-org',
-          nativeProjectId: nativeId,
-        },
-      }),
-    );
-  }
   return accepted(
     ServiceTenantBindingV1.parse({
       instanceId,
       scope,
       nativeScope: {
-        serviceId: service,
-        deploymentId: satyrProducer.deploymentId,
-        nativeOrganizationId: nativeId,
+        serviceId: 'wallet',
+        deploymentId: walletProducer.deploymentId,
+        namespace: 'wallet-native',
+        nativeOrganizationId: 'native-wallet-org',
+        nativeProjectId,
       },
     }),
   );
@@ -256,7 +247,7 @@ async function verifyRevocation(
     'revoked-operation',
     1,
     'enable',
-    satyrRequest(scope),
+    walletCreateRequest(scope),
   );
   expect(
     await store.requestProvision(
@@ -292,11 +283,6 @@ async function snapshot(database: D1DatabaseLike): Promise<unknown> {
       'SELECT instance_id, deployment_id, native_namespace, native_org_id, native_project_id FROM wallet_service_bindings ORDER BY instance_id',
     )
     .all();
-  const satyrBindings = await database
-    .prepare(
-      'SELECT instance_id, deployment_id, native_org_id FROM satyr_service_bindings ORDER BY instance_id',
-    )
-    .all();
   const instanceAccess = await database
     .prepare(
       `SELECT a.instance_id, a.membership_id, m.user_id,
@@ -311,7 +297,6 @@ async function snapshot(database: D1DatabaseLike): Promise<unknown> {
     operations: operations.results,
     receipts: receipts.results,
     walletBindings: walletBindings.results,
-    satyrBindings: satyrBindings.results,
     instanceAccess: instanceAccess.results,
   };
 }
@@ -376,11 +361,11 @@ async function verifyRejoinedInstanceAccess(
   const first = await access.acceptInvitation(account, firstInvitation.invitation.id, {
     token: firstInvitation.token,
   });
-  await setFixtureInstanceAccess(database, 'satyr-a', first.id, 'allowed');
-  const firstGrant = await instanceAccessRevision(database, 'satyr-a', first.id);
+  await setFixtureInstanceAccess(database, 'wallet-a', first.id, 'allowed');
+  const firstGrant = await instanceAccessRevision(database, 'wallet-a', first.id);
   expect(firstGrant.access).toBe('allowed');
   await access.removeMembership(owner, first.id);
-  expect(await instanceAccessRevision(database, 'satyr-a', first.id)).toEqual({
+  expect(await instanceAccessRevision(database, 'wallet-a', first.id)).toEqual({
     access: 'revoked',
     revision: firstGrant.revision,
   });
@@ -394,12 +379,12 @@ async function verifyRejoinedInstanceAccess(
     token: secondInvitation.token,
   });
   expect(second.id).not.toBe(first.id);
-  await setFixtureInstanceAccess(database, 'satyr-a', second.id, 'allowed');
-  const secondGrant = await instanceAccessRevision(database, 'satyr-a', second.id);
+  await setFixtureInstanceAccess(database, 'wallet-a', second.id, 'allowed');
+  const secondGrant = await instanceAccessRevision(database, 'wallet-a', second.id);
   expect(secondGrant.revision).toBeGreaterThan(firstGrant.revision);
-  await setFixtureInstanceAccess(database, 'satyr-a', second.id, 'revoked');
-  await setFixtureInstanceAccess(database, 'satyr-a', second.id, 'allowed');
-  const regranted = await instanceAccessRevision(database, 'satyr-a', second.id);
+  await setFixtureInstanceAccess(database, 'wallet-a', second.id, 'revoked');
+  await setFixtureInstanceAccess(database, 'wallet-a', second.id, 'allowed');
+  const regranted = await instanceAccessRevision(database, 'wallet-a', second.id);
   expect(regranted.revision).toBeGreaterThan(secondGrant.revision);
   await setFixtureInstanceAccess(database, 'wallet-second', second.id, 'allowed');
   const otherInstance = await instanceAccessRevision(database, 'wallet-second', second.id);
@@ -461,11 +446,9 @@ test('durable service commands preserve tenant bindings and reject stale authori
       'enable',
       walletRequest(a, 'native-project-a'),
     );
-    const satyr = provision('satyr-a', 'satyr-enable-1', 1, 'enable', satyrRequest(a));
     expect(
       accepted(await store.requestProvision(owner, { scope: a, command: wallet })).state.kind,
     ).toBe('provisioning');
-    accepted(await store.requestProvision(owner, { scope: a, command: satyr }));
     const secondWallet = provision(
       'wallet-second',
       'wallet-second-enable',
@@ -474,19 +457,13 @@ test('durable service commands preserve tenant bindings and reject stale authori
       walletRequest(second, 'native-project-second'),
     );
     accepted(await store.requestProvision(owner, { scope: second, command: secondWallet }));
-    const walletBinding = bound(a, wallet.instanceId, 'wallet', 'native-project-a');
-    const satyrBinding = bound(a, satyr.instanceId, 'satyr', 'native-satyr-a');
+    const walletBinding = bound(a, wallet.instanceId, 'native-project-a');
     expect((await store.pendingProvision(walletProducer, 100)).length).toBe(2);
     expect(
       (await store.pendingProvision({ serviceId: 'wallet', deploymentId: 'other-deployment' }, 100))
         .length,
     ).toBe(0);
-    const secondWalletBinding = bound(
-      second,
-      secondWallet.instanceId,
-      'wallet',
-      'native-project-second',
-    );
+    const secondWalletBinding = bound(second, secondWallet.instanceId, 'native-project-second');
     accepted(
       await store.acknowledgeProvision(walletProducer, receipt(secondWallet, secondWalletBinding)),
     );
@@ -513,18 +490,14 @@ test('durable service commands preserve tenant bindings and reject stale authori
       kind: 'rejected',
       error: { code: 'scope_forbidden' },
     });
-    expect(await store.acknowledgeProvision(satyrProducer, receipt(wallet, walletBinding))).toEqual(
-      { kind: 'rejected', error: { code: 'scope_forbidden' } },
-    );
+    expect(
+      await store.acknowledgeProvision(foreignProducer, receipt(wallet, walletBinding)),
+    ).toEqual({ kind: 'rejected', error: { code: 'scope_forbidden' } });
     const replay = await Promise.all([
       store.requestProvision(owner, { scope: a, command: wallet }),
       store.requestProvision(owner, { scope: a, command: wallet }),
     ]);
     expect(replay.map(accepted).length).toBe(2);
-    expect(
-      accepted(await store.acknowledgeProvision(satyrProducer, receipt(satyr, satyrBinding)))
-        .instance.state.kind,
-    ).toBe('active');
     // Disable during initial provisioning. Its delayed activation can record observation only.
     const disable = provision(wallet.instanceId, 'wallet-disable-2', 2, 'disable', wallet.binding);
     expect(
@@ -551,7 +524,9 @@ test('durable service commands preserve tenant bindings and reject stale authori
       accepted(await store.acknowledgeProvision(walletProducer, receipt(wallet, walletBinding)))
         .disposition,
     ).toBe('stale');
-    expect(accepted(await store.getInstance(owner, satyr.instanceId)).state.kind).toBe('active');
+    expect(accepted(await store.getInstance(owner, secondWallet.instanceId)).state.kind).toBe(
+      'active',
+    );
     expect(
       accepted(await store.acknowledgeProvision(walletProducer, receipt(disable, walletBinding)))
         .instance.state.kind,
@@ -638,28 +613,32 @@ test('durable service commands preserve tenant bindings and reject stale authori
     ]);
     expect(concurrent.filter(isAccepted).length).toBe(1);
     expect(concurrent.filter(isRejected).length).toBe(1);
-    const satyrB = provision('satyr-b', 'satyr-b-enable-1', 1, 'enable', satyrRequest(b));
-    accepted(await store.requestProvision(otherOwner, { scope: b, command: satyrB }));
+    const retried = accepted(await store.bindProjectBilling(otherOwner, 'project-b-retry'));
+    const created = provision(
+      'wallet-b-retry',
+      'wallet-b-retry-enable-1',
+      1,
+      'enable',
+      walletCreateRequest(retried),
+    );
+    accepted(await store.requestProvision(otherOwner, { scope: retried, command: created }));
     expect(
       accepted(
-        await store.failProvision(satyrProducer, {
-          operationId: satyrB.operationId,
+        await store.failProvision(walletProducer, {
+          operationId: created.operationId,
           failureCode: 'native_capacity_unavailable',
         }),
       ).state.kind,
     ).toBe('failed');
-    const retryB = provision(satyrB.instanceId, 'satyr-b-retry-2', 2, 'enable', satyrB.binding);
-    accepted(await store.requestProvision(otherOwner, { scope: b, command: retryB }));
-    const reusedSatyrBinding = bound(b, satyrB.instanceId, 'satyr', 'native-satyr-a');
+    const retry = provision(created.instanceId, 'wallet-b-retry-2', 2, 'enable', created.binding);
+    accepted(await store.requestProvision(otherOwner, { scope: retried, command: retry }));
+    const reusedBinding = bound(retried, created.instanceId, 'native-project-a');
+    expect(await store.acknowledgeProvision(walletProducer, receipt(retry, reusedBinding))).toEqual(
+      { kind: 'rejected', error: { code: 'binding_conflict' } },
+    );
+    const retriedBinding = bound(retried, created.instanceId, 'native-project-b-retry');
     expect(
-      await store.acknowledgeProvision(satyrProducer, receipt(retryB, reusedSatyrBinding)),
-    ).toEqual({
-      kind: 'rejected',
-      error: { code: 'binding_conflict' },
-    });
-    const satyrBBinding = bound(b, satyrB.instanceId, 'satyr', 'native-satyr-b');
-    expect(
-      accepted(await store.acknowledgeProvision(satyrProducer, receipt(retryB, satyrBBinding)))
+      accepted(await store.acknowledgeProvision(walletProducer, receipt(retry, retriedBinding)))
         .instance.state.kind,
     ).toBe('active');
     await verifyRevocation(database, access, second);
@@ -685,13 +664,13 @@ test('durable service commands preserve tenant bindings and reject stale authori
         'stale activation after disable',
         'persisted receipt disposition',
         'restart replay',
-        'independent active Satyr',
+        'independent active Wallet instance',
         'disable and re-enable same binding',
         'archive retains native uniqueness',
         'concurrent project service collision',
         'membership revocation transaction guard',
         'failed provisioning retry',
-        'Satyr native tenant collision',
+        'Wallet native tenant collision on retry',
         'Wallet native admission requires current active binding',
         'disable revokes native admission before shutdown receipt',
         'another Wallet project retains native admission',

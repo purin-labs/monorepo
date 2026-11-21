@@ -77,7 +77,6 @@ export interface ConsoleRouterBaseOptions {
   walletEnvironments?: ConsoleWalletEnvironmentService | null;
   accountPlatform?: D1AccountPlatformService | null;
   walletProvisioning?: AccountServiceProvisioningAdapterV1 | null;
-  satyrProvisioning?: AccountServiceProvisioningAdapterV1 | null;
   // Optional policy adapter for console policy lifecycle routes.
   policies?: ConsolePolicyService | null;
   // Optional wallet adapter for console wallet list/search/detail routes.

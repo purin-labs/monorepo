@@ -58,7 +58,6 @@ const output = path.join(repository, '.artifacts/platform-billing/account');
 const namespace = 'postpaid-acceptance';
 const owner = { orgId: 'postpaid-owner', actorUserId: 'verified-billing-owner' };
 const wallet = { serviceId: 'wallet', deploymentId: 'postpaid-wallet' } as const;
-const satyr = { serviceId: 'satyr', deploymentId: 'postpaid-satyr' } as const;
 class Clock {
   ms = Date.parse('2026-10-01T02:00:00Z');
   now(): Date {
@@ -177,13 +176,9 @@ async function runPostpaidAcceptance() {
       displayName: 'Billing owner',
     });
     await core.orgProjects.createProject(owner, { id: 'wallet-project', name: 'Wallet project' });
-    await core.orgProjects.createProject(owner, { id: 'satyr-project', name: 'Satyr project' });
+    await core.orgProjects.createProject(owner, { id: 'second-project', name: 'Second project' });
     const walletId = await enableBillingService(core, owner, 'wallet-project', wallet, namespace);
-    const satyrId = await enableBillingService(core, owner, 'satyr-project', satyr, namespace);
-    await database
-      .prepare('INSERT INTO billing_isolated_test_accounts VALUES(?,?)')
-      .bind(namespace, owner.orgId)
-      .run();
+    const secondId = await enableBillingService(core, owner, 'second-project', wallet, namespace);
     const runtime = getConsoleBillingD1Runtime(core.billing);
     if (!runtime) throw new Error('Missing billing runtime');
     const approval = CreditLimitApproval.parse({
@@ -200,13 +195,12 @@ async function runPostpaidAcceptance() {
     await approveCreditLimit(runtime, { userId: 'support', platformSupport: true }, approval);
     const race = await Promise.all([
       core.funds.reserve(wallet, reserve(walletId, 'race-wallet', 100)),
-      core.funds.reserve(satyr, reserve(satyrId, 'race-satyr', 1, 'satyr-completed-turn-test-v1')),
+      core.funds.reserve(wallet, reserve(secondId, 'race-second', 1)),
     ]);
     expect(race.filter(isAccepted)).toHaveLength(1);
     const winner = race.find(isAccepted);
     if (!winner || winner.kind !== 'accepted') throw new Error('No admitted operation');
     const held = winner.value.reservation;
-    const authority = held.instanceId === walletId ? wallet : satyr;
     expect((await getPostpaidAccount(runtime, owner.orgId)).exposure?.reservedMinor).toBe(
       held.requestedMinor,
     );
@@ -229,12 +223,12 @@ async function runPostpaidAcceptance() {
       txOrExecutionRef: null,
       statements: [],
     };
-    accepted(await core.funds.settle(authority, settlement, terminal));
+    accepted(await core.funds.settle(wallet, settlement, terminal));
     await instance.dispose();
     instance = worker();
     database = await databaseOf(instance);
     core = await compose(database, clock, providers);
-    accepted(await core.funds.settle(authority, settlement, terminal));
+    accepted(await core.funds.settle(wallet, settlement, terminal));
     expect(
       await queryD1One(
         database,

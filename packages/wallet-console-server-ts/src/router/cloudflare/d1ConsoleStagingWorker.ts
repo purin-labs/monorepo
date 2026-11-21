@@ -7,17 +7,12 @@ import {
   type RegionalWalletEnvironment,
 } from './regionalWalletConfiguration';
 import { createD1AccountConsoleComposition, isAccountConsoleRequest } from './d1AccountConsole';
-export { SatyrAccountPlatform } from './satyrAccountPlatform';
 import { type CloudflareD1AccountServiceBundle } from '@seams-internal/console-server/router/cloudflare/d1AccountServices';
 import { resolveConsoleRouteSurface } from '@seams-internal/console-server/router/consoleRouteSurface';
 import type { RevocableConsoleSessionAdapter } from '@seams-internal/console-server/boundary/session';
 import { createD1ConsoleSessionRevocationStore } from '@seams-internal/console-server/boundary/sessionRevocations';
 import type { ConsoleAccountService } from '@seams-internal/console-server/account/service';
 import { handleWalletRegistrationMutation } from '../../walletPlacement/service';
-import {
-  satyrProvisioningForConsoleRoute,
-  type SatyrProvisioningEnvironment,
-} from '@seams-internal/console-server/accountPlatform/satyrProvisioningEnvironment';
 import { createWalletConsoleOpsClient } from '@seams/wallet-server/cloud-host';
 import { handleRegistrationSetupRequest } from '../../walletPlacement/registrationSetup';
 import {
@@ -175,7 +170,6 @@ interface CloudflareD1ConsoleStagingEnv
   extends
     CloudflareD1StagingSessionEnv,
     RouterApiCloudflareConsoleWorkerEnv,
-    SatyrProvisioningEnvironment,
     RegionalWalletEnvironment {
   readonly CONSOLE_DB: D1DatabaseLike;
   readonly CLOUDFLARE_API_TOKEN?: string;
@@ -274,7 +268,6 @@ const CONSOLE_STAGING_READY_TABLES = Object.freeze([
   'platform_provision_operations',
   'platform_provision_receipts',
   'wallet_service_bindings',
-  'satyr_service_bindings',
   'billing_funds_reservations',
   'billing_funds_transition_checks',
   'billing_funds_terminal_receipts',
@@ -730,18 +723,11 @@ async function createConsoleHandler(
     }
     const relayResponse = await relayHandler(request, ctx);
     if (relayResponse) return relayResponse;
-    const satyrProvisioning = satyrProvisioningForConsoleRoute(
-      new URL(request.url).pathname,
-      env,
-      bundle.serviceAccess,
-      globalThis.fetch.bind(globalThis),
-    );
     const router = createWalletConsoleRouter({
       corsOrigins: consoleCorsOrigins(env),
       core: consoleCoreServicesFromBundle(bundle),
       walletConsole: walletConsoleServicesFromBundle(bundle),
       walletProvisioning: bundle.walletProvisioning,
-      satyrProvisioning,
       auth,
       stepUp: tenantRootStepUp,
       session,
@@ -830,7 +816,6 @@ async function createAccountHandler(
     billingEmailConsoleBaseUrl: requireEnvString(env, 'CONSOLE_BASE_URL'),
     platformSupportEmails: readEnvString(env, 'CONSOLE_PLATFORM_SUPPORT_EMAILS'),
     walletDeploymentId: readEnvString(env, 'SEAMS_WALLET_SERVICE_DEPLOYMENT_ID') ?? null,
-    satyrEnvironment: env,
     webhookSecretCipher: isBillingRequest(request)
       ? (createConsoleWebhookSecretCipherFromEnv(env) ?? null)
       : null,
@@ -1221,7 +1206,6 @@ async function scheduled(
         namespace: requireEnvString(env, 'SEAMS_TENANT_STORAGE_NAMESPACE'),
         deploymentId: requireEnvString(env, 'SEAMS_WALLET_SERVICE_DEPLOYMENT_ID'),
       },
-      env,
     ),
   );
   const regional = readRegionalWalletConfiguration(env);

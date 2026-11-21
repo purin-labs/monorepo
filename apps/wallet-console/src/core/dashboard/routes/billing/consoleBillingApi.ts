@@ -77,22 +77,6 @@ export type DashboardBillingUsageCharge = DashboardBillingUsageChargeBase &
         readonly unit: 'execution';
       }
     | {
-        readonly kind: 'instance';
-        readonly attribution: DashboardBillingInstanceAttribution & { readonly serviceId: 'satyr' };
-        readonly meterId: 'satyr.completed_turn.test';
-        readonly priceVersion: string;
-        readonly quantity: number;
-        readonly unit: 'turn';
-      }
-    | {
-        readonly kind: 'instance';
-        readonly attribution: DashboardBillingInstanceAttribution & { readonly serviceId: 'satyr' };
-        readonly meterId: 'satyr.jev_input_tokens';
-        readonly priceVersion: string;
-        readonly quantity: number;
-        readonly unit: 'input_token';
-      }
-    | {
         readonly kind: 'historical_organization';
         readonly attribution: {
           readonly kind: 'historical_organization';
@@ -691,33 +675,6 @@ function readUsageCharge(input: unknown): DashboardBillingUsageCharge {
         amountMinor,
         occurredAt,
         attribution: { kind: 'instance', scope, serviceId: 'wallet', instanceId },
-        meterId: row.meterId,
-        priceVersion,
-        quantity,
-        unit: row.unit,
-      };
-    case 'satyr.completed_turn.test':
-      if (attribution.serviceId !== 'satyr' || row.unit !== 'turn') return invalidContract('meter');
-      return {
-        kind: 'instance',
-        ledgerEntryId,
-        amountMinor,
-        occurredAt,
-        attribution: { kind: 'instance', scope, serviceId: 'satyr', instanceId },
-        meterId: row.meterId,
-        priceVersion,
-        quantity,
-        unit: row.unit,
-      };
-    case 'satyr.jev_input_tokens':
-      if (attribution.serviceId !== 'satyr' || row.unit !== 'input_token')
-        return invalidContract('meter');
-      return {
-        kind: 'instance',
-        ledgerEntryId,
-        amountMinor,
-        occurredAt,
-        attribution: { kind: 'instance', scope, serviceId: 'satyr', instanceId },
         meterId: row.meterId,
         priceVersion,
         quantity,

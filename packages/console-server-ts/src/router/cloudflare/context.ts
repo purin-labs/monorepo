@@ -37,7 +37,6 @@ export interface AccountConsoleContext {
   readonly billingStripeWebhookSigningSecret: string | null;
   readonly accountPlatform: D1AccountPlatformService | null;
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1 | null;
-  readonly satyrProvisioning: AccountServiceProvisioningAdapterV1 | null;
   readonly authorizeTenant: ((claims: ConsoleAuthClaims) => Response | null) | null;
   readonly waitUntil: ((work: Promise<unknown>) => void) | null;
   /** The calling Console's origin when it is on the explicit CORS list, for Stripe returns. */

@@ -9,7 +9,7 @@ import {
   isD1DatabaseLike,
   type WalletConsoleServiceBinding,
 } from '@seams/wallet-server/cloud-host';
-import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { consoleWorkerEnvironment } from '../helpers/consoleWorkerEnvironment';
 import { verifyUnactivatedConsoleOnboarding } from './console-onboarding.scenario';
@@ -26,8 +26,6 @@ import { createCloudflareD1AccountServiceBundle } from '../../packages/console-s
 import { runAccountServiceProvisioning } from '../../packages/console-server-ts/src/accountPlatform/provisioning';
 import {
   ServiceProvisionCommandV1,
-  ServiceTenantBindingV1,
-  parseServiceProvisionReceiptV1,
   type PlatformResult,
 } from '../../packages/console-shared-ts/src/accountPlatform';
 import { WalletServiceProvisioningAdapter } from '../../packages/wallet-console-server-ts/src/accountPlatform/provisioning';
@@ -73,14 +71,12 @@ class LocalConsoleService implements WalletConsoleServiceBinding {
   readonly requests: { path: string; status: number }[] = [];
   lastDatabaseWork: { calls: number; statements: number } | null = null;
   failNextBatch = false;
-  accountKeysUnavailable = false;
   consoleCompositionUnavailable = false;
 
   constructor(private readonly worker: Awaited<ReturnType<Miniflare['getWorker']>>) {}
 
   async fetch(input: Request | string, init?: RequestInit): Promise<Response> {
     const request = new Request(input, init);
-    if (this.accountKeysUnavailable) request.headers.set('x-test-account-keys-unavailable', 'true');
     if (this.consoleCompositionUnavailable)
       request.headers.set('x-test-console-composition-unavailable', 'true');
     if (this.failNextBatch) {
@@ -296,58 +292,6 @@ function registrationMutationState(
     .first();
 }
 
-async function activateSatyrAccount(
-  database: D1DatabaseLike,
-  deploymentId: string,
-  instanceId: string,
-): Promise<void> {
-  const core = await createCloudflareD1AccountServiceBundle({
-    database,
-    namespace,
-    ensureSchema: false,
-    externalDeletionGuard: null,
-  });
-  const scope = platformAccepted(await core.accountPlatform.bindProjectBilling(context, projectId));
-  const nativeScope = {
-    serviceId: 'satyr',
-    deploymentId,
-    nativeOrganizationId: instanceId,
-  } as const;
-  const command = platformAccepted(
-    ServiceProvisionCommandV1.parse({
-      version: 1,
-      operationId: `enable-${instanceId}`,
-      instanceId,
-      desiredRevision: 1,
-      command: 'enable',
-      binding: {
-        kind: 'attach_existing_scope',
-        nativeScope,
-        authorityEvidence: { sourceRecordId: instanceId, sourceDigest: 'a'.repeat(64) },
-      },
-    }),
-  );
-  platformAccepted(await core.accountPlatform.requestProvision(context, { scope, command }));
-  const binding = platformAccepted(
-    ServiceTenantBindingV1.parse({ instanceId, scope, nativeScope }),
-  );
-  platformAccepted(
-    await core.accountPlatform.acknowledgeProvision(
-      { serviceId: 'satyr', deploymentId },
-      platformAccepted(
-        parseServiceProvisionReceiptV1({
-          version: 1,
-          operationId: command.operationId,
-          instanceId,
-          desiredRevision: 1,
-          result: 'active',
-          binding,
-        }),
-      ),
-    ),
-  );
-}
-
 test('isolated runtime uses the original Wallet authority and enforces durable credential changes', async () => {
   test.setTimeout(120_000);
   const testInfo = test.info();
@@ -383,20 +327,11 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
     accountId: '0123456789abcdef0123456789abcdef',
     databaseId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   });
-  const assertionKeys = generateKeyPairSync('ed25519');
   Object.assign(consoleEnvironment, {
     GITHUB_OAUTH_CLIENT_ID: 'isolated-console-github-client',
     GITHUB_OAUTH_CLIENT_SECRET: 'isolated-console-github-secret',
     GITHUB_OAUTH_CALLBACK_URL: `${origin}/dashboard/login`,
     CONSOLE_CORS_ORIGINS: `${origin},https://platform.example.test,https://wallet-console.example.test`,
-    PANTRY_DEPLOYMENT_ID: 'satyr-preflight',
-    PANTRY_ACCOUNT_ASSERTION_ISSUER: 'https://satyr.test',
-    PANTRY_ACCOUNT_ASSERTION_AUDIENCE: 'https://account.test',
-    PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID: 'satyr-preflight',
-    PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: JSON.stringify(
-      assertionKeys.publicKey.export({ format: 'jwk' }),
-    ),
-    PANTRY_GOOGLE_OIDC_CLIENT_ID: 'test-google',
   });
   const runtime = new Miniflare({
     host: '127.0.0.1',
@@ -409,10 +344,7 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
         scriptPath: path.join(output, 'consumer.js'),
         compatibilityDate: '2026-04-17',
         compatibilityFlags: ['nodejs_compat'],
-        serviceBindings: {
-          WALLET_CONSOLE: 'console',
-          ACCOUNT_PLATFORM: { name: 'console', entrypoint: 'SatyrAccountPlatform' },
-        },
+        serviceBindings: { WALLET_CONSOLE: 'console' },
         outboundService: guard.fetch.bind(guard),
       },
       {
@@ -460,7 +392,6 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
     if (!sessionSecret) throw new Error('Console fixture is missing its session secret');
     const accountOnlyService = new LocalConsoleService(await runtime.getWorker('console'));
     accountOnlyService.consoleCompositionUnavailable = true;
-    accountOnlyService.accountKeysUnavailable = true;
     observations.push(
       await verifyUnactivatedConsoleOnboarding({
         service: accountOnlyService,
@@ -503,73 +434,21 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
       rateLimitBucket: 'default',
       quotaBucket: 'default',
     });
-    await activateSatyrAccount(database, 'satyr-preflight', 'satyr:preflight');
-    const consumer = await runtime.getWorker('consumer');
-    const accountRequest = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ version: 1, instanceId: 'satyr:missing' }),
-    };
     const publicAccount = await (
       await runtime.getWorker('console')
-    ).fetch('https://console.test/account-platform/v1/fee-policy', accountRequest);
+    ).fetch('https://console.test/account-platform/v1/fee-policy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: 1, instanceId: 'missing' }),
+    });
     expect(publicAccount.status).toBe(404);
     expect(publicAccount.headers.get('x-test-d1-calls')).toBe('0');
-    const privateAccount = await consumer.fetch(
-      'https://account.test/account-platform/v1/fee-policy',
-      accountRequest,
-    );
-    expect(await privateAccount.json()).toEqual({
-      kind: 'rejected',
-      error: { code: 'scope_forbidden' },
-    });
-    const acceptedPolicy = await consumer.fetch(
-      'https://account.test/account-platform/v1/fee-policy',
-      {
-        ...accountRequest,
-        body: JSON.stringify({ version: 1, instanceId: 'satyr:preflight' }),
-      },
-    );
-    expect(acceptedPolicy.status).toBe(200);
-    expect(await acceptedPolicy.json()).toMatchObject({
-      kind: 'accepted',
-      value: { instanceId: 'satyr:preflight', policy: { kind: 'customer_unpriced' } },
-    });
-    // The caller cannot select another producer using request headers.
-    const forgedAuthority = await consumer.fetch(
-      'https://account.test/account-platform/v1/fee-policy',
-      {
-        ...accountRequest,
-        headers: {
-          ...accountRequest.headers,
-          'X-Account-Deployment-Id': 'foreign',
-          Authorization: 'Bearer foreign',
-        },
-        body: JSON.stringify({ version: 1, instanceId: 'satyr:preflight' }),
-      },
-    );
-    expect(await forgedAuthority.json()).toMatchObject({
-      kind: 'accepted',
-      value: { instanceId: 'satyr:preflight' },
-    });
-    const unsignedUser = await consumer.fetch(
-      'https://account.test/account-platform/v1/eligibility',
-      accountRequest,
-    );
-    expect(await unsignedUser.json()).toEqual({
-      kind: 'rejected',
-      error: { code: 'scope_forbidden' },
-    });
     observations.push({
-      stage: 'private_account_binding',
-      boundInstanceAccepted: true,
-      requestAuthorityIgnored: true,
+      stage: 'public_account_platform_path',
       publicStatus: publicAccount.status,
       publicDatabaseCalls: 0,
-      tokenRequired: false,
-      missingInstanceRejected: true,
-      unsignedUserRejected: true,
     });
+    const consumer = await runtime.getWorker('consumer');
     const service = new LocalConsoleService(consumer);
     await verifyConsoleGithubCallbacks(new LocalConsoleService(consumer));
     const client = createWalletConsoleOpsClient(service);
@@ -579,7 +458,6 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
       origin,
     }).request;
 
-    service.accountKeysUnavailable = true;
     const accepted = await client.registrationContext.resolve({
       secret: credential.secret,
       origin,
@@ -649,9 +527,8 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
       (await service.fetch(`https://console.example.test/console/projects/${projectId}/services`))
         .status,
     ).toBe(401);
-    observations.push({ stage: 'wallet_routes_skip_account_key_initialization', verified: true });
+    observations.push({ stage: 'account_routes_require_a_session', verified: true });
 
-    service.accountKeysUnavailable = false;
     const nowMs = Date.now();
     const deployments = createD1TenantDeploymentServiceV1({ database });
     const deployment = await deployments.putBinding(
@@ -986,7 +863,6 @@ test('isolated runtime uses the original Wallet authority and enforces durable c
     expect(malformedLineage.status).toBe(400);
     expect(service.lastDatabaseWork).toEqual({ calls: 0, statements: 0 });
     service.consoleCompositionUnavailable = false;
-    service.accountKeysUnavailable = false;
     const foreignOriginLineage = await service.fetch(
       'https://untrusted.example.test' + WALLET_CONSOLE_OP_PATHS_V1.tenantRootActiveLineage,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },

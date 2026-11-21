@@ -63,7 +63,6 @@ export interface WalletConsoleRouterServices {
 
 export interface ConsoleOnlyRouterComposition {
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1 | null;
-  readonly satyrProvisioning: AccountServiceProvisioningAdapterV1 | null;
   readonly corsOrigins?: string[];
   readonly core: ConsoleCoreRouterServices;
   readonly walletConsole: WalletConsoleRouterServices;
@@ -76,7 +75,6 @@ export interface ConsoleOnlyRouterComposition {
 
 export interface HostedConsoleRouterComposition {
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1 | null;
-  readonly satyrProvisioning: AccountServiceProvisioningAdapterV1 | null;
   readonly core: ConsoleCoreRouterServices;
   readonly walletConsole: WalletConsoleRouterServices;
   readonly tenantStorage: {
@@ -143,7 +141,6 @@ export function composeConsoleOnlyRouterOptions(
   return {
     ...spreadBranchServices(input.core, input.walletConsole),
     walletProvisioning: input.walletProvisioning,
-    satyrProvisioning: input.satyrProvisioning,
     healthz: true,
     readyz: true,
     auth: input.auth,
@@ -161,7 +158,6 @@ export function composeHostedConsoleRouterOptions(
   return {
     ...spreadBranchServices(input.core, input.walletConsole),
     walletProvisioning: input.walletProvisioning,
-    satyrProvisioning: input.satyrProvisioning,
     tenantStorageRouteResolver: input.tenantStorage.resolver,
     tenantStorageNamespace: input.tenantStorage.namespace,
     healthz: true,

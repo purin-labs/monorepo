@@ -71,36 +71,6 @@ const AMAZON_SES_SECRET_NAMES = Object.freeze([
   'EMAIL_OTP_SES_SECRET_ACCESS_KEY',
 ]);
 
-export const CONSOLE_SERVICE_ENVIRONMENT_NAMES = Object.freeze([
-  'PANTRY_DEPLOYMENT_ID',
-  'PANTRY_ACCOUNT_ASSERTION_ISSUER',
-  'PANTRY_ACCOUNT_ASSERTION_AUDIENCE',
-  'PANTRY_ACCOUNT_USER_ASSERTION_KEY_ID',
-  'PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON',
-  'PANTRY_GOOGLE_OIDC_CLIENT_ID',
-  'PANTRY_SERVICE_ORIGIN',
-  'PANTRY_PROVISION_PLACEMENT_CELL_ID',
-  'PANTRY_PROVISION_ENVIRONMENT',
-  'PANTRY_PROVISION_TOKEN',
-  'ACCOUNT_PROVISION_ASSERTION_ISSUER',
-  'ACCOUNT_PROVISION_ASSERTION_AUDIENCE',
-  'ACCOUNT_PROVISION_ASSERTION_KEY_ID',
-  'ACCOUNT_PROVISION_ASSERTION_PRIVATE_JWK_JSON',
-]);
-
-export function readConsoleServiceEnvironment(environment) {
-  const values = {};
-  for (const name of CONSOLE_SERVICE_ENVIRONMENT_NAMES) {
-    const value = String(environment[name] || '').trim();
-    if (value) values[name] = value;
-  }
-  if (Object.keys(values).length === 0) return values;
-  for (const name of CONSOLE_SERVICE_ENVIRONMENT_NAMES) {
-    if (!values[name]) throw new Error(`The Pantry connection requires ${name}`);
-  }
-  return values;
-}
-
 export function backendLaneIds() {
   return BACKEND_LANE_IDS;
 }

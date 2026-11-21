@@ -7,14 +7,13 @@ import {
   type D1AccountPlatformService,
 } from '../../accountPlatform/d1';
 import { D1AccountServiceAccess } from '../../accountPlatform/serviceAccess';
-import { D1AccountMembershipFacade } from '../../accountPlatform/membershipFacade';
 import { createD1ConsoleAuditService } from '../../audit/d1';
 import type { ConsoleAuditService } from '../../audit/service';
 import type { ConsoleAuditCategory, ConsoleAuditEvidenceReferenceKind } from '../../audit/types';
 import { createD1ConsoleBillingService } from '../../billing/d1';
 import type { BillingProviderAdapters } from '../../billing/providers';
 import type { ConsoleBillingService } from '../../billing/service';
-import { D1BillingUsageService, type SatyrTestPricingPolicyV1 } from '../../billing/usage';
+import { D1BillingUsageService } from '../../billing/usage';
 import { createD1ConsoleBillingPrepaidReservationService } from '../../billingPrepaidReservations/d1';
 import type { ConsoleBillingPrepaidReservationService } from '../../billingPrepaidReservations/service';
 import { queryD1One, type D1DatabaseLike } from '../../boundary/d1';
@@ -46,7 +45,6 @@ export interface CloudflareD1AccountServiceBundleOptions {
   readonly organizationEmail?: D1ConsoleOrganizationEmailOptions;
   readonly billingProviders?: Partial<BillingProviderAdapters>;
   readonly billingEmailConsoleBaseUrl?: string;
-  readonly satyrTestPricing?: SatyrTestPricingPolicyV1;
   readonly onboardingEmail?: {
     readonly consoleBaseUrl: string;
     readonly docsBaseUrl: string;
@@ -62,7 +60,6 @@ export interface CloudflareD1AccountServiceBundle {
   readonly organizationAccess: ConsoleOrganizationAccessService;
   readonly accountPlatform: D1AccountPlatformService;
   readonly serviceAccess: D1AccountServiceAccess;
-  readonly serviceMemberships: D1AccountMembershipFacade;
   readonly account: ConsoleAccountService;
   readonly onboarding: ConsoleOnboardingService;
   readonly audit: ConsoleAuditService;
@@ -147,18 +144,9 @@ export async function createCloudflareD1AccountServiceBundle(
   const serviceAccess = new D1AccountServiceAccess({
     database: options.database,
     namespace,
-    platform: accountPlatform,
-    organizationAccess,
     now: options.now,
   });
   if (options.ensureSchema !== false) await serviceAccess.ensureSchema();
-  const serviceMemberships = new D1AccountMembershipFacade({
-    database: options.database,
-    namespace,
-    organizationAccess,
-    access: serviceAccess,
-    now: options.now,
-  });
   const audit = await createD1ConsoleAuditService({
     database: options.database,
     namespace,
@@ -188,7 +176,6 @@ export async function createCloudflareD1AccountServiceBundle(
     database: options.database,
     namespace,
     funds,
-    satyrTestPricing: options.satyrTestPricing ?? { kind: 'disabled' },
     now: options.now,
   });
   if (options.ensureSchema !== false) await billingUsage.ensureSchema();
@@ -234,7 +221,6 @@ export async function createCloudflareD1AccountServiceBundle(
     organizationAccess,
     accountPlatform,
     serviceAccess,
-    serviceMemberships,
     account,
     onboarding,
     audit,

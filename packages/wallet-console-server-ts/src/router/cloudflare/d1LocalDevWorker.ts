@@ -1,16 +1,9 @@
 import { createD1AccountConsoleComposition, isAccountConsoleRequest } from './d1AccountConsole';
 import { createConsoleEmailInvitationSecretCipherFromEnv } from './cron';
-export { SatyrAccountPlatform } from './satyrAccountPlatform';
-import type { D1AccountServiceAccess } from '@seams-internal/console-server/accountPlatform/serviceAccess';
 import { admitD1EstablishedWalletHome } from '@seams/wallet-server/cloud-host';
 import { createCloudflareD1AccountServiceBundle } from '@seams-internal/console-server/router/cloudflare/d1AccountServices';
-import {
-  satyrProvisioningForConsoleRoute,
-  type SatyrProvisioningEnvironment,
-} from '@seams-internal/console-server/accountPlatform/satyrProvisioningEnvironment';
 import { D1RegionalDeploymentAdmission } from '../../tenantDeployment/regionalAdmission';
 import { TenantResourceVerificationV1 } from '../../tenantDeployment/resourceVerification';
-import { createD1ConsoleWalletEnvironmentService } from '../../environments';
 import { createWalletProjectEnvironmentResolver } from '../projectEnvironmentAdapter';
 import { resolveRuntimeTenantRootLineage } from '@seams/wallet-server/cloud-host';
 import type { RuntimePolicyScope } from '@seams/wallet-server/cloud-host';
@@ -181,7 +174,7 @@ import { tenantDeploymentPublicProjectionResponseV1 } from '../../tenantDeployme
 import type { TenantDeploymentBindingReaderV1 } from '../../tenantDeployment/types';
 import { TenantDeploymentD1ResourceIdentityV1 } from '../../tenantDeployment/deploymentResource';
 
-interface LocalD1DevEnv extends RouterAbServiceBindingEnv, SatyrProvisioningEnvironment {
+interface LocalD1DevEnv extends RouterAbServiceBindingEnv {
   readonly SEAMS_D1_HOME_ACCOUNT_ID: string;
   readonly SEAMS_D1_HOME_DATABASE_ID: string;
   readonly CONSOLE_DB: D1DatabaseLike;
@@ -710,7 +703,6 @@ const CONSOLE_READY_TABLES = Object.freeze([
   'platform_provision_operations',
   'platform_provision_receipts',
   'wallet_service_bindings',
-  'satyr_service_bindings',
   'billing_funds_reservations',
   'billing_funds_transition_checks',
   'billing_funds_terminal_receipts',
@@ -1046,27 +1038,6 @@ async function provisionLocalTenantDeployment(
   });
 }
 
-async function routeLocalConsole(
-  env: LocalD1DevEnv,
-  access: D1AccountServiceAccess,
-  options: Parameters<typeof createHostedWalletConsoleRouter>[0],
-  request: Parameters<FetchHandler>[0],
-  workerEnv: Parameters<FetchHandler>[1],
-  ctx: Parameters<FetchHandler>[2],
-): Promise<Response> {
-  const satyrProvisioning = satyrProvisioningForConsoleRoute(
-    new URL(request.url).pathname,
-    env,
-    access,
-    globalThis.fetch.bind(globalThis),
-  );
-  return createHostedWalletConsoleRouter({ ...options, satyrProvisioning })(
-    request,
-    workerEnv,
-    ctx,
-  );
-}
-
 async function createLocalConsoleComposition(env: LocalD1DevEnv): Promise<LocalConsoleComposition> {
   const sponsoredEvmCallConfig = await resolveSponsoredEvmCallConfigFromWorkerEnv(env);
   const billingProviders = localBillingProviderAdapters(env);
@@ -1099,11 +1070,10 @@ async function createLocalConsoleComposition(env: LocalD1DevEnv): Promise<LocalC
     database: env.CONSOLE_DB,
     namespace: localTenantStorageNamespace(env),
   });
-  const handler = routeLocalConsole.bind(null, env, bundle.serviceAccess, {
+  const handler = createHostedWalletConsoleRouter({
     core: consoleCoreServicesFromBundle(bundle),
     walletConsole: walletConsoleServicesFromBundle(bundle),
     walletProvisioning: bundle.walletProvisioning,
-    satyrProvisioning: null,
     tenantStorage: {
       resolver: bundle.tenantStorageRouteResolver,
       namespace: bundle.tenantStorageNamespace,
@@ -1381,7 +1351,6 @@ async function localAccountConsoleHandler(
       String(env.CONSOLE_BASE_URL || '').trim() || 'http://localhost:4001',
     platformSupportEmails: undefined,
     walletDeploymentId: LOCAL_TENANT_DEPLOYMENT_LANE,
-    satyrEnvironment: env,
     webhookSecretCipher: localConsoleWebhookSecretCipher(env),
     billingStripeWebhookSigningSecret: String(env.STRIPE_WEBHOOK_SECRET || '').trim() || null,
     corsOrigins: [...LOCAL_ROUTER_API_CORS_ORIGINS],
@@ -2702,7 +2671,6 @@ async function scheduled(
     resumeCloudflareD1AccountServices(
       { consoleDatabase: env.CONSOLE_DB },
       { namespace: localTenantStorageNamespace(env), deploymentId: LOCAL_TENANT_DEPLOYMENT_LANE },
-      env,
     ),
   );
   const runner: TenantRootRefreshResumptionRunner = runLocalTenantRootRefreshResumptionV1.bind(

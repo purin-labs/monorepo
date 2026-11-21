@@ -1,8 +1,6 @@
 import {
   contractResult,
   exactKeys,
-  exactObject,
-  utcTimestamp,
   integer,
   invalidContract,
   object,
@@ -12,8 +10,6 @@ import {
   type PlatformResult,
 } from './boundary';
 import { readDurableSourceEvidenceV1, type DurableSourceEvidenceV1 } from './instances';
-import { readPlatformScopeV1 } from './scope';
-import type { FundsReservationV1 } from './protocol';
 
 /** Authenticated service evidence authorizes terminal money changes. */
 export class SettleFundsRequestV1 {
@@ -202,59 +198,5 @@ function readReconciliationOutcome(input: unknown): FundsReconciliationOutcomeV1
       });
     default:
       return invalidContract('outcome.kind');
-  }
-}
-
-export function readFundsReservationV1(input: unknown): FundsReservationV1 {
-  const record = object(input, 'reservation');
-  const keys = [
-    'reservationId',
-    'scope',
-    'instanceId',
-    'executionId',
-    'requestedMinor',
-    'priceVersion',
-    'createdAt',
-    'kind',
-  ];
-  const common = {
-    reservationId: textValue(record.reservationId),
-    scope: readPlatformScopeV1(record.scope),
-    instanceId: textValue(record.instanceId),
-    executionId: textValue(record.executionId),
-    requestedMinor: integer(record.requestedMinor, 'requestedMinor', 0),
-    priceVersion: textValue(record.priceVersion),
-    createdAt: utcTimestamp(record.createdAt),
-  };
-  switch (record.kind) {
-    case 'reserved':
-      exactObject(record, keys);
-      return { ...common, kind: record.kind };
-    case 'indeterminate':
-      exactObject(record, [...keys, 'reconciliation']);
-      if (exactObject(record.reconciliation, ['kind']).kind !== 'pending')
-        throw new Error('Invalid reconciliation');
-      return {
-        ...common,
-        kind: record.kind,
-        reconciliation: { kind: 'pending' },
-      };
-    case 'settled':
-      exactObject(record, [...keys, 'chargeId', 'settledMinor']);
-      return {
-        ...common,
-        kind: record.kind,
-        chargeId: textValue(record.chargeId),
-        settledMinor: integer(record.settledMinor, 'integer', 0),
-      };
-    case 'released':
-      exactObject(record, [...keys, 'noChargeEvidence']);
-      return {
-        ...common,
-        kind: record.kind,
-        noChargeEvidence: readDurableSourceEvidenceV1(record.noChargeEvidence),
-      };
-    default:
-      throw new Error('Unknown reservation state');
   }
 }
