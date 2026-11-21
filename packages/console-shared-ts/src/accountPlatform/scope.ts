@@ -1,5 +1,4 @@
 import {
-  assertNever,
   contractResult,
   exactKeys,
   invalidContract,
@@ -9,7 +8,7 @@ import {
   type PlatformResult,
 } from './boundary';
 
-export type PlatformServiceIdV1 = 'wallet' | 'satyr';
+export type PlatformServiceIdV1 = 'wallet';
 
 export interface PlatformScopeFieldsV1 {
   readonly namespace: string;
@@ -57,62 +56,36 @@ export interface WalletTenantScopeV1 {
   readonly nativeProjectId: string;
 }
 
-export interface SatyrTenantScopeV1 {
-  readonly serviceId: 'satyr';
-  readonly deploymentId: string;
-  readonly nativeOrganizationId: string;
-  readonly namespace?: never;
-  readonly nativeProjectId?: never;
-}
-
-export type NativeTenantScopeV1 = WalletTenantScopeV1 | SatyrTenantScopeV1;
+export type NativeTenantScopeV1 = WalletTenantScopeV1;
 
 export function readNativeTenantScope(input: unknown): NativeTenantScopeV1 {
   const record = object(input, 'nativeScope');
-  switch (record.serviceId) {
-    case 'wallet':
-      exactKeys(record, [
-        'serviceId',
-        'deploymentId',
-        'namespace',
-        'nativeOrganizationId',
-        'nativeProjectId',
-      ]);
-      return Object.freeze({
-        serviceId: 'wallet',
-        deploymentId: textValue(record.deploymentId, 'deploymentId'),
-        namespace: textValue(record.namespace, 'namespace'),
-        nativeOrganizationId: textValue(record.nativeOrganizationId, 'nativeOrganizationId'),
-        nativeProjectId: textValue(record.nativeProjectId, 'nativeProjectId'),
-      });
-    case 'satyr':
-      exactKeys(record, ['serviceId', 'deploymentId', 'nativeOrganizationId']);
-      return Object.freeze({
-        serviceId: 'satyr',
-        deploymentId: textValue(record.deploymentId, 'deploymentId'),
-        nativeOrganizationId: textValue(record.nativeOrganizationId, 'nativeOrganizationId'),
-      });
-    default:
-      return invalidContract('serviceId');
-  }
+  if (record.serviceId !== 'wallet') return invalidContract('serviceId');
+  exactKeys(record, [
+    'serviceId',
+    'deploymentId',
+    'namespace',
+    'nativeOrganizationId',
+    'nativeProjectId',
+  ]);
+  return Object.freeze({
+    serviceId: 'wallet',
+    deploymentId: textValue(record.deploymentId, 'deploymentId'),
+    namespace: textValue(record.namespace, 'namespace'),
+    nativeOrganizationId: textValue(record.nativeOrganizationId, 'nativeOrganizationId'),
+    nativeProjectId: textValue(record.nativeProjectId, 'nativeProjectId'),
+  });
 }
 
 /** JSON tuples preserve component boundaries, including separators inside native IDs. */
 export function nativeTenantScopeKey(scope: NativeTenantScopeV1): string {
-  switch (scope.serviceId) {
-    case 'wallet':
-      return JSON.stringify([
-        scope.serviceId,
-        scope.deploymentId,
-        scope.namespace,
-        scope.nativeOrganizationId,
-        scope.nativeProjectId,
-      ]);
-    case 'satyr':
-      return JSON.stringify([scope.serviceId, scope.deploymentId, scope.nativeOrganizationId]);
-    default:
-      return assertNever(scope);
-  }
+  return JSON.stringify([
+    scope.serviceId,
+    scope.deploymentId,
+    scope.namespace,
+    scope.nativeOrganizationId,
+    scope.nativeProjectId,
+  ]);
 }
 
 export class ServiceTenantBindingV1 {

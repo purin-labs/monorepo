@@ -241,34 +241,38 @@ function walletEntry(rows: Record<string, readonly D1Row[]>, projectId: string) 
   };
 }
 
-function satyrEntry() {
+/** A Wallet tenant of another source organization, mapped to its own account. */
+function separateWalletEntry() {
   return {
     binding: {
-      instanceId: 'instance-satyr',
+      instanceId: 'instance-separate',
       scope: {
         namespace,
-        organizationId: 'org_satyr_separate',
-        projectId: 'satyr-dedicated',
-        billingAccountId: 'billing-satyr',
+        organizationId: 'org_separate_account',
+        projectId: 'separate-project',
+        billingAccountId: 'billing-separate',
       },
       nativeScope: {
-        serviceId: 'satyr',
-        deploymentId: 'satyr-rehearsal',
-        nativeOrganizationId: 'native-satyr-tenant',
+        serviceId: 'wallet',
+        deploymentId: 'wallet-rehearsal',
+        namespace,
+        nativeOrganizationId: 'native-separate-organization',
+        nativeProjectId: 'native-separate-project',
       },
     },
     checkpoint: {
-      serviceId: 'satyr',
+      serviceId: 'wallet',
       authorityRevision: 7,
       ownership: { kind: 'preserve_source_owners', activeOwnerCount: 1 },
       identityDigest: digest('synthetic-identities'),
-      membershipDigest: digest('synthetic-owner-operator-person-bindings'),
-      operationalDigest: digest('synthetic-work-projects'),
-      placementDigest: digest('synthetic-pinned-placement'),
-      placementCellId: 'isolated-apac',
-      placementEpoch: 3,
-      environment: 'development',
-      money: 'no_customer_ledger',
+      membershipDigest: digest('synthetic-owner-bindings'),
+      operationalDigest: digest('synthetic-environments'),
+      ledgerDigest: digest('synthetic-empty-ledger'),
+      paymentDigest: digest('synthetic-no-payments'),
+      postedBalanceMinor: 0,
+      openReservationsMinor: 0,
+      historicalUnattributedChargeCount: 0,
+      environmentIds: [],
     },
   };
 }
@@ -277,7 +281,7 @@ function cohortInput(rows: Record<string, readonly D1Row[]>) {
   const entries = [
     walletEntry(rows, 'native-project-a'),
     walletEntry(rows, 'native-project-b'),
-    satyrEntry(),
+    separateWalletEntry(),
   ];
   const inventory = [];
   for (const entry of entries) inventory.push(entry.binding.nativeScope);
@@ -359,25 +363,18 @@ function verifyConflicts(rows: Record<string, readonly D1Row[]>): readonly strin
 function verifyUsageBoundary() {
   const usage = {
     version: 1,
-    eventId: 'turn:session-1:turn-1',
-    instanceId: 'instance-satyr',
+    eventId: 'resource:native-project-a:wallet-1',
+    instanceId: 'instance-native-project-a',
     occurredAt: now().toISOString(),
-    meterId: 'satyr.completed_turn.test',
+    meterId: 'wallet.monthly_active_resource',
     quantity: 1,
-    unit: 'turn',
+    unit: 'resource_month',
     evidence: {
-      kind: 'satyr_turn',
-      sourceRecordId: 'accepted-turn-1',
-      sourceDigest: digest('terminal-receipt'),
-      sessionId: 'session-1',
-      turnId: 'turn-1',
-      terminalOutcome: 'completed',
-      reservationId: 'reservation-turn-1',
-      funding: {
-        kind: 'platform',
-        selection: 'satyr_platform',
-        modelRouteDigest: digest('pinned-model-route'),
-      },
+      kind: 'wallet_resource',
+      sourceRecordId: 'active-resource-1',
+      sourceDigest: digest('resource-receipt'),
+      environmentId: 'environment-a',
+      resourceId: 'wallet-1',
     },
   };
   const parsed = accepted(PlatformUsageEventV1.parse(usage));
@@ -395,10 +392,10 @@ function verifyUsageBoundary() {
   const reserve = {
     version: 1,
     operationId: 'reserve-1',
-    instanceId: 'instance-satyr',
-    executionId: 'turn-1',
+    instanceId: 'instance-native-project-a',
+    executionId: 'execution-1',
     requestedMinor: 1,
-    priceVersion: 'satyr-completed-turn-test-v1',
+    priceVersion: 'wallet-rehearsal-quote-v1',
   };
   expect(ReserveFundsRequestV1.parse(reserve)).toMatchObject({ kind: 'accepted' });
   expect(ReserveFundsRequestV1.parse({ ...reserve, postedBalanceMinor: 1_000_000 })).toMatchObject({
@@ -407,7 +404,7 @@ function verifyUsageBoundary() {
   return parsed;
 }
 
-test('migration preflight preserves two native Wallet projects, money, holds, and a separate Satyr tenant across restart', async () => {
+test('migration preflight preserves two native Wallet projects, money, holds, and a separate Wallet tenant across restart', async () => {
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   let worker = runtime();
@@ -506,7 +503,7 @@ test('migration preflight preserves two native Wallet projects, money, holds, an
           },
           rejectedConflicts: conflicts,
           limitations: [
-            'Satyr tenant checkpoint is synthetic',
+            'Separate tenant checkpoint is synthetic',
             'No target schema or production cutover',
             'No UI steps in phase 1',
           ],

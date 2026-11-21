@@ -84,7 +84,7 @@ void attributedHistoricalCharge;
 const wrongServiceCharge: DashboardBillingUsageCharge = {
   ...walletExecutionCharge,
   // @ts-expect-error Wallet execution charges require Wallet service attribution.
-  attribution: { ...walletExecutionCharge.attribution, serviceId: 'satyr' },
+  attribution: { ...walletExecutionCharge.attribution, serviceId: 'retired_service' },
 };
 void wrongServiceCharge;
 

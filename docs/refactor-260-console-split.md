@@ -30,6 +30,37 @@ Done on 2026-11-21:
   `staging` and `production` environments hold `CF_PAGES_PROJECT_VITE`
   (`seams-site-staging` and `seams-site`, read from the public `pages.dev` hosts).
 - `seams-wallet` names `seams-tech/seams-console` (`0647af091`).
+- Step 6 (company site): the owner set the two company secrets in `purin-labs/purin-monorepo`.
+  Its staging run `44852049624` and, after `dev` was merged into its `main` (`fc336bac`), its
+  production run `44852198797` passed. Another session's site commit `b8019a57` (legal name
+  Purin Heavy Industries) went there as `baf044a8`; runs `44853988209` and `44853990808`
+  redeployed both sites from there.
+- Step 8 (company paths): `86db58f4` deletes the company site, its deploy script, targets,
+  workflow and test, `docs/drawing-style.md` and the company style doc here. The local Caddy
+  files moved to `scripts/local-wallet/`; `localhost:4001/` now opens the Wallet site.
+- Step 5, the host part (`4ab30f88`, with `66f0d504`): the Console API answers on
+  `console.seams.sh` and `console.staging.seams.sh`; the Wallet site hosts keep `/console/*`
+  for the CLI. The Platform Console build is gone; the Wallet Console serves invitations and
+  keeps the support billing page at `/platform/billing` for support sessions only.
+  `account.seams.sh` and `account.staging.seams.sh` are former hosts that redirect to
+  `console.*`. The deploy token cannot change DNS, so the owner approved deleting their old
+  Pages CNAME records, and this session deleted them in the dashboard. A Worker custom domain
+  fails for some minutes after a Pages release; `66f0d504` retries.
+  - Staging run `44853985506` passed every backend job and the activation through the new
+    host; its frontend job then passed after the DNS fix, except one smoke check that ran
+    before the new host certificate existed. The redirect works.
+  - `main` got `dev` as merge `948bb5d6`. Production mainnet run `44858357190` passed,
+    including the frontend smoke of the `account.seams.sh` redirect.
+  - Production testnet run `44859557388` stopped at the placement check: the Deriver B
+    database (`8c379ecb…`) is served in HKG, not SIN. The previous run (`44760463374`,
+    2026-11-20 15:09 UTC) passed it. Nothing changed on Deriver B; Deriver A and the
+    Signing Worker redeployed the same role code. The testnet Console keeps working: its
+    CORS list already includes `console.seams.sh`.
+- Cleanup, confirmed by the owner: the Pages projects `seams-platform-console` and
+  `seams-platform-console-staging` are deleted; `CF_PAGES_PROJECT_PLATFORM_CONSOLE`,
+  `COMPANY_CLOUDFLARE_*` and `CF_PAGES_PROJECT_VITE` are deleted from this repository's
+  `staging` and `production` environments, and the env scripts no longer write them
+  (`5e71da5b`); the repository `seams-tech/seams-console-mirror` is deleted.
 
 Done on 2026-11-20:
 
@@ -54,16 +85,16 @@ Done on 2026-11-20:
 
 Remaining:
 
-| Step (see "Order")                        | Owner                 | Waits for                                          |
-| ----------------------------------------- | --------------------- | -------------------------------------------------- |
-| 2. Keep Pantry's old Console Workers      | Refactor 200, Phase 7 | Plan 95 step 5                                     |
-| 3. Pantry's own accounts                  | Pantry Plan 95        | Steps 2 to 4, then the owner's step 5 gate         |
-| 5. Remove the Pantry service              | This plan             | Plan 95 step 4 (see below)                         |
-| 6. Company site deploys from its own repo | Owner, then this plan | Two company secrets in `purin-labs/purin-monorepo` |
-| 8. Delete the company paths here          | This plan             | Step 6                                             |
+| Step (see "Order")                   | Owner              | Waits for                                     |
+| ------------------------------------ | ------------------ | --------------------------------------------- |
+| 2. Keep Pantry's old Console Workers | This plan (Wave 2) | Plan 95 step 5, then the owner's confirmation |
+| 3. Pantry's own accounts             | Pantry Plan 95     | Steps 2 to 4 (in test), then the step 5 gate  |
+| 5. Remove the Pantry service         | This plan          | Plan 95 step 4 (see below)                    |
+| Testnet deploy of `4ab30f88`         | Owner              | The Deriver B D1 placement (HKG, not SIN)     |
 
-Steps 7 and 9 are done or void: the transfer moved the OIDC identity (step 7), and
-`purin-labs/purin-monorepo` is a new repository, so nothing is renamed (step 9).
+Steps 4, 6, 7 and 8 are done; step 9 is void, because `purin-labs/purin-monorepo` is a new
+repository. Refactor 200's migration session is archived, so Wave 2 and the placement
+question have no other owner.
 
 - Step 5 waits for Plan 95 step 4, not only for the production Pantry: Pantry local
   development binds this checkout's `seams-sdk-d1-local` (`pnpm router`), and its E2E
@@ -71,21 +102,6 @@ Steps 7 and 9 are done or void: the transfer moved the OIDC identity (step 7), a
   Pantry production binds the old Console Worker in the old account and does not see code
   changes here. Pantry CI checks out `purin-labs/monorepo` at `3a05ce4`; the redirect keeps
   that working until Plan 95 step 4 deletes the step.
-- Step 6: the owner puts `COMPANY_CLOUDFLARE_API_TOKEN` and `COMPANY_CLOUDFLARE_ACCOUNT_ID`
-  into the `staging` and `production` environments of `purin-labs/purin-monorepo`. The
-  local copies are in `~/.seams/staging-deployment.env` and `production-deployment.env`.
-  Then run `Deploy / company site` there, staging from `dev`, then production from `main`
-  after `dev` is merged into it. Until then the company site still deploys from here.
-- Step 8 after step 6: freeze `apps/seams-site` here, port any later site commits to
-  `purin-monorepo`, then delete the company site, its deploy files, `docs/drawing-style.md`
-  and `docs/styles/` here. The local Caddy setup (`Caddyfile`, `run_caddy.sh`) serves the
-  Seams stack, so it moves out of `apps/seams-site` and stays here; the local company entry
-  at `localhost:4001/` then needs a new target. Delete the company values
-  (`COMPANY_CLOUDFLARE_*`, `CF_PAGES_PROJECT_VITE`) from the `staging` and `production`
-  environments here. The owner confirms the deletion of `seams-tech/seams-console-mirror`.
-- No production deploy ran for the move. The next production deploy of each lane carries
-  the pin, because `main` has it. Production runs from `main`, which also carries other
-  sessions' unreleased changes (`4017a423`), so its owner chooses when.
 
 ## Decision
 

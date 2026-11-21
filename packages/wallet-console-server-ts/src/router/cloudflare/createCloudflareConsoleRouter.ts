@@ -3780,7 +3780,6 @@ export function createCloudflareConsoleRouter(opts: ConsoleRouterOptions = {}): 
       billingStripeWebhookSigningSecret: opts.billingStripeWebhookSigningSecret ?? null,
       accountPlatform: opts.accountPlatform ?? null,
       walletProvisioning: opts.walletProvisioning ?? null,
-      satyrProvisioning: opts.satyrProvisioning ?? null,
       billing,
       funds,
       billingUsage,

@@ -1,12 +1,9 @@
 import {
   PlatformScopeV1,
   PlatformUsageEventV1,
-  ReleaseFundsRequestV1,
   ReconcileFundsRequestV1,
   SettleFundsRequestV1,
-  satyrJevExecutionIdV1,
   type PlatformResult,
-  type SatyrJevInputTokensUsageV1,
   type UsageRecordingResultV1,
   type WalletMonthlyResourceUsageV1,
   type ReservationResultV1,
@@ -28,14 +25,8 @@ import type { ExecutionChargeV1 } from '../billingPrepaidReservations/types';
 import { fundsChargeId } from '../billingPrepaidReservations/d1';
 import {
   billingCanonicalDigest,
-  blockMeasuredChargeSql,
-  blockMeasuredMonthChargeMinor,
   createWalletExecutionPriceVersionInsert,
-  isRegisteredBillingPriceAvailable,
-  SATYR_COMPLETED_TURN_TEST_PRICE_V1,
-  satyrJevInputTokensPriceFor,
   TrustedWalletExecutionQuoteV1,
-  type SatyrJevInputTokensPrice,
   WALLET_MONTHLY_ACTIVE_RESOURCE_PRICE_V1,
 } from './pricing';
 import { ensureBillingUsageD1Schema } from './usageSchema';
@@ -47,23 +38,17 @@ import {
 } from './d1';
 import type { ConsoleBillingService } from './service';
 
-export type SatyrTestPricingPolicyV1 =
-  | { readonly kind: 'disabled'; readonly organizationIds?: never }
-  | { readonly kind: 'isolated_e2e'; readonly organizationIds: readonly string[] };
-
 export interface D1BillingUsageServiceOptions {
   readonly database: D1DatabaseLike;
   readonly namespace: string;
   readonly funds: ConsoleBillingPrepaidReservationService;
   readonly billing: ConsoleBillingService;
-  readonly satyrTestPricing: SatyrTestPricingPolicyV1;
   readonly now?: () => Date;
 }
 
 interface BoundUsageInstance {
   readonly scope: PlatformScopeV1;
   readonly instanceId: string;
-  readonly serviceId: 'wallet' | 'satyr';
 }
 
 interface AcceptedUsage {
@@ -84,7 +69,7 @@ interface PrepaidUsage extends AcceptedUsage {
   readonly ledgerSourceEventId: string;
   readonly resourceId: string;
   readonly txOrExecutionRef: string | null;
-  readonly outcome: 'settled' | 'released';
+  readonly outcome: 'settled';
 }
 
 function now(): Date {
@@ -140,7 +125,6 @@ export class D1BillingUsageService {
   private readonly database: D1DatabaseLike;
   private readonly namespace: string;
   private readonly funds: ConsoleBillingPrepaidReservationService;
-  private readonly testAccounts: ReadonlySet<string>;
   private readonly clock: () => Date;
   private readonly billing: ConsoleBillingD1Runtime;
 
@@ -156,23 +140,10 @@ export class D1BillingUsageService {
     }
     this.billing = billing;
     this.clock = options.now ?? now;
-    this.testAccounts = new Set(
-      options.satyrTestPricing.kind === 'isolated_e2e'
-        ? options.satyrTestPricing.organizationIds
-        : [],
-    );
   }
 
   async ensureSchema(): Promise<void> {
     await ensureBillingUsageD1Schema(this.database);
-    for (const organizationId of this.testAccounts) {
-      await this.database
-        .prepare(
-          'INSERT INTO billing_isolated_test_accounts (namespace, org_id) VALUES (?, ?) ON CONFLICT DO NOTHING',
-        )
-        .bind(this.namespace, textValue(organizationId, 'organizationId'))
-        .run();
-    }
   }
 
   private async boundInstance(
@@ -186,8 +157,7 @@ export class D1BillingUsageService {
         AND EXISTS (SELECT 1 FROM platform_provision_receipts r JOIN platform_provision_operations o
           ON o.namespace = r.namespace AND o.id = r.operation_id
           WHERE o.namespace = i.namespace AND o.instance_id = i.id AND r.result = 'active' AND r.disposition = 'applied')
-        AND ((i.service_id = 'wallet' AND EXISTS (SELECT 1 FROM wallet_service_bindings w WHERE w.namespace = i.namespace AND w.instance_id = i.id))
-          OR (i.service_id = 'satyr' AND EXISTS (SELECT 1 FROM satyr_service_bindings s WHERE s.namespace = i.namespace AND s.instance_id = i.id)))`,
+        AND EXISTS (SELECT 1 FROM wallet_service_bindings w WHERE w.namespace = i.namespace AND w.instance_id = i.id)`,
       [this.namespace, instanceId, authority.serviceId, authority.deploymentId],
     );
     if (!row) return null;
@@ -199,7 +169,7 @@ export class D1BillingUsageService {
         billingAccountId: row.billing_account_id,
       }),
     );
-    return { scope, instanceId, serviceId: authority.serviceId };
+    return { scope, instanceId };
   }
 
   private async receipt(
@@ -388,7 +358,6 @@ export class D1BillingUsageService {
     const meter = event.measure;
     switch (meter.meterId) {
       case 'wallet.monthly_active_resource':
-        if (instance.serviceId !== 'wallet') return rejected('meter_unknown');
         return this.monthly(
           {
             authority,
@@ -400,7 +369,6 @@ export class D1BillingUsageService {
           meter,
         );
       case 'wallet.execution': {
-        if (instance.serviceId !== 'wallet') return rejected('meter_unknown');
         const row = await queryD1One(
           this.database,
           'SELECT payload_json FROM billing_wallet_execution_quotes WHERE namespace = ? AND instance_id = ? AND execution_id = ?',
@@ -435,221 +403,9 @@ export class D1BillingUsageService {
           outcome: 'settled',
         });
       }
-      case 'satyr.completed_turn.test': {
-        if (instance.serviceId !== 'satyr') return rejected('meter_unknown');
-        if (
-          !(await isRegisteredBillingPriceAvailable({
-            database: this.database,
-            namespace: this.namespace,
-            scope: instance.scope,
-            meterId: meter.meterId,
-            priceVersion: SATYR_COMPLETED_TURN_TEST_PRICE_V1.version,
-            amountMinor: 1,
-          }))
-        )
-          return rejected('price_unavailable');
-        const executionId = JSON.stringify([meter.evidence.sessionId, meter.evidence.turnId]);
-        return this.prepaid({
-          authority,
-          event,
-          instance,
-          payloadDigest,
-          priceVersion: SATYR_COMPLETED_TURN_TEST_PRICE_V1.version,
-          executionId,
-          reservationId: meter.evidence.reservationId,
-          amountMinor: meter.quantity * SATYR_COMPLETED_TURN_TEST_PRICE_V1.unitMinor,
-          sourceRecordId: meter.evidence.sourceRecordId,
-          sourceDigest: meter.evidence.sourceDigest,
-          chargeId: fundsChargeId(meter.evidence.reservationId),
-          ledgerSourceEventId: `satyr_turn:${event.instanceId}:${executionId}`,
-          resourceId: executionId,
-          txOrExecutionRef: null,
-          outcome: meter.quantity === 0 ? 'released' : 'settled',
-        });
-      }
-      case 'satyr.jev_input_tokens': {
-        if (instance.serviceId !== 'satyr') return rejected('meter_unknown');
-        const price = await satyrJevInputTokensPriceFor(this.database, instance.scope);
-        if (!price) return rejected('price_unavailable');
-        return this.jevHour(
-          { authority, event, instance, payloadDigest, priceVersion: price.version },
-          meter,
-          price,
-        );
-      }
       default:
         return assertNever(meter);
     }
-  }
-
-  /**
-   * Each hour adds its tokens to the account's UTC month. It charges the rise of the
-   * month's rounded charge, so the month's charges sum to one rounding of the month's total.
-   */
-  private async jevHour(
-    usage: AcceptedUsage,
-    measure: SatyrJevInputTokensUsageV1,
-    price: SatyrJevInputTokensPrice,
-  ): Promise<UsageRecordingResultV1> {
-    if (
-      !(await isRegisteredBillingPriceAvailable({
-        database: this.database,
-        namespace: this.namespace,
-        scope: usage.instance.scope,
-        meterId: price.meterId,
-        priceVersion: price.version,
-        amountMinor: 0,
-      }))
-    )
-      return rejected('price_unavailable');
-    const hour = {
-      feature: measure.evidence.feature,
-      hourStartMs: Date.parse(measure.evidence.hourStart),
-      monthUtc: measure.evidence.hourStart.slice(0, 7),
-      executionId: satyrJevExecutionIdV1(measure.evidence.feature, measure.evidence.hourStart),
-    };
-    const stored = await queryD1One(
-      this.database,
-      'SELECT payload_digest FROM billing_jev_hours WHERE namespace = ? AND instance_id = ? AND feature = ? AND hour_start_ms = ?',
-      [this.namespace, usage.event.instanceId, hour.feature, hour.hourStartMs],
-    );
-    if (stored) return rejected('event_conflict');
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const result = await this.jevHourAttempt(usage, measure, price, hour);
-      if (result !== 'concurrent_month_change') return result;
-    }
-    throw new Error('Jev usage lost four concurrent changes to its month');
-  }
-
-  private async jevHourAttempt(
-    usage: AcceptedUsage,
-    measure: SatyrJevInputTokensUsageV1,
-    price: SatyrJevInputTokensPrice,
-    hour: {
-      readonly feature: string;
-      readonly hourStartMs: number;
-      readonly monthUtc: string;
-      readonly executionId: string;
-    },
-  ): Promise<UsageRecordingResultV1 | 'concurrent_month_change'> {
-    const scope = usage.instance.scope;
-    const month = await queryD1One(
-      this.database,
-      'SELECT COALESCE(SUM(input_tokens), 0) AS tokens FROM billing_jev_hours WHERE namespace = ? AND org_id = ? AND month_utc = ?',
-      [this.namespace, scope.organizationId, hour.monthUtc],
-    );
-    const before = integer(month?.tokens, 'month tokens', 0);
-    const amountMinor =
-      blockMeasuredMonthChargeMinor(price, before + measure.quantity) -
-      blockMeasuredMonthChargeMinor(price, before);
-    const recordHour = [
-      this.database
-        .prepare(
-          `INSERT INTO billing_jev_hours (namespace, instance_id, feature, hour_start_ms, org_id, month_utc, execution_id, input_tokens, producer_deployment_id, event_id, payload_digest)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(
-          this.namespace,
-          usage.event.instanceId,
-          hour.feature,
-          hour.hourStartMs,
-          scope.organizationId,
-          hour.monthUtc,
-          hour.executionId,
-          measure.quantity,
-          usage.authority.deploymentId,
-          usage.event.eventId,
-          usage.payloadDigest,
-        ),
-      // The charge must equal the rise of the stored month. A concurrent hour aborts this batch.
-      this.database
-        .prepare(
-          `INSERT INTO billing_funds_transition_checks (valid) VALUES ((
-          SELECT ${blockMeasuredChargeSql('t.tokens')} - ${blockMeasuredChargeSql('t.tokens - CAST(? AS INTEGER)')} = CAST(? AS INTEGER)
-          FROM billing_price_definitions p,
-            (SELECT COALESCE(SUM(input_tokens), 0) AS tokens FROM billing_jev_hours WHERE namespace = ? AND org_id = ? AND month_utc = ?) t
-          WHERE p.meter_id = ? AND p.version = ? AND p.kind = 'block_measured'))`,
-        )
-        .bind(
-          measure.quantity,
-          amountMinor,
-          this.namespace,
-          scope.organizationId,
-          hour.monthUtc,
-          price.meterId,
-          price.version,
-        ),
-    ];
-    const reservationId = measure.evidence.reservationId;
-    if (reservationId === null) {
-      // Use without a reservation never raises the month's charge.
-      if (amountMinor > 0) return rejected('insufficient_funds');
-      try {
-        await this.database.batch([
-          this.eventInsert(usage),
-          this.database
-            .prepare(
-              `INSERT INTO billing_usage_receipts (namespace, producer_service_id, producer_deployment_id, instance_id, event_id, org_id, outcome, charge_id, ledger_entry_id, amount_minor, price_version)
-            VALUES (?, ?, ?, ?, ?, ?, 'nonbillable_outcome', NULL, NULL, 0, ?)`,
-            )
-            .bind(
-              this.namespace,
-              usage.authority.serviceId,
-              usage.authority.deploymentId,
-              usage.event.instanceId,
-              usage.event.eventId,
-              scope.organizationId,
-              usage.priceVersion,
-            ),
-          ...recordHour,
-          this.database.prepare('DELETE FROM billing_funds_transition_checks'),
-        ]);
-      } catch (error) {
-        const receipt = await this.receipt(usage.authority, usage.event, usage.payloadDigest);
-        if (receipt) return receipt;
-        if (String(error).includes('funds_operation_conflict')) return 'concurrent_month_change';
-        throw error;
-      }
-      const receipt = await this.receipt(usage.authority, usage.event, usage.payloadDigest);
-      if (!receipt) throw new Error('Jev usage committed without its receipt');
-      return receipt;
-    }
-    const reservation = await this.funds.getReservation(usage.authority, reservationId);
-    if (reservation.kind === 'rejected') return rejected('scope_forbidden');
-    if (
-      reservation.value.instanceId !== usage.event.instanceId ||
-      reservation.value.executionId !== hour.executionId ||
-      reservation.value.priceVersion !== price.version
-    )
-      return rejected('event_conflict');
-    if (amountMinor > reservation.value.requestedMinor) return rejected('insufficient_funds');
-    const result = await this.prepaid(
-      {
-        ...usage,
-        executionId: hour.executionId,
-        reservationId,
-        amountMinor,
-        sourceRecordId: measure.evidence.sourceRecordId,
-        sourceDigest: measure.evidence.sourceDigest,
-        chargeId: fundsChargeId(reservationId),
-        ledgerSourceEventId: `satyr_jev:${usage.event.instanceId}:${hour.executionId}`,
-        resourceId: hour.executionId,
-        txOrExecutionRef: null,
-        outcome: amountMinor > 0 ? 'settled' : 'released',
-      },
-      recordHour,
-    );
-    if (result.kind === 'rejected' && result.error.code === 'event_conflict') {
-      const receipt = await this.receipt(usage.authority, usage.event, usage.payloadDigest);
-      if (receipt) return receipt;
-      const latest = await this.funds.getReservation(usage.authority, reservationId);
-      if (
-        latest.kind === 'accepted' &&
-        (latest.value.kind === 'reserved' || latest.value.kind === 'indeterminate')
-      )
-        return 'concurrent_month_change';
-    }
-    return result;
   }
 
   private async monthly(
@@ -788,15 +544,12 @@ export class D1BillingUsageService {
       statements,
     };
     if (reservation.value.kind === 'indeterminate') {
-      const outcome =
-        usage.outcome === 'released'
-          ? { kind: 'no_charge', noChargeEvidence: proof }
-          : {
-              kind: 'charged',
-              settledMinor: usage.amountMinor,
-              priceVersion: usage.priceVersion,
-              evidence: proof,
-            };
+      const outcome = {
+        kind: 'charged',
+        settledMinor: usage.amountMinor,
+        priceVersion: usage.priceVersion,
+        evidence: proof,
+      };
       return this.funds.reconcile(
         usage.authority,
         requireParsed(
@@ -806,21 +559,6 @@ export class D1BillingUsageService {
             reservationId: usage.reservationId,
             executionId: usage.executionId,
             outcome,
-          }),
-        ),
-        transaction,
-      );
-    }
-    if (usage.outcome === 'released') {
-      return this.funds.release(
-        usage.authority,
-        requireParsed(
-          ReleaseFundsRequestV1.parse({
-            version: 1,
-            operationId: `usage_release:${usage.event.instanceId}:${usage.executionId}`,
-            reservationId: usage.reservationId,
-            executionId: usage.executionId,
-            noChargeEvidence: proof,
           }),
         ),
         transaction,
@@ -843,15 +581,12 @@ export class D1BillingUsageService {
     );
   }
 
-  private async prepaid(
-    usage: PrepaidUsage,
-    measured: readonly D1PreparedStatementLike[] = [],
-  ): Promise<UsageRecordingResultV1> {
+  private async prepaid(usage: PrepaidUsage): Promise<UsageRecordingResultV1> {
     const existing = await this.funds.getExecutionCharge(usage.authority, {
       instanceId: usage.event.instanceId,
       executionId: usage.executionId,
     });
-    const statements = [this.eventInsert(usage), this.prepaidReceiptInsert(usage), ...measured];
+    const statements = [this.eventInsert(usage), this.prepaidReceiptInsert(usage)];
     if (existing) {
       if (!executionMatches(existing, usage)) return rejected('event_conflict');
       await this.database.batch(statements);

@@ -1,4 +1,3 @@
-export { SatyrAccountPlatform } from '../../../packages/wallet-console-server-ts/src/router/cloudflare/satyrAccountPlatform';
 import consoleWorker from '../../../packages/wallet-console-server-ts/src/router/cloudflare/d1ConsoleStagingWorker';
 import type {
   D1DatabaseLike,
@@ -73,16 +72,8 @@ function walletRequestEnvironment(
   request: Request,
   env: Parameters<typeof consoleWorker.fetch>[1],
 ): Parameters<typeof consoleWorker.fetch>[1] {
-  if (request.headers.has('x-test-console-composition-unavailable')) {
-    return { ...env, SEAMS_WALLET_HOME_CATALOG_JSON: 'Console composition is unavailable' };
-  }
-  if (!request.headers.has('x-test-account-keys-unavailable')) return env;
-  return {
-    ...env,
-    PANTRY_SERVICE_ORIGIN: 'https://satyr.invalid',
-    PANTRY_ACCOUNT_USER_ASSERTION_PUBLIC_JWK_JSON: 'Unavailable on Wallet routes',
-    ACCOUNT_PROVISION_ASSERTION_PRIVATE_JWK_JSON: 'Unavailable on Wallet routes',
-  };
+  if (!request.headers.has('x-test-console-composition-unavailable')) return env;
+  return { ...env, SEAMS_WALLET_HOME_CATALOG_JSON: 'Console composition is unavailable' };
 }
 
 async function fetch(

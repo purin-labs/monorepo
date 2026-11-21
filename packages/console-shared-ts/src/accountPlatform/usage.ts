@@ -14,29 +14,7 @@ import {
 import type { DurableSourceEvidenceV1 } from './instances';
 import type { PlatformScopeV1, PlatformServiceIdV1 } from './scope';
 
-export type PlatformMeterIdV1 =
-  | 'wallet.monthly_active_resource'
-  | 'wallet.execution'
-  | 'satyr.completed_turn.test'
-  | 'satyr.jev_input_tokens';
-
-export type SatyrJevFeatureV1 = 'mail_classification' | 'related_cases' | 'screen_relevance';
-
-export type SatyrFundingSelectionV1 =
-  | {
-      readonly kind: 'customer';
-      readonly selection:
-        | 'claude_oauth'
-        | 'codex_subscription'
-        | 'organisation_openai_api_key'
-        | 'organisation_anthropic_api_key';
-      readonly modelRouteDigest: string;
-    }
-  | {
-      readonly kind: 'platform';
-      readonly selection: 'satyr_platform';
-      readonly modelRouteDigest: string;
-    };
+export type PlatformMeterIdV1 = 'wallet.monthly_active_resource' | 'wallet.execution';
 
 export type WalletMonthlyResourceUsageV1 = {
   readonly meterId: 'wallet.monthly_active_resource';
@@ -64,51 +42,7 @@ export type WalletExecutionUsageV1 = {
   };
 };
 
-export type SatyrTurnUsageV1 = {
-  readonly meterId: 'satyr.completed_turn.test';
-  readonly unit: 'turn';
-  readonly evidence: DurableSourceEvidenceV1 & {
-    readonly kind: 'satyr_turn';
-    readonly sessionId: string;
-    readonly turnId: string;
-    readonly terminalOutcome: 'completed' | 'failed' | 'cancelled';
-    readonly funding: SatyrFundingSelectionV1;
-    readonly reservationId: string;
-  };
-} & (
-  | { readonly quantity: 1; readonly evidence: { readonly terminalOutcome: 'completed' } }
-  | {
-      readonly quantity: 0;
-      readonly evidence: { readonly terminalOutcome: 'failed' | 'cancelled' };
-    }
-);
-
-/**
- * The input-token total of one UTC hour for one Jev feature, on Satyr's key only.
- * A record that raises the month's charge names the reservation of its feature-hour.
- */
-export type SatyrJevInputTokensUsageV1 = {
-  readonly meterId: 'satyr.jev_input_tokens';
-  readonly unit: 'input_token';
-  readonly quantity: number;
-  readonly evidence: DurableSourceEvidenceV1 & {
-    readonly kind: 'satyr_jev_hour';
-    readonly hourStart: string;
-    readonly feature: SatyrJevFeatureV1;
-    readonly reservationId: string | null;
-  };
-};
-
-export type PlatformUsageMeasureV1 =
-  | WalletMonthlyResourceUsageV1
-  | WalletExecutionUsageV1
-  | SatyrTurnUsageV1
-  | SatyrJevInputTokensUsageV1;
-
-/** One reservation holds the paid use of one feature-hour. */
-export function satyrJevExecutionIdV1(feature: SatyrJevFeatureV1, hourStart: string): string {
-  return JSON.stringify(['satyr_jev', feature, hourStart]);
-}
+export type PlatformUsageMeasureV1 = WalletMonthlyResourceUsageV1 | WalletExecutionUsageV1;
 
 /** Producer authority comes from authenticated transport, outside the payload. */
 export class PlatformUsageEventV1 {
@@ -231,150 +165,8 @@ function readUsageMeasure(record: Record<string, unknown>): PlatformUsageMeasure
           reservationId: textValue(evidence.reservationId, 'reservationId'),
         }),
       });
-    case 'satyr.completed_turn.test':
-      return readSatyrTurn(record, evidence, sourceRecordId, sourceDigest);
-    case 'satyr.jev_input_tokens':
-      return readSatyrJevHour(record, evidence, sourceRecordId, sourceDigest);
     default:
       return invalidContract('meterId');
-  }
-}
-
-function readSatyrJevFeature(input: unknown): SatyrJevFeatureV1 {
-  switch (input) {
-    case 'mail_classification':
-    case 'related_cases':
-    case 'screen_relevance':
-      return input;
-    default:
-      return invalidContract('feature');
-  }
-}
-
-function readSatyrJevHour(
-  record: Record<string, unknown>,
-  evidence: Record<string, unknown>,
-  sourceRecordId: string,
-  sourceDigest: string,
-): SatyrJevInputTokensUsageV1 {
-  exactKeys(evidence, [
-    'kind',
-    'sourceRecordId',
-    'sourceDigest',
-    'hourStart',
-    'feature',
-    'reservationId',
-  ]);
-  if (evidence.kind !== 'satyr_jev_hour' || record.unit !== 'input_token')
-    return invalidContract('measure');
-  const hourStart = utcTimestamp(evidence.hourStart, 'hourStart');
-  if (Date.parse(hourStart) % 3_600_000 !== 0) return invalidContract('hourStart');
-  // The hour's charge belongs to the UTC month of the hour.
-  const occurredAt = utcTimestamp(record.occurredAt, 'occurredAt');
-  if (occurredAt < hourStart || occurredAt.slice(0, 7) !== hourStart.slice(0, 7))
-    return invalidContract('occurredAt');
-  return Object.freeze({
-    meterId: 'satyr.jev_input_tokens',
-    unit: 'input_token',
-    quantity: integer(record.quantity, 'quantity', 0),
-    evidence: Object.freeze({
-      kind: evidence.kind,
-      sourceRecordId,
-      sourceDigest,
-      hourStart,
-      feature: readSatyrJevFeature(evidence.feature),
-      reservationId:
-        evidence.reservationId === null ? null : textValue(evidence.reservationId, 'reservationId'),
-    }),
-  });
-}
-
-function readSatyrTurn(
-  record: Record<string, unknown>,
-  evidence: Record<string, unknown>,
-  sourceRecordId: string,
-  sourceDigest: string,
-): SatyrTurnUsageV1 {
-  exactKeys(evidence, [
-    'kind',
-    'sourceRecordId',
-    'sourceDigest',
-    'sessionId',
-    'turnId',
-    'terminalOutcome',
-    'funding',
-    'reservationId',
-  ]);
-  if (evidence.kind !== 'satyr_turn' || record.unit !== 'turn') return invalidContract('measure');
-  const sessionId = textValue(evidence.sessionId, 'sessionId');
-  const turnId = textValue(evidence.turnId, 'turnId');
-  const reservationId = textValue(evidence.reservationId, 'reservationId');
-  const funding = readFunding(evidence.funding);
-  switch (evidence.terminalOutcome) {
-    case 'completed':
-      if (record.quantity !== 1) return invalidContract('quantity');
-      return Object.freeze({
-        meterId: 'satyr.completed_turn.test',
-        unit: 'turn',
-        quantity: 1,
-        evidence: Object.freeze({
-          kind: evidence.kind,
-          sourceRecordId,
-          sourceDigest,
-          sessionId,
-          turnId,
-          terminalOutcome: evidence.terminalOutcome,
-          funding,
-          reservationId,
-        }),
-      });
-    case 'failed':
-    case 'cancelled':
-      if (record.quantity !== 0) return invalidContract('quantity');
-      return Object.freeze({
-        meterId: 'satyr.completed_turn.test',
-        unit: 'turn',
-        quantity: 0,
-        evidence: Object.freeze({
-          kind: evidence.kind,
-          sourceRecordId,
-          sourceDigest,
-          sessionId,
-          turnId,
-          terminalOutcome: evidence.terminalOutcome,
-          funding,
-          reservationId,
-        }),
-      });
-    default:
-      return invalidContract('terminalOutcome');
-  }
-}
-
-function readFunding(input: unknown): SatyrFundingSelectionV1 {
-  const record = object(input, 'funding');
-  exactKeys(record, ['kind', 'selection', 'modelRouteDigest']);
-  const modelRouteDigest = digestValue(record.modelRouteDigest, 'modelRouteDigest');
-  switch (record.kind) {
-    case 'customer':
-      switch (record.selection) {
-        case 'claude_oauth':
-        case 'codex_subscription':
-        case 'organisation_openai_api_key':
-        case 'organisation_anthropic_api_key':
-          return Object.freeze({
-            kind: record.kind,
-            selection: record.selection,
-            modelRouteDigest,
-          });
-        default:
-          return invalidContract('selection');
-      }
-    case 'platform':
-      if (record.selection !== 'satyr_platform') return invalidContract('selection');
-      return Object.freeze({ kind: record.kind, selection: record.selection, modelRouteDigest });
-    default:
-      return invalidContract('funding.kind');
   }
 }
 

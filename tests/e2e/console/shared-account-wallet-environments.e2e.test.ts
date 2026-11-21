@@ -193,7 +193,7 @@ async function walletEnvironmentScenario(): Promise<void> {
     await accountProjects.upsertOrganization(context, { name: 'Account without Wallet' });
     const genericProject = await accountProjects.createProject(context, {
       id: 'account-only-project',
-      name: 'Satyr project',
+      name: 'Account-only project',
     });
     expect(genericProject).not.toHaveProperty('environmentCount');
     const walletTables = await accountDatabase

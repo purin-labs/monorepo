@@ -30,7 +30,6 @@ import type { ConsoleBillingService } from '../billing/service';
 import {
   BILLING_EXECUTION_PRICE_ELIGIBILITY_SQL,
   billingExecutionPriceEligibilityBindings,
-  billingFundsMeterId,
   isRegisteredBillingPriceAvailable,
   registerWalletExecutionPriceVersion,
 } from '../billing/pricing';
@@ -177,12 +176,7 @@ function reservationOf(row: D1Row): FundsReservationV1 {
 }
 
 function chargeOf(row: D1Row): ExecutionChargeV1 {
-  if (
-    row.meter_id !== 'wallet.execution' &&
-    row.meter_id !== 'satyr.completed_turn.test' &&
-    row.meter_id !== 'satyr.jev_input_tokens'
-  )
-    throw new Error('Invalid execution meter');
+  if (row.meter_id !== 'wallet.execution') throw new Error('Invalid execution meter');
   if (row.terminal_outcome !== 'settled' && row.terminal_outcome !== 'released')
     throw new Error('Invalid execution outcome');
   if (row.terminal_outcome === 'released') {
@@ -387,16 +381,10 @@ export class D1ConsoleBillingPrepaidReservationService implements ConsoleBilling
     );
     if (instance.kind === 'rejected') return rejected('scope_forbidden');
     const scope = instance.value.scope;
-    const meterId = billingFundsMeterId(authority.serviceId, request.priceVersion);
-    if (authority.serviceId === 'wallet')
-      await registerWalletExecutionPriceVersion(this.runtime.database, request.priceVersion);
+    await registerWalletExecutionPriceVersion(this.runtime.database, request.priceVersion);
     const priceInput = {
       database: this.runtime.database,
-      namespace: scope.namespace,
-      scope,
-      meterId,
       priceVersion: request.priceVersion,
-      amountMinor: request.requestedMinor,
     } as const;
     if (!(await isRegisteredBillingPriceAvailable(priceInput)))
       return rejected('price_unavailable');
@@ -610,7 +598,7 @@ export class D1ConsoleBillingPrepaidReservationService implements ConsoleBilling
     const scope = scopeOf(row);
     const amount = outcome.kind === 'settled' ? outcome.amountMinor : 0;
     if (
-      (authority.serviceId === 'satyr' || row.payment_model === 'postpaid') &&
+      row.payment_model === 'postpaid' &&
       amount > integer(row.requested_minor, 'requested_minor', 0)
     )
       return rejected('operation_conflict');
@@ -618,31 +606,10 @@ export class D1ConsoleBillingPrepaidReservationService implements ConsoleBilling
       outcome.kind === 'settled'
         ? outcome.priceVersion
         : textValue(row.price_version, 'price_version');
-    const meterId = billingFundsMeterId(
-      authority.serviceId,
-      textValue(row.price_version, 'price_version'),
-    );
-    if (
-      outcome.kind === 'settled' &&
-      billingFundsMeterId(authority.serviceId, priceVersion) !== meterId
-    )
-      return rejected('operation_conflict');
-    const priceAmount =
-      outcome.kind === 'settled' ? amount : integer(row.requested_minor, 'requested_minor', 0);
-    if (authority.serviceId === 'wallet' && outcome.kind === 'settled')
+    if (outcome.kind === 'settled')
       await registerWalletExecutionPriceVersion(this.runtime.database, priceVersion);
-    const priceInput = {
-      database: this.runtime.database,
-      namespace: scope.namespace,
-      scope,
-      meterId,
-      priceVersion,
-      amountMinor: priceAmount,
-    } as const;
-    if (
-      (outcome.kind === 'settled' || authority.serviceId === 'satyr') &&
-      !(await isRegisteredBillingPriceAvailable(priceInput))
-    )
+    const priceInput = { database: this.runtime.database, priceVersion } as const;
+    if (outcome.kind === 'settled' && !(await isRegisteredBillingPriceAvailable(priceInput)))
       return rejected('price_unavailable');
     const occurredAtMs = Date.parse(transaction.occurredAt);
     if (!Number.isSafeInteger(occurredAtMs))
@@ -692,7 +659,7 @@ export class D1ConsoleBillingPrepaidReservationService implements ConsoleBilling
           outcome.kind,
           reconciled ? 1 : 0,
           this.runtime.now().getTime(),
-          outcome.kind === 'released' && authority.serviceId === 'wallet' ? 1 : 0,
+          outcome.kind === 'released' ? 1 : 0,
           ...billingExecutionPriceEligibilityBindings(priceInput),
         ),
       this.runtime.database.prepare(
@@ -710,7 +677,7 @@ export class D1ConsoleBillingPrepaidReservationService implements ConsoleBilling
           scope.projectId,
           scope.billingAccountId,
           row.instance_id,
-          meterId,
+          'wallet.execution',
           executionId,
           amount > 0 ? transaction.chargeId : null,
           transaction.ledgerSourceEventId,

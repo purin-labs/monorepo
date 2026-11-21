@@ -17,7 +17,6 @@ createAccountConsoleRouter({
   session,
   readyCheck,
   walletProvisioning: null,
-  satyrProvisioning: null,
   billingStripeWebhookSigningSecret: null,
 });
 
@@ -27,7 +26,6 @@ createAccountConsoleRouter({
   session,
   readyCheck,
   walletProvisioning: null,
-  satyrProvisioning: null,
   billingStripeWebhookSigningSecret: null,
 });
 
@@ -37,7 +35,6 @@ createAccountConsoleRouter({
   auth,
   readyCheck,
   walletProvisioning: null,
-  satyrProvisioning: null,
   billingStripeWebhookSigningSecret: null,
 });
 
@@ -47,7 +44,6 @@ createAccountConsoleRouter({
   session,
   readyCheck,
   walletProvisioning: null,
-  satyrProvisioning: null,
   billingStripeWebhookSigningSecret: null,
   // @ts-expect-error Wallet selection belongs to Wallet request context.
   environmentId: 'wallet-only-environment',

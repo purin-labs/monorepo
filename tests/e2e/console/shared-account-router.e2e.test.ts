@@ -154,7 +154,6 @@ async function composeAccountRouter(database: D1DatabaseLike) {
     database,
     namespace,
     funds,
-    satyrTestPricing: { kind: 'disabled' },
   });
   await billingUsage.ensureSchema();
   const session = createSession();
@@ -180,7 +179,6 @@ async function composeAccountRouter(database: D1DatabaseLike) {
     session,
     readyCheck: ready,
     walletProvisioning: null,
-    satyrProvisioning: null,
     billingStripeWebhookSigningSecret: null,
     corsOrigins: ['https://account.acceptance.invalid'],
   });

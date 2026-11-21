@@ -224,8 +224,9 @@ function readProjectServices(
   for (const entry of body.services) {
     const service = object(entry, 'service');
     const serviceId = service.serviceId;
-    if ((serviceId !== 'wallet' && serviceId !== 'satyr') || seen.has(serviceId))
-      throw new Error('Invalid service catalog.');
+    // An older Console also lists a retired service. This dashboard shows only the services it knows.
+    if (serviceId !== 'wallet') continue;
+    if (seen.has(serviceId)) throw new Error('Invalid service catalog.');
     seen.add(serviceId);
     const availability = object(service.availability, 'service availability');
     let available: ProjectService['availability'];
@@ -249,12 +250,7 @@ function readProjectServices(
     }
     result.push({ serviceId, availability: available, status });
   }
-  if (seen.size !== 2) throw new Error('The service catalog is incomplete.');
-  for (const entry of body.instances) {
-    const instance = object(entry, 'instance');
-    if (instance.serviceId !== 'wallet' && instance.serviceId !== 'satyr')
-      throw new Error('Unknown service instance.');
-  }
+  if (!seen.has('wallet')) throw new Error('The service catalog is incomplete.');
   return result;
 }
 

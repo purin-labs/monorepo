@@ -1,10 +1,5 @@
 import { runAccountServiceProvisioning } from '@seams-internal/console-server/accountPlatform/provisioning';
-import {
-  createSatyrProvisioningAdapterFromEnvironment,
-  type SatyrProvisioningEnvironment,
-} from '@seams-internal/console-server/accountPlatform/satyrProvisioningEnvironment';
 import type { D1AccountServiceAccess } from '@seams-internal/console-server/accountPlatform/serviceAccess';
-import type { D1AccountMembershipFacade } from '@seams-internal/console-server/accountPlatform/membershipFacade';
 import { WALLET_API_CREDENTIAL_SCOPE_VALIDATION } from '@seams-internal/wallet-console-shared/apiKeyScopes';
 import { WALLET_CONSOLE_WEBHOOK_EVENT_CATEGORY_VALIDATION } from '@seams-internal/wallet-console-shared/webhookEventCategories';
 import {
@@ -222,7 +217,6 @@ export interface CloudflareD1ConsoleRouterStorageOptions {
   readonly orgProjects: ConsoleOrgProjectService;
   readonly accountPlatform: D1AccountPlatformService;
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1;
-  readonly satyrProvisioning: AccountServiceProvisioningAdapterV1 | null;
   readonly walletEnvironments: ConsoleWalletEnvironmentService;
   readonly organizationAccess: ConsoleOrganizationAccessService;
   readonly account: ConsoleAccountService;
@@ -259,7 +253,6 @@ export interface CloudflareD1ConsoleServiceBundle {
   readonly orgProjects: ConsoleOrgProjectService;
   readonly accountPlatform: D1AccountPlatformService;
   readonly serviceAccess: D1AccountServiceAccess;
-  readonly serviceMemberships: D1AccountMembershipFacade;
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1;
   readonly walletEnvironments: ConsoleWalletEnvironmentService;
   readonly organizationAccess: ConsoleOrganizationAccessService;
@@ -408,7 +401,6 @@ interface CloudflareD1ConsoleCommonServices {
   readonly orgProjects: ConsoleOrgProjectService;
   readonly accountPlatform: D1AccountPlatformService;
   readonly serviceAccess: D1AccountServiceAccess;
-  readonly serviceMemberships: D1AccountMembershipFacade;
   readonly walletProvisioning: AccountServiceProvisioningAdapterV1;
   readonly walletEnvironments: ConsoleWalletEnvironmentService;
   readonly organizationAccess: ConsoleOrganizationAccessService;
@@ -1100,7 +1092,6 @@ function createCloudflareD1ConsoleRouterStorageOptions(input: {
     orgProjects: input.orgProjects,
     accountPlatform: input.accountPlatform,
     walletProvisioning: input.walletProvisioning,
-    satyrProvisioning: null,
     walletEnvironments: input.walletEnvironments,
     organizationAccess: input.organizationAccess,
     account: input.account,
@@ -1292,10 +1283,7 @@ export async function createCloudflareD1ConsoleOnlyServiceBundle(
     ...servicesWithApiKeys,
     spendCaps,
     sponsorshipPricing,
-    consoleRouterOptions: {
-      ...servicesWithApiKeys,
-      satyrProvisioning: null,
-    },
+    consoleRouterOptions: servicesWithApiKeys,
   };
 }
 
@@ -1311,19 +1299,6 @@ export function asRouterApiOptions(
   return input;
 }
 
-async function resumeSatyrProvisioning(
-  environment: SatyrProvisioningEnvironment,
-  bundle: CloudflareD1ConsoleOnlyServiceBundle,
-): Promise<void> {
-  const adapter = createSatyrProvisioningAdapterFromEnvironment(
-    environment,
-    bundle.serviceAccess,
-    globalThis.fetch.bind(globalThis),
-  );
-  if (adapter)
-    await runAccountServiceProvisioning({ platform: bundle.accountPlatform, adapter, limit: 20 });
-}
-
 /** Usage counts land first, so the plan pass sees this tick's production activity. */
 async function resumeFreePlan(bundle: CloudflareD1ConsoleOnlyServiceBundle): Promise<void> {
   await bundle.walletMonthlyUsage.resumePending(20);
@@ -1336,7 +1311,6 @@ async function resumeFreePlan(bundle: CloudflareD1ConsoleOnlyServiceBundle): Pro
 export async function resumeCloudflareD1AccountServices(
   bindings: CloudflareD1ConsoleOnlyStorageBindings,
   route: Pick<CloudflareD1ConsoleRouteOptions, 'namespace' | 'deploymentId'>,
-  environment: SatyrProvisioningEnvironment,
 ): Promise<void> {
   const bundle = await createCloudflareD1ConsoleOnlyServiceBundle({
     bindings,
@@ -1350,7 +1324,6 @@ export async function resumeCloudflareD1AccountServices(
       limit: 20,
     }),
     resumeFreePlan(bundle),
-    resumeSatyrProvisioning(environment, bundle),
   ]);
   for (const result of results) {
     if (result.status === 'rejected')

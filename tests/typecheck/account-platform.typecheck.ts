@@ -3,12 +3,8 @@ import type {
   BillingChargeAttributionV1,
   BoundServiceInstanceV1,
   FundsReservationV1,
-  PlatformPrincipalV1,
-  PlatformIdentityLinkV1,
   PlatformScopeV1,
   PlatformUsageEventV1,
-  SatyrFundingSelectionV1,
-  SatyrTenantScopeV1,
   ServiceTenantBindingV1,
   ServiceProvisionCommandV1,
   SettleableFundsReservationV1,
@@ -25,7 +21,6 @@ declare const cohort: AccountMigrationCohortV1;
 declare const provisionCommand: ServiceProvisionCommandV1;
 declare const storedInstance: AccountServiceInstanceV1;
 declare const unsettled: Extract<FundsReservationV1, { readonly kind: 'indeterminate' }>;
-declare const linkedIdentity: PlatformIdentityLinkV1;
 
 // @ts-expect-error Plain fields do not construct a validated platform scope.
 const literalScope: PlatformScopeV1 = {
@@ -61,14 +56,6 @@ const incompleteWallet: WalletTenantScopeV1 = {
   nativeOrganizationId: 'native-org',
 };
 
-const invalidSatyrScope: SatyrTenantScopeV1 = {
-  serviceId: 'satyr',
-  deploymentId: 'satyr-deployment',
-  nativeOrganizationId: 'native-org',
-  // @ts-expect-error Satyr binds its complete tenant without a Wallet project field.
-  nativeProjectId: 'wallet-project',
-};
-
 // @ts-expect-error Unreconciled holds cannot settle or release.
 const prematureSettlement: SettleableFundsReservationV1 = unsettled;
 
@@ -81,21 +68,6 @@ const historical: BillingChargeAttributionV1 = {
   instanceId: 'instance_fixture',
 };
 
-// @ts-expect-error The pinned customer route cannot become platform-funded.
-const mixedFunding: SatyrFundingSelectionV1 = {
-  kind: 'platform',
-  selection: 'codex_subscription',
-  modelRouteDigest: 'a'.repeat(64),
-};
-
-// @ts-expect-error Automation cannot carry an arbitrary user's identity.
-const impersonatingService: PlatformPrincipalV1 = {
-  kind: 'automation',
-  automationId: 'automation_fixture',
-  grantId: 'grant_fixture',
-  identity: linkedIdentity,
-};
-
 void literalScope;
 void spreadScope;
 void spreadBinding;
@@ -106,8 +78,5 @@ void spreadCommand;
 void spreadStoredInstance;
 void incompleteActive;
 void incompleteWallet;
-void invalidSatyrScope;
 void prematureSettlement;
 void historical;
-void mixedFunding;
-void impersonatingService;

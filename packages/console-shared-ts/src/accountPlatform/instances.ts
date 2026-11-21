@@ -33,18 +33,6 @@ export type ServiceBindingRequestV1 =
       readonly authorityEvidence?: never;
     }
   | {
-      readonly kind: 'create_native_scope';
-      readonly serviceId: 'satyr';
-      readonly parent: PlatformScopeV1;
-      readonly configuration: {
-        readonly deploymentId: string;
-        readonly placementCellId: string;
-        readonly environment: 'development' | 'production';
-      };
-      readonly nativeScope?: never;
-      readonly authorityEvidence?: never;
-    }
-  | {
       readonly kind: 'attach_existing_scope';
       readonly nativeScope: NativeTenantScopeV1;
       readonly authorityEvidence: DurableSourceEvidenceV1;
@@ -78,40 +66,18 @@ export function readServiceBindingRequest(input: unknown): ServiceBindingRequest
       const parent = PlatformScopeV1.parse(record.parent);
       if (parent.kind === 'rejected') return invalidContract(`parent.${parent.error.field}`);
       const configuration = object(record.configuration, 'configuration');
-      switch (record.serviceId) {
-        case 'wallet':
-          exactKeys(configuration, ['deploymentId', 'namespace', 'signingRootVersion']);
-          return Object.freeze({
-            kind: record.kind,
-            serviceId: record.serviceId,
-            parent: parent.value,
-            configuration: Object.freeze({
-              deploymentId: textValue(configuration.deploymentId, 'deploymentId'),
-              namespace: textValue(configuration.namespace, 'namespace'),
-              signingRootVersion: textValue(configuration.signingRootVersion, 'signingRootVersion'),
-            }),
-          });
-        case 'satyr':
-          exactKeys(configuration, ['deploymentId', 'placementCellId', 'environment']);
-          if (
-            configuration.environment !== 'development' &&
-            configuration.environment !== 'production'
-          ) {
-            return invalidContract('environment');
-          }
-          return Object.freeze({
-            kind: record.kind,
-            serviceId: record.serviceId,
-            parent: parent.value,
-            configuration: Object.freeze({
-              deploymentId: textValue(configuration.deploymentId, 'deploymentId'),
-              placementCellId: textValue(configuration.placementCellId, 'placementCellId'),
-              environment: configuration.environment,
-            }),
-          });
-        default:
-          return invalidContract('serviceId');
-      }
+      if (record.serviceId !== 'wallet') return invalidContract('serviceId');
+      exactKeys(configuration, ['deploymentId', 'namespace', 'signingRootVersion']);
+      return Object.freeze({
+        kind: record.kind,
+        serviceId: record.serviceId,
+        parent: parent.value,
+        configuration: Object.freeze({
+          deploymentId: textValue(configuration.deploymentId, 'deploymentId'),
+          namespace: textValue(configuration.namespace, 'namespace'),
+          signingRootVersion: textValue(configuration.signingRootVersion, 'signingRootVersion'),
+        }),
+      });
     }
     default:
       return invalidContract('binding.kind');

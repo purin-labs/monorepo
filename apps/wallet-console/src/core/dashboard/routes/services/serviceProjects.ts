@@ -13,8 +13,6 @@ export function platformServiceLabel(serviceId: PlatformServiceIdV1): string {
   switch (serviceId) {
     case 'wallet':
       return 'Wallet';
-    case 'satyr':
-      return 'Seams Pantry';
     default:
       return assertNever(serviceId);
   }

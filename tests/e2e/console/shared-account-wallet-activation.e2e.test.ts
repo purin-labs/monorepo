@@ -248,7 +248,6 @@ async function compose(database: D1DatabaseLike) {
     session,
     readyCheck: ready,
     walletProvisioning: delivery,
-    satyrProvisioning: null,
     billingStripeWebhookSigningSecret: 'whsec_isolated_wallet_activation_acceptance',
     corsOrigins: [origin],
   });
@@ -1144,7 +1143,6 @@ async function verifyAutomaticWalletSetup(
       walletEnvironments: product.environments,
       apiKeys: product.apiKeys,
       walletProvisioning: product.delivery,
-      satyrProvisioning: null,
       corsOrigins: [origin],
     });
     const token = await issueSession(product.session);
@@ -1936,7 +1934,6 @@ test('project members see only assigned project resources while owners govern th
       approvals,
       stepUp,
       walletProvisioning: product.delivery,
-      satyrProvisioning: null,
       corsOrigins: [origin],
     });
     const ownerToken = await product.session.signJwt(owner.actorUserId, {

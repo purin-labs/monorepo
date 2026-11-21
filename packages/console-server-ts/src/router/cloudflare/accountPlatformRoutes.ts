@@ -49,8 +49,6 @@ function provisioningAdapter(
   switch (serviceId) {
     case 'wallet':
       return context.walletProvisioning;
-    case 'satyr':
-      return context.satyrProvisioning;
   }
 }
 
@@ -63,7 +61,7 @@ interface ServiceCatalogEntry {
 
 function serviceCatalog(context: AccountConsoleContext): readonly ServiceCatalogEntry[] {
   const entries: ServiceCatalogEntry[] = [];
-  for (const serviceId of ['wallet', 'satyr'] as const) {
+  for (const serviceId of ['wallet'] as const) {
     const adapter = provisioningAdapter(context, serviceId);
     entries.push(
       adapter
@@ -136,7 +134,7 @@ export async function handleAccountPlatformRoutes(
   context: AccountConsoleContext,
 ): Promise<Response | null> {
   const matched = context.pathname.match(
-    /^\/console\/projects\/([^/]+)\/services(?:\/(wallet|satyr)\/(enable|disable|archive))?$/,
+    /^\/console\/projects\/([^/]+)\/services(?:\/(wallet)\/(enable|disable|archive))?$/,
   );
   if (!matched) return null;
   const auth = await requireConsoleAuth(context);
@@ -155,7 +153,7 @@ export async function handleAccountPlatformRoutes(
   }
   if (
     context.method === 'POST' &&
-    (matched[2] === 'wallet' || matched[2] === 'satyr') &&
+    matched[2] === 'wallet' &&
     (matched[3] === 'enable' || matched[3] === 'disable' || matched[3] === 'archive')
   ) {
     return changeService(context, auth.claims, projectId, matched[2], matched[3]);

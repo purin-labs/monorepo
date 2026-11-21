@@ -44,29 +44,10 @@ export interface WalletMigrationCheckpointV1 {
   readonly environmentIds: readonly string[];
 }
 
-export interface SatyrMigrationCheckpointV1 {
-  readonly serviceId: 'satyr';
-  readonly authorityRevision: number;
-  readonly ownership: SourceAccountOwnershipV1;
-  readonly identityDigest: string;
-  readonly membershipDigest: string;
-  readonly operationalDigest: string;
-  readonly placementDigest: string;
-  readonly placementCellId: string;
-  readonly placementEpoch: number;
-  readonly environment: 'development' | 'production';
-  readonly money: 'no_customer_ledger';
-  readonly ledgerDigest?: never;
-  readonly paymentDigest?: never;
-  readonly postedBalanceMinor?: never;
-  readonly openReservationsMinor?: never;
-  readonly historicalUnattributedChargeCount?: never;
-  readonly environmentIds?: never;
+export interface AccountMigrationEntryV1 {
+  readonly binding: ServiceTenantBindingV1;
+  readonly checkpoint: WalletMigrationCheckpointV1;
 }
-
-export type AccountMigrationEntryV1 =
-  | { readonly binding: ServiceTenantBindingV1; readonly checkpoint: WalletMigrationCheckpointV1 }
-  | { readonly binding: ServiceTenantBindingV1; readonly checkpoint: SatyrMigrationCheckpointV1 };
 
 /** Explicit mappings only. This boundary never derives an identity from an email or a name. */
 export class AccountMigrationCohortV1 {
@@ -124,17 +105,7 @@ function readMigrationEntry(input: unknown): AccountMigrationEntryV1 {
   if (checkpoint.serviceId !== binding.value.nativeScope.serviceId) {
     return invalidContract('checkpoint.serviceId');
   }
-  switch (checkpoint.serviceId) {
-    case 'wallet':
-      return Object.freeze({
-        binding: binding.value,
-        checkpoint: readWalletCheckpoint(checkpoint),
-      });
-    case 'satyr':
-      return Object.freeze({ binding: binding.value, checkpoint: readSatyrCheckpoint(checkpoint) });
-    default:
-      return invalidContract('checkpoint.serviceId');
-  }
+  return Object.freeze({ binding: binding.value, checkpoint: readWalletCheckpoint(checkpoint) });
 }
 
 function readWalletCheckpoint(record: Record<string, unknown>): WalletMigrationCheckpointV1 {
@@ -186,39 +157,6 @@ function readWalletCheckpoint(record: Record<string, unknown>): WalletMigrationC
   });
 }
 
-function readSatyrCheckpoint(record: Record<string, unknown>): SatyrMigrationCheckpointV1 {
-  exactKeys(record, [
-    'serviceId',
-    'authorityRevision',
-    'ownership',
-    'identityDigest',
-    'membershipDigest',
-    'operationalDigest',
-    'placementDigest',
-    'placementCellId',
-    'placementEpoch',
-    'environment',
-    'money',
-  ]);
-  if (record.environment !== 'development' && record.environment !== 'production') {
-    return invalidContract('environment');
-  }
-  if (record.money !== 'no_customer_ledger') return invalidContract('money');
-  return Object.freeze({
-    serviceId: 'satyr',
-    authorityRevision: integer(record.authorityRevision, 'authorityRevision', 1),
-    ownership: readSourceOwnership(record.ownership),
-    identityDigest: digestValue(record.identityDigest, 'identityDigest'),
-    membershipDigest: digestValue(record.membershipDigest, 'membershipDigest'),
-    operationalDigest: digestValue(record.operationalDigest, 'operationalDigest'),
-    placementDigest: digestValue(record.placementDigest, 'placementDigest'),
-    placementCellId: textValue(record.placementCellId, 'placementCellId'),
-    placementEpoch: integer(record.placementEpoch, 'placementEpoch', 1),
-    environment: record.environment,
-    money: record.money,
-  });
-}
-
 function readSourceOwnership(input: unknown): SourceAccountOwnershipV1 {
   const record = object(input, 'ownership');
   switch (record.kind) {
@@ -248,14 +186,12 @@ export interface AccountMigrationPlanV1 {
     readonly organizationId: string;
     readonly billingAccountId: string;
     readonly currency: 'USD';
-    readonly money:
-      | {
-          readonly kind: 'preserve_ledger';
-          readonly postedBalanceMinor: number;
-          readonly openReservationsMinor: number;
-          readonly ledgerDigest: string;
-        }
-      | { readonly kind: 'new_empty_account' };
+    readonly money: {
+      readonly kind: 'preserve_ledger';
+      readonly postedBalanceMinor: number;
+      readonly openReservationsMinor: number;
+      readonly ledgerDigest: string;
+    };
   }[];
 }
 
@@ -276,17 +212,12 @@ export interface AccountMigrationConflictV1 {
 
 function sourceOrganizationKey(entry: AccountMigrationEntryV1): string {
   const native = entry.binding.nativeScope;
-  switch (native.serviceId) {
-    case 'wallet':
-      return JSON.stringify([
-        native.serviceId,
-        native.deploymentId,
-        native.namespace,
-        native.nativeOrganizationId,
-      ]);
-    case 'satyr':
-      return JSON.stringify([native.serviceId, native.deploymentId, native.nativeOrganizationId]);
-  }
+  return JSON.stringify([
+    native.serviceId,
+    native.deploymentId,
+    native.namespace,
+    native.nativeOrganizationId,
+  ]);
 }
 
 function organizationCheckpointKey(checkpoint: WalletMigrationCheckpointV1): string {
@@ -377,23 +308,19 @@ export function planAccountMigration(
     if (projectOwners.has(projectKey) && projectOwners.get(projectKey) !== accountKey) {
       return conflict('project_ownership_conflict', entry);
     }
-    if (entry.checkpoint.serviceId === 'wallet') {
-      const checkpointKey = organizationCheckpointKey(entry.checkpoint);
-      if (checkpoints.has(sourceKey) && checkpoints.get(sourceKey) !== checkpointKey) {
-        return conflict('source_checkpoint_conflict', entry);
-      }
-      checkpoints.set(sourceKey, checkpointKey);
-      for (const environmentId of entry.checkpoint.environmentIds) {
-        if (nativeScope.serviceId !== 'wallet')
-          return conflict('source_checkpoint_conflict', entry);
-        const environmentKey = JSON.stringify([
-          nativeScope.deploymentId,
-          nativeScope.namespace,
-          environmentId,
-        ]);
-        if (environments.has(environmentKey)) return conflict('environment_already_bound', entry);
-        environments.add(environmentKey);
-      }
+    const checkpointKey = organizationCheckpointKey(entry.checkpoint);
+    if (checkpoints.has(sourceKey) && checkpoints.get(sourceKey) !== checkpointKey) {
+      return conflict('source_checkpoint_conflict', entry);
+    }
+    checkpoints.set(sourceKey, checkpointKey);
+    for (const environmentId of entry.checkpoint.environmentIds) {
+      const environmentKey = JSON.stringify([
+        nativeScope.deploymentId,
+        nativeScope.namespace,
+        environmentId,
+      ]);
+      if (environments.has(environmentKey)) return conflict('environment_already_bound', entry);
+      environments.add(environmentKey);
     }
     if (!accountSources.has(accountKey)) {
       billingAccounts.push({
@@ -401,15 +328,12 @@ export function planAccountMigration(
         organizationId: scope.organizationId,
         billingAccountId: scope.billingAccountId,
         currency: 'USD',
-        money:
-          entry.checkpoint.serviceId === 'wallet'
-            ? {
-                kind: 'preserve_ledger',
-                postedBalanceMinor: entry.checkpoint.postedBalanceMinor,
-                openReservationsMinor: entry.checkpoint.openReservationsMinor,
-                ledgerDigest: entry.checkpoint.ledgerDigest,
-              }
-            : { kind: 'new_empty_account' },
+        money: {
+          kind: 'preserve_ledger',
+          postedBalanceMinor: entry.checkpoint.postedBalanceMinor,
+          openReservationsMinor: entry.checkpoint.openReservationsMinor,
+          ledgerDigest: entry.checkpoint.ledgerDigest,
+        },
       });
     }
     nativeScopes.add(nativeKey);

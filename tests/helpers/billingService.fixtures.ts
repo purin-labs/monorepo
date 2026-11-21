@@ -21,20 +21,13 @@ export async function enableBillingService(
     await core.accountPlatform.bindProjectBilling(context, projectId),
   );
   const instanceId = `${authority.serviceId}:${projectId}`;
-  const nativeScope =
-    authority.serviceId === 'wallet'
-      ? {
-          serviceId: 'wallet',
-          deploymentId: authority.deploymentId,
-          namespace,
-          nativeOrganizationId: context.orgId,
-          nativeProjectId: projectId,
-        }
-      : {
-          serviceId: 'satyr',
-          deploymentId: authority.deploymentId,
-          nativeOrganizationId: `native:${projectId}`,
-        };
+  const nativeScope = {
+    serviceId: authority.serviceId,
+    deploymentId: authority.deploymentId,
+    namespace,
+    nativeOrganizationId: context.orgId,
+    nativeProjectId: projectId,
+  };
   const binding = acceptedBillingResult(
     ServiceTenantBindingV1.parse({ instanceId, scope, nativeScope }),
   );
