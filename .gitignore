@@ -12,7 +12,7 @@ target/
 .runtime/
 .local/
 sqlite/
-apps/seams-site/.caddy.log
+scripts/local-wallet/.wallet-public/
 
 # Test, browser, and release artifacts
 playwright-report/

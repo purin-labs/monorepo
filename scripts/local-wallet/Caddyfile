@@ -77,8 +77,10 @@
 	handle @console_assets {
 		reverse_proxy 127.0.0.1:4005
 	}
+	# The company site moved to purin-labs/purin-monorepo; the local entry opens the
+	# Wallet site.
 	handle {
-		reverse_proxy 127.0.0.1:4004
+		redir * /wallet/ 302
 	}
 }
 

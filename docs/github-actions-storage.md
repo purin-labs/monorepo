@@ -49,12 +49,8 @@ A run succeeds only after deployment, tenant activation, frontend checks, and fi
 
 ### Company site
 
-The company site (`apps/seams-site`, `purin.io`) is not part of these pipelines. Deploy it with
-`Deploy / company site` (`.github/workflows/deploy-company-site.yml`): staging from `dev`,
-production from `main`. It runs `pnpm deploy:company-site <plan|build|deploy|smoke> --site <site>`
-with the targets in `deployment/company-site/targets.json`. The `COMPANY_CLOUDFLARE_API_TOKEN`
-and `COMPANY_CLOUDFLARE_ACCOUNT_ID` secrets of the `staging` and `production` environments
-choose its Cloudflare account, so a move to another account changes only those two secrets.
+The company site (`purin.io`) is not in this repository. It deploys from
+`purin-labs/purin-monorepo` with its workflow `Deploy / company site`.
 
 ### Follow a run or retry a failure
 

@@ -330,7 +330,7 @@ function startConsole() {
 }
 
 function startCaddy() {
-  return spawnManaged('caddy', ['-C', 'apps/seams-site', 'run', 'caddy'], caddyEnv());
+  return spawnManaged('caddy', ['run', 'caddy'], caddyEnv());
 }
 
 function startRouter() {
@@ -1129,7 +1129,9 @@ function isConsoleViteCommand(command) {
 }
 
 function isSiteCaddyCommand(command) {
-  return command.includes(`caddy run --config ${path.join(repoRoot, 'apps/seams-site/Caddyfile')}`);
+  return command.includes(
+    `caddy run --config ${path.join(repoRoot, 'scripts/local-wallet/Caddyfile')}`,
+  );
 }
 
 function isDocsVitepressCommand(command) {

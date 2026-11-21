@@ -28,7 +28,7 @@ export default [
       '**/node_modules/**',
       '**/dist/**',
       // Wallet and VoiceID assets that run_caddy.sh composes for the local wallet host.
-      'apps/seams-site/.wallet-public/**',
+      'scripts/local-wallet/.wallet-public/**',
       'apps/wallet-console/dist-wallet/**',
       '**/.next/**',
       '**/.svelte-kit/**',
@@ -57,8 +57,6 @@ export default [
       'wasm/**/pkg/**',
       'crates/router-ab-ed25519-yao-client/pkg/**',
       'wasm/**/target/**',
-      'apps/seams-site/public/**',
-      'apps/seams-site/src/public/transaction-mocks/mock.js',
       'output/playwright/**',
     ],
   },

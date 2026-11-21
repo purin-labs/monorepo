@@ -42,11 +42,6 @@ of Platform and Wallet entry points and the reasons for that design.
 - [Local/provider runtime qualification](../deployment/celld/README.md): retain
   its qualification limits when describing private infrastructure.
 
-## Site
-
-- [Ink drawing style](drawing-style.md): how the site's brush drawings look and
-  move, the draw-in timing, and the checks for a new drawing.
-
 ## Concept plans
 
 - [Refactor 210 — voice intents](refactor-210-voice-intents.md): Speak-to-Sign

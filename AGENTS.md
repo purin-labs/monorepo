@@ -18,9 +18,9 @@ agent session. When working under `tests/`, also read `tests/AGENTS.md`.
 ## Repo shape (the non-obvious parts)
 
 - This repository is `seams-tech/seams-console`. It moved from `purin-labs/monorepo` on
-  2026-11-21 with its environments and secrets. The Purin company site moves to
-  `purin-labs/purin-monorepo`; `apps/seams-site` stays here only until its deploy runs from
-  there (`docs/refactor-260-console-split.md`, step 8).
+  2026-11-21 with its environments and secrets. The Purin company site (`purin.io`) lives in
+  `purin-labs/purin-monorepo` (checkout `~/Dev/purin-labs/purin-monorepo`); commit and deploy
+  company site work there, never here.
 - Private TypeScript applications and Console packages live in `apps/` and `packages/`. Wallet SDK, Rust/WASM, CLI, and public docs sources live in the separate `seams-wallet` repository; consume their exact package releases here.
 - ALL TypeScript tests live in the top-level `tests/` workspace (`tests/unit/`,
   `tests/e2e/`, `tests/relayer/`, `tests/wallet-iframe/`, ...) — never co-located with
@@ -28,9 +28,6 @@ agent session. When working under `tests/`, also read `tests/AGENTS.md`.
 - Wallet Rust and pure SDK tests run in `seams-wallet`; keep Console and composed acceptance tests private.
 - Before changing tenant-root recovery trust or deploying its control plane, read
   `docs/recovery-trust-operations.md`. Preserve the latest signed revocation history.
-- Before adding, changing or reviewing an ink drawing on the Seams site
-  (`apps/seams-site/src/components/h2/ink/`) or its animation, read
-  `docs/drawing-style.md`. The `ink-drawing` skill applies it step by step.
 
 ## Custody vocabulary (each term names exactly one thing)
 

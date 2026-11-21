@@ -896,7 +896,7 @@ test('frontend commands reject backend-only operations and unknown surface argum
     runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'gateway']),
     /--component must be/u,
   );
-  // The company site deploys through scripts/deploy-company-site.mjs.
+  // The company site deploys from purin-labs/purin-monorepo.
   expectFailure(
     runCommand(frontendScript, ['plan', '--site', 'staging', '--component', 'company']),
     /--component must be/u,
