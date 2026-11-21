@@ -491,12 +491,12 @@ export function H2Security(): React.JSX.Element {
    the Console in its own language. A new language must add every screen. */
 const CONSOLE_SCREEN_IMAGES = {
   observability: {
-    en: '/wallet-preview/wallet-console-observability.png?v=2',
-    ja: '/wallet-preview/wallet-console-observability-ja.png?v=1',
+    en: '/wallet-preview/wallet-console-observability.png?v=3',
+    ja: '/wallet-preview/wallet-console-observability-ja.png?v=2',
   },
   audit: {
-    en: '/wallet-preview/wallet-console-audit.png?v=6',
-    ja: '/wallet-preview/wallet-console-audit-ja.png?v=1',
+    en: '/wallet-preview/wallet-console-audit.png?v=7',
+    ja: '/wallet-preview/wallet-console-audit-ja.png?v=2',
   },
 } as const satisfies Record<string, Record<Locale, string>>;
 
